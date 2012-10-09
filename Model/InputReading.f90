@@ -104,7 +104,7 @@
 !================================================================================================================================
         Subroutine InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
         &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals)
+        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues)
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! IsInputFromNC(n) (Output) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)
@@ -162,6 +162,8 @@
         Real:: TVal
         integer::arrayx
         Character*200:: file_nameM
+        character (len = *), parameter :: missing_value = "missing_value"
+        real:: VarMissingValues(MaxNumofFile,n),VarMissval
         Character*200, Allocatable:: AllFiles(:)
         allocate(tempfilelist(MaxNumofFile))
         allocate(tempfilesteps(MaxNumofFile))
@@ -255,6 +257,8 @@
                     File_name=NCDFContainer(k,i)
                     call check(nf90_open(File_name, nf90_nowrite, ncidout))                         ! open the netcdf file
                     call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumTimeStepEachNC))  ! information about dimensionID 3
+                    Call check(nf90_inq_varid(ncidout,varnameinncdf(i),InputVarId))
+                    CALL check(nf90_get_att(ncidout,InputVarId,missing_value,VarMissingValues(k,i)))  
                     NOofTS(i)=NOofTS(i)+NumTimeStepEachNC
                 end do
             end if
@@ -329,9 +333,12 @@
         Integer::TotalTS
         Double precision:: TVal(1)
         integer:: ArrayStart,ArrayEnd
+        integer:: InputVarId
+        
         Varid=3  !  We require that time is the 3rd dimension
         RefHour=0.00
         FileCount=1
+        
         Do i=1,n
             ArrayEnd=0
             TScounts=1
@@ -375,7 +382,7 @@
 
         
         Subroutine Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-            &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues)
+            &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues,VarMissingValues)
             
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)    
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -404,6 +411,7 @@
         Real:: Allvalues(arrayx,n)
         Real, allocatable :: AllVal(:)
         Double precision:: TSV(arrayx,n)
+        REAL:: VarMissingValues(MaxNumofFile,n)
         Do i = 1,n 
             ArrayEnd=0
             if (IsInputFromNC(i) .eq. 1)then
@@ -417,7 +425,12 @@
                     ArrayEnd=rec+ArrayStart-1
                     Allvalues(ArrayStart:ArrayEnd,i)=AllVal(1:rec)
                     Deallocate(AllVal)
-                end do
+                    Do jj=1,NoofTS(i)
+                        if (Allvalues(jj,i) .EQ. VarMissingValues(k,i))Then
+                            Allvalues(jj,i)=Allvalues((jj-1),i)
+                        End if
+                    End do
+                End do
             End if
         End do
         

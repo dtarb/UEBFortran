@@ -313,8 +313,8 @@
  Surface temperature:    293.9717      K
  Energy closure:    3.816650    
  Iterations:           15
- Complete runtime:  0.1179000      minutes
- Input time:  0.7669964      Seconds
- Compute time:   2.986827      Seconds
- Out time:   1.528981      Seconds
- Aggregation time:   1.496000      Seconds
+ Complete runtime:   1.074583      minutes
+ Input time:  0.7550011      Seconds
+ Compute time:   3.210297      Seconds
+ Out time:   2.336197      Seconds
+ Aggregation time:   2.111000      Seconds
