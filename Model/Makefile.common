@@ -1,0 +1,20 @@
+
+PROGS=uebg
+
+.SUFFIXES: .f90 .cpp .o .mod
+
+.f90.o:
+	$(FC) $(FFLAGS) -c $<
+
+.for.o:
+	$(FC) $(FFLAGS) -c $<
+
+all: ${PROGS}
+
+uebg: Canopy.o  InputReading.o  ParamSiteInitial.o  functions.o  snowdgtv.o  snowdv.o  snowxv.o Output.o checks.o AggregatedOutput.o
+	$(FC) $(FCFLAGS) -o $@ $? ${LDFLAGS}
+
+clean:
+	-${RM} *.o *~ core
+realclean: clean
+	-${RM} ${PROGS}

@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "UEBGrid", "UEBGrid.vfproj", "{367085E4-CDE7-4885-83C6-772A5B110B80}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{367085E4-CDE7-4885-83C6-772A5B110B80}.Debug|Win32.ActiveCfg = Debug|Win32
+		{367085E4-CDE7-4885-83C6-772A5B110B80}.Debug|Win32.Build.0 = Debug|Win32
+		{367085E4-CDE7-4885-83C6-772A5B110B80}.Release|Win32.ActiveCfg = Release|Win32
+		{367085E4-CDE7-4885-83C6-772A5B110B80}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

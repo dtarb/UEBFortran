@@ -1,0 +1,69 @@
+Model Parameters
+irad:  Radiation control flag (0=from ta, 1= input qsi, 2= input qsi,qli 3= input qnet)
+0   
+ireadalb:  Albedo reading control flag (0=albedo is computed internally, 1 albedo is read)
+0
+tr: Temperature above which all is rain (3 C)
+3   
+ts: Temperature below which all is snow (-1 C)
+-1        
+ems: Emissivity of snow (nominally 0.99)
+0.99  
+cg:  Ground heat capacity (nominally 2.09 KJ/kg/C)
+2.09          
+z: Nominal meas. heights for air temp. and humidity (2m)
+2 
+zo:  Surface aerodynamic roughness (m)
+0.010     
+rho: Snow Density (Nominally 450 kg/m^3)
+337 
+rhog:  Soil Density (nominally 1700 kg/m^3)
+1700 
+lc: Liquid holding capacity of snow (0.05)
+0.05     
+ks:  Snow Saturated hydraulic conductivity (20 m/hr)
+20
+de:  Thermally active depth of soil (0.1 m)
+0.1   
+avo:  Visual new snow albedo (0.95)
+0.85 
+anir0: NIR new snow albedo (0.65)
+0.65 
+lans: The thermal conductivity of fresh (dry) snow
+1.0   
+lang: the thermal conductivity of soil
+4.0   
+wlf:  Low frequency fluctuation in deep snow/soil layer 
+0.0654      
+rd1: Amplitude correction coefficient of heat conduction (1)
+1 
+fstab:  Stability correction control parameter 0 = no corrections
+1.0  
+tref:  Reference temperature of soil layer in ground heat calculation input
+-0.45 
+dnews:  The threshold depth of for new snow (0.001 m)
+0.001  
+emc:   Emissivity of canopy
+0.98   
+alpha: Scattering coefficient for solar radiation
+0.5   
+alphal:   Scattering coefficient for long wave radiation
+0.0  
+g: leaf orientation with respect to zenith angle
+0.5   
+uc:  Unloading rate coefficient (Per hour) (Hedstrom and Pomeroy, 1998)
+.004626286  
+as:  Fraction of extraterrestrial radiation on cloudy day, Shuttleworth (1993)  
+0.25   
+Bs:     (as+bs):Fraction of extraterrestrial radiation on clear day, Shuttleworth 
+.5      
+lambda: Ratio of direct atm radiation to diffuse, worked out from Dingman 
+.857143 
+rimax:  Maximum value of Richardson number for stability correction
+0.16
+wcoeff: Wind decay coefficient for the forest
+0.5     
+a: A in Bristow-Campbell formula for atmospheric transmittance
+0.8      
+c: C in Bristow-Campbell formula for atmospheric transmittance
+2.4         

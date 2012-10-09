@@ -1,0 +1,34 @@
+UEBGrid is comprised of the following Fortran Files
+
+snowdv.f90  Driver file with the main program.  This has the changes needed to use netcdf inputs and outputs specified in the UEBGrid interface design document
+snowdgt.f90  Main UEB subroutine.  The only changes from UEBveg are to control input/output
+snowxv.f90  Subroutines used for radiation calculations from vegetation UEB
+canopy.f90  Subroutines for canopy parameterization from vegetation UEB (unchanged for UEB grid)
+ParamSiteInitial.f90 Subroutines for reading parameters and site variables from the formats specified in the UEBGrid interface design document
+inputreading.f90  Subroutines called from snowdv.f90 to read the various control files specified in the UEBGrid interface design document
+Output.f90  Subroutines to write netcdf output according to the UEBGrid interface design document
+functions.f90  Utility subroutines used in the wrapping of UEB to provide a grid interface
+checks.f90  Additional utility subroutines
+AggregatedOutput.f90   Subroutines to write aggregated output
+
+It also needs to be linked to netCDF library files
+
+netCDF libraries were downloaded from the following link:
+ftp://ftp.unidata.ucar.edu/pub/netcdf/contrib/win32/netcdf-ifort-3.6.1.zip
+2/3/12
+
+To use NetCDF from Fortran
+Add the following libraries to visual studio project
+netcdf.lib
+netcdf_f90.lib
+
+For the bitbox repository we leave netCDF out of the repository so need to go up a few directories
+
+Settings to Visual studio to include netCDF files in the builds
+In Fortran\General\Additional Include Directories: ...\..\netcdf3.6.1\include
+In Linker\General\Additional Library Directories\General: ..\..\..\netcdf3.6.1\lib
+In Linker\Input\Additional Dependencies: netcdf.lib
+In code use netcdf
+In system path create an entry for the path to the file netcdf.dll in ..\..\..\netcdf3.6.1\lib
+In Visual studio solution add netcdf.lib and netcdf_f90.lib
+In Visual studio project properties -> Fortran ->Libraries set runtime library to Multithreaded to avoid libcmt warning.

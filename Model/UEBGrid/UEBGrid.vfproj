@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{367085E4-CDE7-4885-83C6-772A5B110B80}">
+	<Platforms>
+		<Platform Name="Win32"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32" WholeProgramOptimization="true">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" AdditionalIncludeDirectories="..\..\..\netcdf3.6.1\include" Interfaces="true" WarnInterfaces="true" Traceback="true" BoundsCheck="true"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\..\netcdf3.6.1\lib" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="netcdf.lib"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" AdditionalIncludeDirectories="..\..\..\netcdf3.6.1\include"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\..\netcdf3.6.1\lib" SubSystem="subSystemConsole" AdditionalDependencies="netcdf.lib"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<File RelativePath="..\AggregatedOutput.f90"/>
+		<File RelativePath="..\Canopy.f90"/>
+		<File RelativePath="..\checks.f90"/>
+		<File RelativePath="..\functions.f90"/>
+		<File RelativePath="..\InputReading.f90"/>
+		<File RelativePath="..\..\..\netcdf3.6.1\lib\netcdf.lib"/>
+		<File RelativePath="..\..\..\netcdf3.6.1\lib\netcdf_f90.lib"/>
+		<File RelativePath="..\Output.f90"/>
+		<File RelativePath="..\ParamSiteInitial.f90"/>
+		<File RelativePath="..\snowdgtv.f90"/>
+		<File RelativePath="..\snowdv.f90"/>
+		<File RelativePath="..\snowxv.f90"/></Files>
+	<Globals/></VisualStudioProject>

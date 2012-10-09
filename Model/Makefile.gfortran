@@ -1,0 +1,10 @@
+DEBUG = #-Wall 
+
+FC=gfortran
+FFLAGS= ${DEBUG} -g3 -ffree-line-length-none -I/usr/include
+LDFLAGS= -static-libgfortran -g3 -lnetcdff
+
+CXX = g++
+CXXFLAGS = -g3 -Wall
+
+include Makefile.common
