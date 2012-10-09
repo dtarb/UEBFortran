@@ -1,9 +1,0 @@
-        !COMPILER-GENERATED INTERFACE MODULE: Tue Oct 09 13:10:41 2012
-        MODULE IS_NUMERIC__genmod
-          INTERFACE 
-            FUNCTION IS_NUMERIC(STRING)
-              CHARACTER(*), INTENT(IN) :: STRING
-              LOGICAL(KIND=4) :: IS_NUMERIC
-            END FUNCTION IS_NUMERIC
-          END INTERFACE 
-        END MODULE IS_NUMERIC__genmod
