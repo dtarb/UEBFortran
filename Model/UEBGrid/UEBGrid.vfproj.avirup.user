@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioUserFile ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{367085E4-CDE7-4885-83C6-772A5B110B80}">
+	<Configurations>
+		<Configuration Name="Debug|Win32" CommandArguments="twdefControl.dat" WorkingDirectory="C:\Users\avirup\Desktop\UebGrid - edit\Repository\Data"/>
+		<Configuration Name="Release|Win32" CommandArguments="twdefControl.dat" WorkingDirectory="C:\Users\avirup\Desktop\UebGrid - edit\Repository\Data"/></Configurations></VisualStudioUserFile>

@@ -1,0 +1,7 @@
+List of Aggregated Output Variables                 
+P: Precipitation (m/hr)
+SWE: Surface snow water equivalent (m)
+SWIT: Total outflow (m/hr)
+SWISM: Total outflow from snow melt (m/hr)
+SWIR: Total outflow from Rain (m/hr)
+SWIGM: Total outflow from glacier melt (m/hr)

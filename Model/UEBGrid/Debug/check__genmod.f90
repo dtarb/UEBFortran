@@ -1,0 +1,8 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Oct 08 18:57:07 2012
+        MODULE CHECK__genmod
+          INTERFACE 
+            SUBROUTINE CHECK(STATUS)
+              INTEGER(KIND=4), INTENT(IN) :: STATUS
+            END SUBROUTINE CHECK
+          END INTERFACE 
+        END MODULE CHECK__genmod
