@@ -13,3 +13,5 @@ SWIR: Total outflow from Rain (m/hr)
 Outputs\SWIR.nc
 SWIGM: Total outflow from glacier melt (m/hr)
 Outputs\SWIGM.nc
+SWE: Snow water Equivalent (m)
+Outputs\SWE.nc
