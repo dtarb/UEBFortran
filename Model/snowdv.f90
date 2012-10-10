@@ -145,7 +145,7 @@
       Double precision, allocatable:: FNDJDT(:)
       Double precision, allocatable:: TimeMaxPerFile(:,:)
       Double precision, allocatable:: TimeMinPerFile(:,:)
-      REAL, allocatable::VarMissingValues(:,:)
+      REAL, allocatable::VarMissingValues(:,:),VarfILLValues(:,:)
       Double precision:: CurrentModelDT 
       ! FOR PROGRAM EXECUTION TIME 
       real, dimension(2) :: tarray
@@ -166,7 +166,7 @@
        !declares for check
        integer:: count,countinput,timerec
        integer:: AggUnit,ST
-       REAL:: WsMissingValues
+       REAL:: WsMissingValues,WsFillValues
       ! UTC time conversion declarations
        REAL::longitude,NHour,UTChour
        Integer:: MYEAR,MMONTH,MDAY
@@ -241,12 +241,13 @@
 
       
       !CALL nCDF2DArrayInfo(Watershedfile,dimlen2,dimlen1)
-      CALL nCDF2DArrayInfo2(Watershedfile,dimlen2,dimlen1,WatershedVARID,WsMissingValues)
+      CALL nCDF2DArrayInfo2(Watershedfile,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
 !     Call function to go through input control file and find the maximum number of netcdf files for any time varying input variable     
       CAll InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
       Allocate(NCDFContainer(MaxNumofFile,11))
       Allocate(NCfileNumtimesteps(MaxNumofFile,11))
       Allocate(VarMissingValues(MaxNumofFile,11))
+      Allocate(VarfILLValues(MaxNumofFile,11))
 !       Call function to read input files and determine the format of variable input (netcdf or text)
 !       Outputs are 
 !       IsInputFromNC is 0 for text and 1 for netcdf for corresponding variable
@@ -257,7 +258,7 @@
 
        CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
         &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues)
+        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
        Allocate(TimeMaxPerFile(MaxNumofFile,11))
        Allocate(TimeMinPerFile(MaxNumofFile,11))
        allocate(TSV(arrayx,11))
@@ -346,12 +347,12 @@
 
        CALL nCDF2DRead(Watershedfile,WatershedVARID,IDNumber(1),jxcoord,iycoord)
         !  read site variables and initial conditions of state variables
-       if((IDNumber(1) .ne. 0) .or. (IDNumber(1) .ne. WsMissingValues))then  !  Omit calculations if not in the watershed
+       if((IDNumber(1) .ne. 0) .or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  !  Omit calculations if not in the watershed
          !  TODO change the above to also exclude netcdf no data values
        CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,dimlen2,dimlen1,iycoord,jxcoord,dtbar,Ts_last,longitude)
        CALL Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-            &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues,VarMissingValues)
-            
+            &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues,VarMissingValues,VarfILLValues)
+    
        !modeldrInt=int(modeldt)
        StepInADay=24/modeldt     
        If (inputvarname(5) .NE. 'tmin')THEN

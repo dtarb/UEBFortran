@@ -246,7 +246,7 @@ call check(nf90_close(ncidout))                                         ! Closin
 end subroutine nCDF2DArrayInfo
 !==================2-D netcdf file reading ends  ==================================================================================
 !==================2-D netcdf file reading starts and reads its diemension,variables etc.===========================================
-Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingValues)
+Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
 use netcdf
 integer :: y_dimid, x_dimid
 integer, parameter :: NDIMS = 2
@@ -254,14 +254,30 @@ integer:: nDimensions, nVariables, nAttributes, unlimitedDimId, formatNum, dimle
 character (20) :: dimname1,  dimname2, dimname3, varname
 character (50) :: FILE_NAME, y_NAME, x_NAME
 character (50) :: WatershedVARID
-character (len = *), parameter :: missing_value = "missing_value"
+character (len = *), parameter :: missing_value = "missing_value",fillvalue="_FillValue"
+integer::numAtts
+character (len = 50):: AttName
 real::WSMissingValues
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
 call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
 call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! information about dimensionID 2 
-call check(nf90_inq_varid(ncidout, WatershedVARID, WSVarId))
-CALL check(nf90_get_att(ncidout,WSVarId,missing_value,WSMissingValues))                     
+call check(nf90_inq_varid(ncidout,WatershedVARID,WSVarId))
+CALL check(nf90_inquire_variable(ncidout,WSVarId,natts=numAtts))
+
+DO iii=1,numAtts
+CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
+    if(AttName .eq. missing_value)THEN
+        CALL check(nf90_get_att(ncidout,WSVarId,missing_value,WsMissingValues)) 
+    ELSE
+        WsFillValues=0
+    end IF
+    if(AttName .eq. fillvalue)THEN
+        CALL check(nf90_get_att(ncidout,WSVarId,fillvalue,WsFillValues))  
+    ELSE
+        WsFillValues=0
+    end IF
+END DO
 
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF2DArrayInfo2
