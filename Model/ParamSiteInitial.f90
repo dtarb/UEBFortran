@@ -32,6 +32,13 @@
 
 !==This subroutine reads the values from parameter file ==
         subroutine readvals(param,irad,ireadalb,bca,bcc,vfile)
+!param (output) an array that holds all the paramter values 
+!irad (out) a falg for radiation calculation
+!ireadalb Albedo reading control flag (0=albedo is computed internally, 1 albedo is read)
+!bca (out) A in Bristow-Campbell formula for atmospheric transmittance
+!bcc (out) C in Bristow-Campbell formula for atmospheric transmittance
+!vfile (in0 file that stores paramter values
+
         Character (100) ParamHeading
         CHARACTER*15 filecode, ParamName
         parameter(n = 34)
@@ -85,8 +92,8 @@
 
 ! =================== for one point within the grid that the model is looping over 
       subroutine readsv(param,statev,sitev,svfile,slope,azi,lat,subtype, &
-      dimlen2,dimlen1,ilat,jlon,dtbar,ts_last,longitude)
-    ! param (input and output) is 
+      &dimlen2,dimlen1,ilat,jlon,dtbar,ts_last,longitude)
+    ! param (input and output) an array that holds all the paramter values
     ! statev (output) is state variable array that returns the initial conditions read from input files
     ! sitev (output)is site variables array that returns the site variables read from input files
     ! svfile (input)is name of control file for site variables and initial conditions

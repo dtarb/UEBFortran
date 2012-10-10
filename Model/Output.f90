@@ -386,3 +386,37 @@
             end do
         end do
         end Subroutine DirectoryCreate
+        
+            Subroutine OutputnetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumTimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
+    use NETCDF
+    
+    integer, parameter :: NDIMS = 3
+    integer::incfile,ioutv,outcount,NumTimeStep
+    character (50) :: FILE_NAME
+    integer :: start(NDIMS), count(NDIMS),VarId,recid
+    integer:: iycoord,jxcoord, timerec
+    integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
+    integer::NCIDARRAY(NumofFile,outcount),OutVar(outcount)
+    REAL:: OutVarValue(NumTimeStep,64)
+    
+    timerec=NumTimeStepPerFile(incfile)
+    count = (/ 1, 1, timerec /)
+    start = (/ 1, 1, 1 /)
+    start(1) = iycoord
+    start(2) = jxcoord
+    call check(nf90_put_var(NCIDARRAY(incfile,ioutv),4,OutVarValue(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2),outvar(ioutv)),start, count))
+    End Subroutine 
+    
+    Subroutine OutputTimenetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT,jxcoord,iycoord)
+        use NETCDF
+        integer, parameter :: NDIMS = 3
+        integer::outcount
+        integer::incfile,ioutv,OutVar(outcount)
+        character (50) :: FILE_NAME
+        integer :: start(NDIMS), count(NDIMS),VarId,recid
+        integer:: iycoord,jxcoord, timerec,NCIDARRAY(NumofFile,outcount)
+        integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
+        Double precision::FNDJDT(NumTimeStep)
+        timerec=NumTimeStepPerFile(incfile)
+        call check(nf_put_var_double(NCIDARRAY(incfile,ioutv),3,FNDJDT(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2))))
+    End Subroutine 
