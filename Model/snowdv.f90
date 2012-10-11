@@ -48,7 +48,7 @@
       ! for netCDF declaration
       use netcdf
       PARAMETER(nsv=10,npar=32,nxv=6,niv=8,nov=14)
-      integer :: OutCount,ioutv
+      integer :: OutCount,ioutv,totalgrid,numgrid
       integer, parameter :: NDIMS = 3
       integer:: irad, ireadalb, subtype, TotalModelTimeSteps, InputVTimeSteps(11), NumNCFILES(11),ISInputFROMNC(11)
       integer:: n, SVDT, reason, ilat, jlon, krec,dimlen2,dimlen1,dimlen3,MaxNumofFile, TimeSteps, ArrayElements
@@ -336,9 +336,9 @@
         tout=0.
         tagg=0.
         tlast=tresult
-               
+       totalgrid=dimlen1*dimlen2     
 !      Start loop over space
-
+       numgrid=0
        DO iycoord=1, dimlen1
        DO jxcoord=1, dimlen2
 !       iycoord=1
@@ -711,7 +711,9 @@
     tresult= ETIME(tarray)
     toutnc=toutnc+tresult-tlast
     tlast=tresult
-    
+    numgrid=numgrid+1
+    write(6,FMT="(A1,A,t30,F6.2$,A)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
+
        END DO  !  These are the end of the space loop
      END DO
     
