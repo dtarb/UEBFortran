@@ -149,7 +149,7 @@
       Double precision:: CurrentModelDT 
       ! FOR PROGRAM EXECUTION TIME 
       real, dimension(2) :: tarray
-      real :: tresult, tio, tcomp,tout,tagg,tlast
+      real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc
       REAL:: Hour
       Double precision:: SHOUR
       !aggregated output declaration
@@ -627,7 +627,6 @@
      &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
      
     tresult= ETIME(tarray)
- !   write(6,*)'Second:',tarray(1),tarray(2),tresult
     tcomp=tcomp+tresult-tlast
     tlast=tresult
 
@@ -682,7 +681,6 @@
     Timearray(istep)=hour
 
     tresult= ETIME(tarray)
-
     tout=tout+tresult-tlast
     tlast=tresult
 
@@ -709,6 +707,10 @@
                 CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
           enddo
         enddo
+        
+    tresult= ETIME(tarray)
+    toutnc=toutnc+tresult-tlast
+    tlast=tresult
     
        END DO  !  These are the end of the space loop
      END DO
@@ -743,12 +745,14 @@
     write(66,*) "Input time:",tio," Seconds"
     write(66,*) "Compute time:",tcomp," Seconds"
     write(66,*) "Out time:",tout," Seconds"
+    write(66,*) "Out timeinNC:",toutnc," Seconds"
     write(66,*) "Aggregation time:",tagg," Seconds"
     Close(66)
     write(6,*) "Complete runtime:",tarray(1)," minutes"
     write(6,*) "Input time:",tio," Seconds"
     write(6,*) "Compute time:",tcomp," Seconds"
     write(6,*) "Out time:",tout," Seconds"
+     write(6,*) "Out timeinNC:",toutnc," Seconds"
     write(6,*) "Aggregation time:",tagg," Seconds"
     Write(6,*) "Your task is successfully performed! Plesae view the results in 'outputs' folder!"
 end program
