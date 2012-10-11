@@ -32,6 +32,13 @@
 
 !!==================3-D netcdf file reading starts and reads a single value ata time=============================================
 Subroutine nCDF3DRead (file_name,Var_name,SingleArray,i,j,rec)
+!Task: provides the value of a variable for a particular x- and y-coordinate
+!file_name (in) 2-D netccdf file name
+!varname (in) variable name 
+!SingleArray (output) array that holds the value
+!i (in) partcular y-coordinate
+!j (in) partcular x-coordinate
+
 use netcdf
 
 integer, parameter :: NDIMS = 3 
@@ -62,6 +69,12 @@ end subroutine nCDF3DRead
 
 !==================3-D netcdf file reading starts and reads its diemension,variables etc.===========================================
 Subroutine nCDF3DArrayInfo (FILE_NAME,dimlen2,dimlen1,dimlen3)
+!Task: provides the length of x- and y-coordinate and time
+!FILE_NAME (in) 3-D netccdf file
+!Dimlen2 (out) length of y-coordinate
+!dimlen1 (out) length of x-coordinate
+!dimlen3 (out) length of time steps
+
 use netcdf
 character (len = *), parameter :: LAT_NAME = "ycoord"
 character (len = *), parameter :: LON_NAME = "xcoord"
@@ -78,21 +91,19 @@ call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! return
 call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
 call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! information about dimensionID 2
 call check(nf90_inquire_dimension(ncidout, 3, dimname3, dimlen3))       ! information about dimensionID 3  
-
-!call check(nf90_inquire_variable(ncidout, 3, varname))                  ! information about variableID 3
-!call check(nf90_inq_dimid(ncidout, LAT_NAME, y_dimid))
-!call check(nf90_inquire_dimension(ncidout, y_dimid, y_NAME, dimlen1))   
-!call check(nf90_inq_dimid(ncidout, LON_NAME, x_dimid))
-!call check(nf90_inquire_dimension(ncidout, x_dimid, x_NAME, dimlen2))       
-!call check(nf90_inq_dimid(ncidout, REC_NAME, time_dimid))
-!call check(nf90_inquire_dimension(ncidout, time_dimid, Time_name, dimlen3))    
-
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF3DArrayInfo
 !==================3-D netcdf file reading ends  ==================================================================================
 
 !!==================2-D netcdf file reading starts and reads a single value at a time==============================================
 Subroutine nCDF2DRead(file_name,varname,SingleArray,i,j)
+!Task: provides the value of a variable for a particular x- and y-coordinate
+!file_name (in) 2-D netccdf file
+!varname (in) variable name 
+!SingleArray (output) array that holds the value
+!i (in) partcular y-coordinate
+!j (in) partcular x-coordinate
+
 use netcdf
 
 integer, parameter :: NDIMS = 2 
@@ -223,6 +234,11 @@ end subroutine nCDF3DTimeRead
 
 !==================2-D netcdf file reading starts and reads its diemension,variables etc.===========================================
 Subroutine nCDF2DArrayInfo(FILE_NAME,dimlen2,dimlen1)
+!Task: provides the length of x- and y-coordinate and time
+!FILE_NAME (in) 2-D netccdf file
+!Dimlen2 (out) length of y-coordinate
+!dimlen1 (out) length of x-coordinate
+
 use netcdf
 !character (len = *), parameter :: LAT_NAME = "ycoord"
 !character (len = *), parameter :: LON_NAME = "xcoord"
@@ -247,6 +263,14 @@ end subroutine nCDF2DArrayInfo
 !==================2-D netcdf file reading ends  ==================================================================================
 !==================2-D netcdf file reading starts and reads its diemension,variables etc.===========================================
 Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
+!Task: provides the length of x- and y-coordinate and time
+!FILE_NAME (in) 2-D netccdf file
+!Dimlen2 (out) length of y-coordinate
+!dimlen1 (out) length of x-coordinate
+!WatershedVARID (in) vaiable ID (in this case watershed variable ID)
+!WsMissingValues (out) missing value attribute for a variable in a netCDF 
+!WsFillValues (out) missing value attribute in a netCDF 
+
 use netcdf
 integer :: y_dimid, x_dimid
 integer, parameter :: NDIMS = 2
@@ -285,6 +309,7 @@ end subroutine nCDF2DArrayInfo2
 
 !==================Start hecking eavh of the netCDf command functions  ============================================================
 subroutine check(status)
+!Task: converts year month date and hours (yyyy mm dd hh.hh) into a simgle double precision julian date
 use netcdf
 implicit none
 integer, intent ( in) :: status
@@ -395,11 +420,12 @@ SUBROUTINE SSORT (X, IY, N, KFLAG)
 !==================Sorting function end here====================================
 !!==================3-D netcdf file reading starts and reads TIMESTEPS=============================================
 Subroutine NetCDFTimeArray(file_name,time_out,timelength)
-!file_name
-!time_out
+!Task: provides all the values in time diension and the legth of time dimension
+!file_name (in) 2-D netccdf file
+!time_out (out) array that holds all the time dimension values
+!timelength (out) the length of time dimension
 
 use netcdf
-
 integer, parameter :: NDIMS = 3
 integer:: unlimitedDimId, dimlen3
 character (50) :: FILE_NAME, Var_name="time", Rec_name="time"
@@ -458,8 +484,10 @@ end subroutine NetCDFTimeArray
 ! function to convert string to lowercase obtained from http://www.gbenthien.net/strings/index.html 4/20/12
 ! No copyright indicated on web page so presumed public domain
 subroutine lowercase(str,lcstr)
+!Task: converts a upper case (capital)/mixed string to a lower case string
+!Str (in) string that needs to be converted to loer class
+!lcstr (out) string after lower class conversion
 
-! convert string to lower case
 
 character (len=*):: str
 character (len=len_trim(str)):: lcstr
@@ -501,8 +529,16 @@ END FUNCTION is_numeric
 
 !!!==================3-D netcdf file reading starts and reads TIMESTEPS=============================================
 Subroutine SpatialCoordinate(File_name,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
-!! this will give us spatial coornate names, their unit and value
-!!  file_name  (in)  Netcdf file to read from
+! this will give us spatial coornate names, their unit and value
+! file_name  (in)  Netcdf file to read from
+! dimlen1 (out) length of dimension (lon) 1
+! dimlen2(out) length of dimension (lat) 2
+! DimName1(out) name of dimension (lon) 1
+! DimName2(out) name of dimension (lat) 2
+! DimValue1(out) values in dimension (lon) 1
+! DimValue2(out) values in dimension (lat) 1
+! DimUnit1(out) unit of dimension (lon) 1
+! DimUnit2(out) unit of dimension (lat) 2
 
 use netcdf
 character (50) :: FILE_NAME
