@@ -70,7 +70,7 @@
          "int      ","ieff     ","Ur       ","SWEc     ","Tc       ", &
          "Tac      ","QHc      ","QEc      ","Ec       ","Qpc      ", &
          "Qmc      ","Mc       ","FMc      ","MassError","SWIGM    ", &
-         "SWISM    ","SWIR    "/)
+         "SWISM    ","SWIR     "/)
 
         MStartHour=dble(ModelStartHour)
         MEndHour=dble(ModelEndHour)
@@ -168,7 +168,7 @@
          "int      ","ieff     ","Ur       ","SWEc     ","Tc       ", &
          "Tac      ","QHc      ","QEc      ","Ec       ","Qpc      ", &
          "Qmc      ","Mc       ","FMc      ","MassError","SWIGM    ", &
-         "SWISM    ","SWIR    "/)
+         "SWISM    ","SWIR     "/)
      
         if( NumofFile .gt. 1)then
             netCDFDataValPerfile=1.5*1000*1000*1000/5.5   !  Determined experimentally
@@ -305,7 +305,7 @@
            "kJ/m2/hr","m/s     ","unitless","m       ","m       ", &
            "m/hr    ","m/hr    ","m       ","m       ","deg C   ", &
            "deg C   ","kJ/m2/hr","kJ/m2/hr","m/hr    ","kJ/m2/hr", &
-           "kJ/m2/hr","m/hr    ","m/hr    ","m       " ,"m/hr   ", &
+           "kJ/m2/hr","m/hr    ","m/hr    ","m       ","m/hr    ", &
            "m/hr    ","m/hr    "/)
       
 
@@ -344,31 +344,34 @@
                !               x_dimid=1
                !               y_dimid=2
                !               time_dimid=3
-               call check(nf90_def_dim(ncid,DimName1,dimlen1,x_dimid))
-               call check(nf90_def_dim(ncid,DimName2,dimlen2,y_dimid))
-               call check(nf90_def_dim(ncid,'Time', &
-                    NumTimeStepPerFile(j),time_dimid))
+               call check(nf90_def_dim(ncid,'Time',NumTimeStepPerFile(j),time_dimid))
+               call check(nf90_def_dim(ncid,DimName2,dimlen2,x_dimid))
+               call check(nf90_def_dim(ncid,DimName1,dimlen1,y_dimid))
+               
+               
                ! Define the coordinate variables. We will only define coordinate
                ! variables for lat and lon.  Ordinarily we would need to provide
                ! an array of dimension IDs for each variable's dimensions, but
                ! since coordinate variables only have one dimension, we can
                ! simply provide the address of that dimension ID (lat_dimid) and
                ! similarly for (lon_dimid).
-               call check(nf90_def_var(ncid,DimName1,NF90_REAL,x_dimid, &
-                    x_varid))
-               call check(nf90_def_var(ncid,DimName2,NF90_REAL,y_dimid, &
-                    y_varid))
-               call check(nf90_def_var(ncid,"Time",NF90_REAL,time_dimid, &
+               call check(nf90_def_var(ncid,"time",NF90_REAL,time_dimid, &
                     time_varid))
+               call check(nf90_def_var(ncid,DimName2,NF90_REAL,x_dimid, &
+                    x_varid))
+               call check(nf90_def_var(ncid,DimName1,NF90_REAL,y_dimid, &
+                    y_varid))
+
+
 !                ! Assign units attributes to coordinate variables.
-               call check(nf90_put_att(ncid,x_varid,UNITS,DimUnit1))
-               call check(nf90_put_att(ncid,y_varid,UNITS,DimUnit2))
+               call check(nf90_put_att(ncid,y_varid,UNITS,DimUnit1))
+               call check(nf90_put_att(ncid,x_varid,UNITS,DimUnit2))
                call check(nf90_put_att(ncid,time_varid,UNITS,time_unit))
                 ! The dimids array is used to pass the dimids of the dimensions of
                 ! the netCDF variables. Both of the netCDF variables we are creating
                 ! share the same four dimensions. In Fortran, the unlimited
                 ! dimension must come last on the list of dimids.
-               dimids = (/x_dimid,y_dimid,time_dimid/)               
+               dimids = (/time_dimid,x_dimid,y_dimid/)               
                ! Define the netCDF variables for the pressure and temperature data.
                call check( nf90_def_var(ncid,trim(OutSymbol(outvar(i))), &
                     NF90_REAL, &
@@ -387,7 +390,7 @@
         end do
         end Subroutine DirectoryCreate
         
-            Subroutine OutputnetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumTimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
+    Subroutine OutputnetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumTimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
     use NETCDF
     
     integer, parameter :: NDIMS = 3
@@ -400,10 +403,12 @@
     REAL:: OutVarValue(NumTimeStep,64)
     
     timerec=NumTimeStepPerFile(incfile)
-    count = (/ 1, 1, timerec /)
+!    count = (/ 1, 1, timerec /)
+!    start = (/ 1, 1, 1 /)
+    count = (/ timerec, 1, 1 /)
     start = (/ 1, 1, 1 /)
-    start(1) = iycoord
     start(2) = jxcoord
+    start(3) = iycoord 
     call check(nf90_put_var(NCIDARRAY(incfile,ioutv),4,OutVarValue(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2),outvar(ioutv)),start, count))
     End Subroutine 
     
@@ -418,5 +423,5 @@
         integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
         Double precision::FNDJDT(NumTimeStep)
         timerec=NumTimeStepPerFile(incfile)
-        call check(nf_put_var_double(NCIDARRAY(incfile,ioutv),3,FNDJDT(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2))))
+        call check(nf_put_var_double(NCIDARRAY(incfile,ioutv),1,FNDJDT(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2))))
     End Subroutine 
