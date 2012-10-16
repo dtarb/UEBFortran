@@ -172,6 +172,7 @@
        Integer:: MYEAR,MMONTH,MDAY
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
        integer::modx,totaldayMOne,totalDay,StepInADay,modeldtInt,gg
+       REAL:: TNCCreate,TInputCheck
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
       ! differences and conforms to later Fortran-2003 standards.
@@ -223,7 +224,7 @@
 
 ! Writing the Long file that includes all warnings
       OPEN(66,FILE='UEBWarning.log',STATUS='UNKNOWN')
-      
+      OPEN(636,FILE='UEBTiming.log',STATUS='UNKNOWN')
 !  Open and Read Input File
       OPEN(1,FILE=afile,STATUS= 'OLD')
       READ(1,*)MainHeading
@@ -263,7 +264,6 @@
        Allocate(TimeMinPerFile(MaxNumofFile,11))
        allocate(TSV(arrayx,11))
        allocate(AllValues(arrayx,11))
-       
        CALL TimeSeriesAndTimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
         &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
         &varnameinncdf,arrayx,NOofTS,TSV,Allvalues)
@@ -273,8 +273,10 @@
       allocate(DimValue1(dimlen1))
       allocate(DimValue2(dimlen2))
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
-
-     
+      
+      TInputCheck = ETIME(tarray)
+      write(6,*)'Time to check inputs',TInputCheck
+      write(636,*)'Check Inputs',TInputCheck, ' seconds'
 ! Output file creation
         CALL NumOutFiles(OutControlFILE,ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
                          &dimlen2,dimlen1,NumTimeStep,NumofFile,NumOutPoint,OutCount)                  
@@ -329,8 +331,10 @@
         
        write(6,*)"Starting loop over grid cells"
       !  Initialize timing results
-        tresult= ETIME(tarray)
-        write(6,*)'Initializing time tracking:',tarray(1),tarray(2),tresult
+        TNCCreate= ETIME(tarray)
+        write(6,*)'Time to create netCDFs ',(TNCCreate-TInputCheck)
+        write(636,*)'Create netCDFs ',(TNCCreate-TInputCheck),' seconds'
+        !write(6,*)'Initializing time tracking:',tarray(1),tarray(2),tresult
         tio=0.
         tcomp=0.
         tout=0.
@@ -341,19 +345,17 @@
        numgrid=0
        DO iycoord=1, dimlen1
        DO jxcoord=1, dimlen2
-!       iycoord=1
-!       jxcoord=1
+
        iunit=119  !  unit for point output
 
        CALL nCDF2DRead(Watershedfile,WatershedVARID,IDNumber(1),jxcoord,iycoord)
         !  read site variables and initial conditions of state variables
-       if((IDNumber(1) .ne. 0) .or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  !  Omit calculations if not in the watershed
+       if((IDNumber(1) .ne. 0).or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  !  Omit calculations if not in the watershed
          !  TODO change the above to also exclude netcdf no data values
        CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,dimlen2,dimlen1,iycoord,jxcoord,dtbar,Ts_last,longitude)
        CALL Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
             &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues,VarMissingValues,VarfILLValues)
-    
-       !modeldrInt=int(modeldt)
+
        StepInADay=24/modeldt     
        If (inputvarname(5) .NE. 'tmin')THEN
             NoofTS(5)=NoofTS(1)
@@ -623,45 +625,46 @@
 
 !**************************************************************************************************
 
-    CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
-     &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
+        CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
+         &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
      
-    tresult= ETIME(tarray)
-    tcomp=tcomp+tresult-tlast
-    tlast=tresult
+        tresult= ETIME(tarray)
+        tcomp=tcomp+tresult-tlast
+        tlast=tresult
 
-!    IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
-!        OutArr=0
-!    END IF
-    if(towrite)WRITE(iunit,*)OutArr
+        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
+           OutArr=0
+        END IF
+        
+        if(towrite)WRITE(iunit,*)OutArr
+        
+        DStorage=statev(2)-Ws1+statev(4)-Wc1
+        errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
+         
+        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
+            ERRMBAL=0
+        END IF
+        if(towrite)WRITE(iunit,*)ERRMBAL
+        
+        !mapping to OutVarValue
+        OutVarValue(istep,1:12)=IniOutVals(5:16)
+        OutVarValue(istep,13:62)=OutArr(1:50)
+        OutVarValue(istep,63)=ERRMBAL
+        OutVarValue(istep,64:66)=OutArr(51:53)
+        
+        ! These settings tell netcdf to write one timestep of data. (The
+        ! setting of start(4) inside the loop below tells netCDF which
+        ! timestep to write.)
     
-    DStorage=statev(2)-Ws1+statev(4)-Wc1
-    errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM   
-!    IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
-!        ERRMBAL=0
-!    END IF
-    if(towrite)WRITE(iunit,*)ERRMBAL
-    !mapping to OutVarValue
-    OutVarValue(istep,1:12)=IniOutVals(5:16)
-    OutVarValue(istep,13:62)=OutArr(1:50)
-    OutVarValue(istep,63)=ERRMBAL
-    OutVarValue(istep,64:66)=OutArr(51:53)
-    
-    ! These settings tell netcdf to write one timestep of data. (The
-    ! setting of start(4) inside the loop below tells netCDF which
-    ! timestep to write.)
-    
-    !  Here we rely on the even spread of time steps until the last file
-     incfile=(istep-1)/NumTimeStepPerFile(1)+1  !  the netcdf file position
-     timestepinfile=istep-(incfile-1)*NumTimeStepPerFile(1)  ! the time step in the file
-     VARINDX = (/iycoord,jxcoord,timestepinfile/)
-     TIMEINDX =(/timestepinfile/)
-     ReferenceHour=DBLE(hour)
-     call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
-     FNDJDT(istep)=CTJD-ReferenceTime
-     
-     ELSE
-            OutVarValue(istep,1:66)=0
+        !  Here we rely on the even spread of time steps until the last file
+         incfile=(istep-1)/NumTimeStepPerFile(1)+1  !  the netcdf file position
+         timestepinfile=istep-(incfile-1)*NumTimeStepPerFile(1)  ! the time step in the file
+         VARINDX = (/iycoord,jxcoord,timestepinfile/)
+         TIMEINDX =(/timestepinfile/)
+         ReferenceHour=DBLE(hour)
+         call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
+         FNDJDT(istep)=CTJD-ReferenceTime
+
      END IF
         
 
@@ -698,7 +701,7 @@
         Close(iunit)
         
 !        close(667)
-        endif  !  this is the end of if we are in a watershed
+        
 
          do ioutv=1,outcount
            do incfile = 1,NumofFile
@@ -707,26 +710,26 @@
                 CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
           enddo
         enddo
-        
+    endif  !  this is the end of if we are in a watershed    
     tresult= ETIME(tarray)
     toutnc=toutnc+tresult-tlast
     tlast=tresult
     numgrid=numgrid+1
     write(6,FMT="(A1,A,t30,F6.2$,A)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
-
+    
        END DO  !  These are the end of the space loop
      END DO
     
     do ioutv=1,outcount
        do incfile = 1,NumofFile
         CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
-        CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),1,DimValue1))
+        CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
         CALL OutputTimenetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT,jxcoord,iycoord)
         CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))
       enddo
     enddo
-     
+    Write (6,FMT="(/A30/)") " now arregation will be started" 
      do istep=1,NumTimestep
         do ivar=1,AggOutNum
             Do jUniqueID=1,uniqueIDNumber
@@ -742,19 +745,21 @@
     tagg=tagg+tresult-tlast
     tlast=tresult
 
-    tarray(1)=tarray(1)/60. !convert seconds to minutes
-    write(66,*) "Complete runtime:",tarray(1)," minutes"
-    write(66,*) "Input time:",tio," Seconds"
-    write(66,*) "Compute time:",tcomp," Seconds"
-    write(66,*) "Out time:",tout," Seconds"
-    write(66,*) "Out timeinNC:",toutnc," Seconds"
-    write(66,*) "Aggregation time:",tagg," Seconds"
+    tarray(1)=tarray(1)  !/60. convert seconds to minutes
+    
+    write(636,*) "Input time:",tio," Seconds"
+    write(636,*) "Compute time:",tcomp," Seconds"
+    write(636,*) "Out time:",tout," Seconds"
+    write(636,*) "Out timeinNC:",toutnc," Seconds"
+    write(636,*) "Aggregation time:",tagg," Seconds"
+    write(636,*) "Complete runtime:",tarray(1)," Seconds"
+    Close(636)
     Close(66)
-    write(6,*) "Complete runtime:",tarray(1)," minutes"
     write(6,*) "Input time:",tio," Seconds"
     write(6,*) "Compute time:",tcomp," Seconds"
     write(6,*) "Out time:",tout," Seconds"
-     write(6,*) "Out timeinNC:",toutnc," Seconds"
+    write(6,*) "Out timeinNC:",toutnc," Seconds"
     write(6,*) "Aggregation time:",tagg," Seconds"
+    write(6,*) "Complete runtime:",tarray(1)," Seconds"
     Write(6,*) "Your task is successfully performed! Plesae view the results in 'outputs' folder!"
 end program
