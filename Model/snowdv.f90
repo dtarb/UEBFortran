@@ -294,8 +294,9 @@
 !  suggest concatenate outputfolder and outSamplefile into one string array
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
-        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimValue1,DimValue2,DimUnit1,DimUnit2, &
-        NumofFile,outcount,Outvar,NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
+        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,&
+        &DimUnit2,NumofFile,outcount,Outvar,&
+                        &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         Allocate(StartEndNCDF(NumofFile,2))                
         CALL checks(svfile,MaxNumofFile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
         allocate(AllNCDFfile(totalNC))
@@ -723,7 +724,7 @@
        do incfile = 1,NumofFile
         CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
         CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
-        CALL OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
+        CALL OutputTimenetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT,jxcoord,iycoord)
         CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))
       enddo
