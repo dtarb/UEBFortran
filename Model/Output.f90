@@ -224,8 +224,8 @@
         end subroutine OutputFiles
         !===End of reading the values from outconrol.dat file ==
 
-        Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2 &
-       ,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2, &
+        Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2, &
+       DimValue1,DimValue2,DimUnit1,DimUnit2, &
        NumofFile,outcount,Outvar,NumTimeStepPerFile,outSampleFile, &
        OutputNCContainer,NCIDARRAY)
 
@@ -395,8 +395,7 @@
     
     integer, parameter :: NDIMS = 3
     integer::incfile,ioutv,outcount,NumTimeStep
-    character (50) :: FILE_NAME
-    integer :: start(NDIMS), count(NDIMS),VarId,recid
+    integer :: start(NDIMS), count(NDIMS)
     integer:: iycoord,jxcoord, timerec
     integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
     integer::NCIDARRAY(NumofFile,outcount),OutVar(outcount)
@@ -412,14 +411,13 @@
     call check(nf90_put_var(NCIDARRAY(incfile,ioutv),4,OutVarValue(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2),outvar(ioutv)),start, count))
     End Subroutine 
     
-    Subroutine OutputTimenetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT,jxcoord,iycoord)
+    Subroutine OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
         use NETCDF
         integer, parameter :: NDIMS = 3
         integer::outcount
-        integer::incfile,ioutv,OutVar(outcount)
-        character (50) :: FILE_NAME
-        integer :: start(NDIMS), count(NDIMS),VarId,recid
-        integer:: iycoord,jxcoord, timerec,NCIDARRAY(NumofFile,outcount)
+        integer::incfile,ioutv
+        integer::numoffile,NUMTIMESTEP
+        integer:: timerec,NCIDARRAY(NumofFile,outcount)
         integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
         Double precision::FNDJDT(NumTimeStep)
         timerec=NumTimeStepPerFile(incfile)
