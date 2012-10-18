@@ -50,22 +50,15 @@
       PARAMETER(nsv=10,npar=32,nxv=6,niv=8,nov=14)
       integer :: OutCount,ioutv,totalgrid,numgrid
       integer, parameter :: NDIMS = 3
-      integer:: irad, ireadalb, subtype, TotalModelTimeSteps, InputVTimeSteps(11), NumNCFILES(11),ISInputFROMNC(11)
-      integer:: n, SVDT, reason, ilat, jlon, krec,dimlen2,dimlen1,dimlen3,MaxNumofFile, TimeSteps, ArrayElements
+      integer:: irad, ireadalb, subtype, NumNCFILES(11),ISInputFROMNC(11)
+      integer:: dimlen2,dimlen1,MaxNumofFile
       integer ModelStartDate(3), ModelEndDate(3)
-      REAL slope,azi,SingleArray(1), bca,bcc,subalb, ModelStartHour,ModelEndHour,Modeldt
-      CHARACTER*200 svfile, vfile, Wfile, StateSiteFiles(16), xx, file_name,InputVName(11), InputTSFilename(11)
+      REAL slope,azi, bca,bcc, ModelStartHour,ModelEndHour,Modeldt
+      CHARACTER*200 svfile, InputTSFilename(11)
       CHARACTER*200, dimension(:,:), allocatable :: NCDFContainer
-      !double precision, dimension(:), allocatable:: timeStepsnetCDF
-      double precision, dimension(:,:,:), allocatable :: NCfiletimeDimesions
-      REAL, dimension(:), allocatable :: OutputArray
-      double precision, dimension(:), allocatable :: TempArray
-      double precision, dimension(:,:),allocatable:: InputTime
       integer, dimension(:,:),allocatable:: OutPoint
       character*200, dimension(:),allocatable :: OutPointFiles
       Character (200):: WatershedVARID
-      real, dimension(1):: WatershedGridValue
-      integer:: NCVtimeStep(11), MaxInputVTimeStep, MaxNCVTimestep, timelength, FileOpenFlag(11)
       CHARACTER*200 MainHeading
       Character*50 varnameinncdf(11)
       CHARACTER*200 pfile,inputcon,StateSiteVName(32)
@@ -102,37 +95,22 @@
       Character*200, dimension(:,:), allocatable :: OutputNCContainer
       Character*200, dimension(:,:), allocatable :: NCOutfileArr
       integer, dimension(:,:), allocatable :: NCIDARRAY
-      REAL Values(1) !  one dimensional array to pass to netcdf
-      Character*200:: FN,inputvarname(11) ! file name
+      Character*200:: inputvarname(11) ! file name
 ! Add a control of ground heat input
-      integer mQgOption
-      integer:: m,t ! looping variable
       character (200) :: DimName1,DimName2
       character*(200) :: DimUnit1,DimUnit2
       Character* 200,dimension(:), allocatable :: OutFolder,outSampleFile,outputfolder
       integer,dimension(:),allocatable :: outvar  !  Variable to hold the index position of each output variable
-      Character* 200:: OV
+
 !  Arrays to manage the steping of time through the input files using the following rules
 !  First value in a set of input files is the first time step value
 !  If there are multiple netcdf file they are used in the order of their first time value
 !  an input value persists until another value is encountered
-      integer :: currentfile(11)
-      integer :: currenttspos(11)  
-      double precision :: timeofnextavailinput(11), FileNextDateJDT
-      integer ::  fileofnextts(11)
-      integer ::  posinfileofnextts(11),NumofFile,NumOutPoint
+      integer ::  NumofFile,NumOutPoint
       integer, allocatable ::  NCfileNumtimesteps(:,:)   !  holds the number of time steps in each netcdf file
-      double precision, allocatable :: NCStartTime(:,:)  ! holds the start time in each netcdf file
       real :: InpVals(11)
-      integer :: CurrentNCFilePos(11),NextNCFilePos(11)
-      integer :: NCFiletspos(11)
-      integer :: FileCurrentDate(3,11),FileNextDate(3,11)
-      double precision :: FileNextTime(11)
-      double precision :: dhour, EJD, TJD,tol
-      real :: FileNextVal(11)
-      !CHARACTER(200), DIMENSION(63) :: outputfolder
+      double precision :: dhour, EJD,tol
       CHARACTER(200) :: OutControlFILE
-      CHARACTER(200) ::Watershfile
       real,allocatable :: OutVarValue(:,:)
       REal:: OutArr(53),IniOutVals(16)
       integer:: timestepinfile,incfile
@@ -164,14 +142,13 @@
        Character*200, dimension(:), allocatable :: AllNCDFfile
        integer:: totalNC
        !declares for check
-       integer:: count,countinput,timerec
        integer:: AggUnit,ST
        REAL:: WsMissingValues,WsFillValues
       ! UTC time conversion declarations
        REAL::longitude,NHour,UTChour
        Integer:: MYEAR,MMONTH,MDAY
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
-       integer::modx,totaldayMOne,totalDay,StepInADay,modeldtInt,gg
+       integer::modx,totaldayMOne,totalDay,StepInADay,gg
        REAL:: TNCCreate,TInputCheck
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
@@ -265,8 +242,7 @@
        allocate(TSV(arrayx,11))
        allocate(AllValues(arrayx,11))
        CALL TimeSeriesAndTimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &varnameinncdf,arrayx,NOofTS,TSV,Allvalues)
+        arrayx,NOofTS,TSV,Allvalues)
         
       ReferenceHour=0.00
       CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,ReferenceTime)
@@ -294,11 +270,11 @@
 !  suggest concatenate outputfolder and outSamplefile into one string array
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
-        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,&
+        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
                         &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         Allocate(StartEndNCDF(NumofFile,2))                
-        CALL checks(svfile,MaxNumofFile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
+        CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
         allocate(AllNCDFfile(totalNC))
         CALL  NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile)
 !   Work with aggregated outputs    
@@ -354,7 +330,7 @@
          !  TODO change the above to also exclude netcdf no data values
        CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,dimlen2,dimlen1,iycoord,jxcoord,dtbar,Ts_last,longitude)
        CALL Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-            &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues,VarMissingValues,VarfILLValues)
+            &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
 
        StepInADay=24/modeldt     
        If (inputvarname(5) .NE. 'tmin')THEN
@@ -490,9 +466,9 @@
 1       istep=istep+1
         IF(sitev(10).NE. 3)THEN
         
-        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelEndDate,&
-        &ModelStartDate,ModelStartHour,ModelEndHour,&
-        &nrefyr,nrefmo,nrefday,Year,Month,Day,Hour,ModelDt,InpVals,CurrentArrayPos,CurrentModelDT,istep)
+        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,Allvalues,arrayx,&
+        ModelStartDate,ModelStartHour,&
+        nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
          
 !        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
 !            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
@@ -724,7 +700,7 @@
        do incfile = 1,NumofFile
         CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
         CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
-        CALL OutputTimenetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT,jxcoord,iycoord)
+        CALL OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
         CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))
       enddo

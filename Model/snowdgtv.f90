@@ -351,7 +351,7 @@
          Rkinsc,Vz,Tac,  &                             ! Just for testing
                QHs,QEs,Es,QPs, &
                MR,QMs,Q,FM,TSURFs,tave,qnet,refDepth, totalRefDepth, &
-               smelt,gsurf,Qlis)
+               smelt)
                
     
 
@@ -540,11 +540,11 @@ SWISM=SWIT-SWIGM-SWIR
          Rkinsc,Vz,Tac, &                             ! Just for testing
                QHs,QEs,Es,QPs, &
                MR,QMs,Q,FM,TSURFs,tave,qnet,refDepth, totalRefDepth, &
-               smelt,gsurf, Qlis)
+               smelt)
 
-        REAL  k,Ta,Mc,LAI,int,int1,Inmax,ieff,i1,Mc1
+        REAL  k,Ta,Mc,LAI,int,int1,Inmax,ieff,Mc1
 
-        REAL MR,mr1,Lans,LanG
+        REAL MR,mr1
       real sitev(*)
       real param(*)
         real mtime(*)        !yjs add model time 
@@ -928,7 +928,7 @@ SWISM=SWIT-SWIGM-SWIR
 !        Fs   = (Wc/Inmax)**(.05)  
       ENDIF 
 
-         CALL INTERCEPT(Ta,LAI,p,Wc,dt,Inmax,param,sitev, &
+         CALL INTERCEPT(LAI,p,Wc,dt,Inmax,param,sitev, &
                 ieff,Ur,int)          ! Output variables
                         
 !  Total heat advected by precipitation is 
@@ -968,13 +968,13 @@ SWISM=SWIT-SWIGM-SWIR
        totalRefDepth .le. rd1*ds .and. Ws.gt.0.0) then
 
 
-        Qc1=  QcEst(Ws,p,Tk,Tck,V,Zm,d,Z0c,Rimax,Rcastar,Cf,Fs, &     
-                Qli,Hcan,Vz,Ta,Rh,RKINsc,Qps,To,Ps,Qsi,atff,COSZEN, &
-          APr,TAK, EA,A,Ac,Wc,Inmax, Qnetob,Iradfl,param,sitev )
+        Qc1=  QcEst(p,Tk,Tck,V,d,Z0c,Cf,Fs, &     
+                Qli,Vz,Ta,Rh,RKINsc,Qps,Qsi,atff,COSZEN, &
+           TAK, EA,A,Wc, Qnetob,Iradfl,param,sitev )
 
-        Qc2=  QcEst(Ws,p,Tk-.01,Tck,V,Zm,d,Z0c,Rimax,Rcastar,Cf,Fs, &
-                Qli,Hcan,Vz,Ta,Rh,RKINsc,Qps,To,Ps,Qsi,atff,COSZEN, &
-           APr,TAK, EA,A,Ac,Wc,Inmax, Qnetob,Iradfl,param,sitev )
+        Qc2=  QcEst(p,Tk-.01,Tck,V,d,Z0c,Cf,Fs, &
+                Qli,Vz,Ta,Rh,RKINsc,Qps,Qsi,atff,COSZEN, &
+           TAK, EA,A,Wc, Qnetob,Iradfl,param,sitev )
 
           call Grad(qc1,qc2,0.0,-0.01, var_a, var_b)
           x1=refDep(lans,var_a, var_b, hf, rhom, dt, refDepth)       !refreezing depth
@@ -988,9 +988,9 @@ SWISM=SWIT-SWIGM-SWIR
 
 ! call Temperature
 
-      Tsurfs= SRFTMPsc(Tssk, Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Qsi,atff,Cf, &
+      Tsurfs= SRFTMPsc(Tssk, Us,Ws,Wc,A,dt,P,Ta,V,RH,Qsi,atff,Cf, &
         Qli,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-       Qpc,Qps, Inmax, Rkinc,Rkinsc,Vz,Tc,Tk,Tak,EA,RHOA, &
+       Qpc,Qps, Rkinc,Rkinsc,Vz,Tc,Tk,Tak,EA, &
          fkappaS,RHO,TherC,Fs,  &                                          
          tave,refDepth,Smelt, SmeltC)    ! This will give me Tsurf, Tc, and Smeltc
  
@@ -1006,24 +1006,22 @@ SWISM=SWIT-SWIGM-SWIR
                  Betab,Betad,Taub,Taud)   ! Output variables:
 
 
-         CALL NETSOLRAD(Ta,A,Betab,Betad,Wc,Taub,Taud, &
-                  Inmax,Qsib,Qsid,param,Fs, &
-                  Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
+         CALL NETSOLRAD(A,Betab,Betad,Taub,Taud, &
+                  Qsib,Qsid,Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
 
-          CALL NETLONGRAD(RH,Ta,Tsurfs,Tc,Tk,Fs,EmC,EmS,SBC,cf,sitev, &
-                        Qli,param, &
-                        Qlis,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
+          CALL NETLONGRAD(Ta,Tsurfs,Tc,Tk,Fs,EmC,EmS,SBC,sitev, &
+                        Qli,param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
 
 
 13      Ess    = SVPI(Tsurfs)
         Esc    = SVPI(Tc) 
 
-         CALL TURBFLUX(Ws,Wc,A,TK,Tc,Ta,Tsurfs,RH,V,EA,p,param,sitev, &
+         CALL TURBFLUX(Wc,TK,Tc,Ta,Tsurfs,RH,V,EA,p,param,sitev, &
                       d,Z0c,Vz,RKINc,RKINsc,Tac,Fs,Ess,Esc, &                     ! Output variables
                           QHc,QEc,Ec,QHs,QEs,Es,QH,QE,E)          
 
     
-        CALL INTERCEPT(Ta,LAI,p,Wc,dt,Inmax,param,sitev, &
+        CALL INTERCEPT(LAI,p,Wc,dt,Inmax,param,sitev, &
                                     ieff,Ur,int)    ! Output variables
 
         
@@ -1078,14 +1076,14 @@ SWISM=SWIT-SWIGM-SWIR
 !************************* SRFTMP () *********************************
 !                COMPUTE THE SURFACE TEMPERATURE OF SNOW
  
-      FUNCTION SRFTMPsc(Tssk,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Qsi,atff,Cf, &
+      FUNCTION SRFTMPsc(Tssk,Us,Ws,Wc,A,dt,P,Ta,V,RH,Qsi,atff,Cf, &
       Qli,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-       Qpcin,Qpsin, Inmax, Rkinc,Rkinsc,Vz,Tc,Tk,Tak,EA,RHOA, &
+       Qpcin,Qpsin, Rkinc,Rkinsc,Vz,Tc,Tk,Tak,EA, &
          fkappaS,RHO,TherC,Fs,tave,refDepth,Smelt,SmeltC) 
 
         
                                                                           
-        real k,Inmax, LAI
+        real k, LAI
         real F1, F2, F1ts,F1tc,F2ts,F2tc,J11, J12, J21, J22, delTs, delTc
         REAL param(*)
         REAL sitev(*)
@@ -1145,19 +1143,15 @@ SWISM=SWIT-SWIGM-SWIR
        niter = 0
  15     IF(niter.LT. nitermax)THEN 
 
-         F1 = SURFEBsc(Tssk1,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-       Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck1,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC, &                                        
-       TSURFs,tave,refDepth)   
-                                                                !yjs add three value to reflect model control changes)) 
+         F1 = SURFEBsc(Tssk1,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+       Qps, Rkinc,Rkinsc,Vz,Tck1,EA, &
+        FkappaS,RHO,TherC,tave,refDepth) !yjs add three value to reflect model control changes)) 
 
 
-        F2 = SURFEBc(Tck1,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk1,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC, &                                           
-       TSURFs,tave,refDepth)   !yjs add three value to reflect model control changes))
+        F2 = SURFEBc(Tck1,Wc,A,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk1,Tk,EA,RHO)   !yjs add three value to reflect model control changes))
 
 
 !     assumed small increament to estimate the Jocobian matrix
@@ -1165,32 +1159,26 @@ SWISM=SWIT-SWIGM-SWIR
       delTs = 0.01
         delTc = 0.01
                    
-        F1ts = SURFEBsc(Tssk1+delTs,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf, &
-      Qli,Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
-      iTsMethod,mtime,Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck1, &
-      Tk,Tak,EA,RHOA, FkappaS,RHO,TherC, &                        
-       TSURFs,tave,refDepth)
+        F1ts = SURFEBsc(Tssk1+delTs,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,cf, &
+             Qli,Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+             iTsMethod,Qps, Rkinc,Rkinsc,Vz,Tck1, &
+             EA, FkappaS,RHO,TherC,tave,refDepth)
 
 
-         F1tc = SURFEBsc(Tssk1,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck1+delTc,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC, &                                    
-       TSURFs,tave,refDepth)      
+        F1tc = SURFEBsc(Tssk1,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,cf,Qli, &
+             Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+             Qps, Rkinc,Rkinsc,Vz,Tck1+delTc,EA, &
+             FkappaS,RHO,TherC,tave,refDepth)      
                                                                                                  
         
-            F2ts = SURFEBc(Tck1,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk1+delTs,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,   &                                         
-       TSURFs,tave,refDepth)
+            F2ts = SURFEBc(Tck1,Wc,A,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk1+delTs,Tk,EA,RHO)
         
                                  
-        F2tc = SURFEBc(Tck1+delTc,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk1,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)    
+        F2tc = SURFEBc(Tck1+delTc,Wc,A,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk1,Tk,EA,RHO)    
                                                                          
 !      Jacobian matrix
        J11 = (F1ts-F1)/delTs 
@@ -1284,11 +1272,10 @@ SWISM=SWIT-SWIGM-SWIR
 ! Estimate Tc based on assumed snow surface temperature
  
 13     Tclast = Tck 
-       Tc    = CanTemp(Tck, Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Qsi,atff,Cf, &
-         Qli,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-       Qpc, Inmax, Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-         fkappaS,RHO,TherC,Fs,  &                                          
-         tave,refDepth,SmeltC)                            ! Reduced parametre later 
+       Tc    = CanTemp(Tck,Wc,A,P,Ta,V,RH,Qsi,atff,Cf, &
+            Qli,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,mtime, &
+            Qpc, Rkinsc,Vz,Tssk,Tk,Tak,EA,RHO,Fs, &
+            tave,SmeltC)           ! Reduced parametre later 
 
 
                          
@@ -1297,19 +1284,16 @@ SWISM=SWIT-SWIGM-SWIR
  1     if(ER.gt.tol.and.niter.lt. nitermax)then  
            Tslast = Tssk
 
-        F1 = SURFEBsc(Tssk,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC, &                                           
-       TSURFs,tave,refDepth)   
-                                                                !yjs add three value to reflect model control changes)) 
+        F1 = SURFEBsc(Tssk,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)  !yjs add three value to reflect model control changes)) 
            
                  
-         F2 = SURFEBsc(fff*Tssk,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC, &                                           
-       TSURFs,tave,refDepth)            !yjs add three value to reflect model control changes)) 
+         F2 = SURFEBsc(fff*Tssk,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)            !yjs add three value to reflect model control changes)) 
           
                 
          Tssk = Tssk - ((1.-fff) * Tssk * F1) / (F1 - F2)
@@ -1325,35 +1309,31 @@ SWISM=SWIT-SWIGM-SWIR
  11    Tlb = TaK - 20.                             ! First guess at a reasonable range                 
          Tub = Tak + 10.
 
-         Flb = SURFEBsc(Tlb,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,      &                                      
-       TSURFs,tave,refDepth)      
+         Flb = SURFEBsc(Tlb,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)      
         
-         Fub = SURFEBsc(Tub,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,    &                                        
-       TSURFs,tave,refDepth)  
+         Fub = SURFEBsc(Tub,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)  
         
         ibtowrite=0
        if(Flb*fub .gt. 0.)then     ! these are of the same sign so the range needs to be enlarged
                 Tlb= TaK - 150.          ! an almost ridiculously large range - solution should be in this if it exists
                 Tub= Tak + 100.  
 
-         Flb = SURFEBsc(Tlb,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)  
+         Flb = SURFEBsc(Tlb,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)  
                                               
         
-         Fub = SURFEBsc(Tub,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)  
+         Fub = SURFEBsc(Tub,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)  
      
 
          ibtowrite=1
@@ -1386,11 +1366,10 @@ SWISM=SWIT-SWIGM-SWIR
        niter = log((Tub-Tlb)/tol)/log(2.)   ! Number of iterations needed for temperature tolerance
          do iter  =1,niter
            Tssk = 0.5*(tub+tlb)
-           F1   = SURFEBsc(Tssk,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,   &                                         
-       TSURFs,tave,refDepth)  
+           F1   = SURFEBsc(Tssk,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)  
                                                 !yjs add three value to reflect model control changes)) 
                  if(f1.gt.0.0) then  ! This relies on the assumption (fact) that this is a monotonically decreasing function
                         tlb=tssk
@@ -1414,11 +1393,10 @@ SWISM=SWIT-SWIGM-SWIR
 
 !dgt 5/4/04 surface melt smelt
           SRFTMPsc = 0.0
-        smelt= SURFEBsc(SRFTMPsc+Tk,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf, &
+        smelt= SURFEBsc(SRFTMPsc+Tk,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf, &
       Qli,Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
-      mtime, Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,    &                                        
-       TSURFs,tave,refDepth) 
+      Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth) 
      
 !dgt 5/4/04 surface melt smelt is the energy not accommodated by conduction into the snow
 !  so it results in surface melt which then infiltrates and adds energy to the snowpack
@@ -1457,18 +1435,16 @@ SWISM=SWIT-SWIGM-SWIR
 !                  COMPUTE THE CANOPY TEMPERATURE
 
 !************************************************************************************************** 
-      FUNCTION CanTemp(Tck, Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Qsi,atff,Cf, &
-        Qli, COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-       Qpcin, Inmax, Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-         fkappaS,RHO,TherC,Fs,   &                                         
-         tave,refDepth,SmeltC) 
+      FUNCTION CanTemp(Tck,Wc,A,P,Ta,V,RH,Qsi,atff,Cf, &
+           Qli, COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,mtime, &
+           Qpcin, Rkinsc,Vz,Tssk,Tk,Tak,EA,RHO,Fs,   &
+           tave,SmeltC)
         
                                                                           
-        real Tssk,k,Inmax, SmeltC
+        real Tssk,k, SmeltC
         REAL param(*)
         REAL sitev(*)
         real mtime(*)
-        integer iTsMethod
 
 !     common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
@@ -1513,18 +1489,14 @@ SWISM=SWIT-SWIGM-SWIR
  1     if(ER.gt.tol.and.niter.lt. nitermax)then  
            Tclast = Tck
 
-        F1 = SURFEBc(Tck,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)                    !yjs add three value to reflect model control changes)) 
+        F1 = SURFEBc(Tck,Wc,A,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)                    !yjs add three value to reflect model control changes)) 
 
                  
-         F2 = SURFEBc(fff*Tck,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC, &                                           
-       TSURFs,tave,refDepth)            !yjs add three value to reflect model control changes)) 
+         F2 = SURFEBc(fff*Tck,Wc,A,P,Ta,V,RH,Fs,cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)            !yjs add three value to reflect model control changes)) 
           
                 
          Tck = Tck - ((1.-fff) * Tck * F1) / (F1 - F2)
@@ -1541,35 +1513,27 @@ SWISM=SWIT-SWIGM-SWIR
  11    Tlb = TaK - 20.                             ! First guess at a reasonable range                 
          Tub = Tak + 10.
 
-         Flb = SURFEBc(Tlb,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)      
+         Flb = SURFEBc(Tlb,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)      
         
-         Fub = SURFEBc(Tub,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)  
+         Fub = SURFEBc(Tub,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)  
         
         ibtowrite=0
        if(Flb*fub .gt. 0.)then     ! these are of the same sign so the range needs to be enlarged
                 Tlb= TaK - 150.          ! an almost ridiculously large range - solution should be in this if it exists
                 Tub= Tak + 100.  
 
-         Flb = SURFEBc(Tlb,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,     &                                       
-       TSURFs,tave,refDepth)  
+         Flb = SURFEBc(Tlb,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)  
                                               
         
-         Fub = SURFEBc(Tub,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,      &                                      
-       TSURFs,tave,refDepth)  
+         Fub = SURFEBc(Tub,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)  
      
 
          ibtowrite=1
@@ -1602,11 +1566,9 @@ SWISM=SWIT-SWIGM-SWIR
        niter = log((Tub-Tlb)/tol)/log(2.)   ! Number of iterations needed for temperature tolerance
          do iter  =1,niter
            Tck = 0.5*(tub+tlb)
-           F1   = SURFEBc(Tck,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,           &                                 
-       TSURFs,tave,refDepth)  
+           F1   = SURFEBc(Tck,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO)  
                                                 !yjs add three value to reflect model control changes)) 
                  if(f1.gt.0.0) then  ! This relies on the assumption (fact) that this is a monotonically decreasing function
                         tlb=tck
@@ -1628,11 +1590,9 @@ SWISM=SWIT-SWIGM-SWIR
 
 !dgt 5/4/04 surface melt smelt
           CanTemp = 0.0
-        smeltC= SURFEBc(CanTemp+Tk,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf, &
+        smeltC= SURFEBc(CanTemp+Tk,Wc,A,P,Ta,V,RH,Fs,Cf, &
         Qli,Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
-        iTsMethod,mtime,Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz, &
-        Tssk,Tk,Tak,EA,RHOA, FkappaS,RHO,TherC,   &                  
-       TSURFs,tave,refDepth) 
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO) 
 
 
        CanTemp =  (Tck*(1-Fs)+(CanTemp+Tk)*Fs)-Tk      ! Equiv canopy temp during melt
@@ -1657,16 +1617,15 @@ SWISM=SWIT-SWIGM-SWIR
 !*****      FUNCTION TO EVALUATE THE SURFACE ENERGY BALANCE FOR USE IN SOLVING FOR SURFACE TEMPERATURE     ****** 
 !*                 DGT and C Luce 4/23/97
 !************************************************************************************************************************** 
-      FUNCTION SURFEBsc(Tssk, Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tck,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,  &                                          
-       TSURFs,tave,refDepth)                                                                 ! Heat and vapor conductance for neutral
+      FUNCTION SURFEBsc(Tssk, Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
+        Qp, Rkinc,Rkinsc,Vz,Tck,EA, &
+        FkappaS,RHO,TherC,tave,refDepth)                                                                 ! Heat and vapor conductance for neutral
 
-        real param(*),sitev(*),mtime(*), Inmax
+        real param(*),sitev(*)
         integer iTsMethod,Iradfl
         real LanS, LanG,LanE,LanE_Ze, LanE_de, LanE_ze2,LanE_de2
-        real cg,rho,rhog,w1f,rd1,fkappas,ds,TherC
+        real cg,rho,rhog,rd1,fkappas,TherC
       real tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave,TsAvek
 
 !       common /ts_save/ ts_old, tave_old, Ts_ave, Tave_ave 
@@ -1801,7 +1760,7 @@ SWISM=SWIT-SWIGM-SWIR
         Ess    = SVP(Tssk-Tk)
         Esc    = SVP(Tck-Tk)  
 
-         CALL TURBFLUX(Ws,Wc,A,TK,Tck-Tk,Ta,Tssk-Tk,RH,V,EA,p,param,sitev, &
+         CALL TURBFLUX(Wc,TK,Tck-Tk,Ta,Tssk-Tk,RH,V,EA,p,param,sitev, &
                       d,Z0c,Vz,RKINc,RKINsc,Tac, Fs,Ess,Esc,  &  ! Output variables
                           QHc,QEc,Ec,QHs,QEs,Es,QH,QE,E)          
 
@@ -1818,12 +1777,10 @@ SWISM=SWIT-SWIGM-SWIR
          CALL TRANSRADCAN (COSZEN,sitev,param, &               ! Input variables , leaf parameters
                  Betab,Betad,Taub,Taud)   ! Output variables:
 
-         CALL NETSOLRAD(Ta,A,Betab,Betad,Wc,Taub,Taud, &
-             Inmax,Qsib,Qsid,param,Fs, &
-                            Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
-         CALL NETLONGRAD(RH,Ta,Tssk-Tk,Tck-Tk,Tk,Fs,EmC,EmS,SBC,cf,sitev, &
-                        Qli,param, &
-                        Qlis,Qlns,Qlnc )                     !  Output: Qsns,Qsnc
+         CALL NETSOLRAD(A,Betab,Betad,Taub,Taud, &
+             Qsib,Qsid,Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
+         CALL NETLONGRAD(Ta,Tssk-Tk,Tck-Tk,Tk,Fs,EmC,EmS,SBC,sitev, &
+                        Qli,param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc
 
 
                 SURFEBsc = SURFEBsc + QSNs + QLNs
@@ -1841,18 +1798,15 @@ SWISM=SWIT-SWIGM-SWIR
                  
 !*****************************************************************************************************************************************
  
-      FUNCTION SURFEBc(Tck,Us,Ws,Wc,A,dt,P,Pr,Ps,Ta,V,RH,Fs,Cf,Qli, &
-     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod,mtime, &
-        Qpc,Qps,Inmax, Rkinc,Rkinsc,Vz,Tssk,Tk,Tak,EA,RHOA, &
-        FkappaS,RHO,TherC,    &                                        
-       TSURFs,tave,refDepth)                             ! Reduced parametre later                                    ! Heat and vapor conductance for neutral
+      FUNCTION SURFEBc(Tck,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
+     Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob, &
+        Qpc, Rkinc,Rkinsc,Vz,Tssk,Tk,EA,RHO) ! Reduced parametre later
+                               ! Heat and vapor conductance for neutral
 
-        real param(*),sitev(*),mtime(*), Inmax
-        integer iTsMethod,Iradfl
-        real LanS, LanG,LanE,LanE_Ze, LanE_de, LanE_ze2,LanE_de2
-        real cg,rho,rhog,w1f,rd1,fkappas,ds,TherC
-      real tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave,TsAvek
-
+        real param(*),sitev(*)
+        integer Iradfl
+        real LanS, LanG
+        real cg,rho,rhog,rd1
 
 !     Constant data set 
       data cs /2.09/                                !  Ice heat capacity (2.09 KJ/kg/C)
@@ -1886,20 +1840,18 @@ SWISM=SWIT-SWIGM-SWIR
          CALL TRANSRADCAN (COSZEN,sitev,param, &               ! Input variables , leaf parameters
                  Betab,Betad,Taub,Taud)                     ! Output variables:
 
-         CALL NETSOLRAD(Ta,A,Betab,Betad,Wc,Taub,Taud, &
-         Inmax,Qsib,Qsid,param,Fs, &
-                            Qsns,Qsnc )                       !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
+         CALL NETSOLRAD(A,Betab,Betad,Taub,Taud, &
+              Qsib,Qsid,Qsns,Qsnc )                       !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
     
-         CALL NETLONGRAD(RH,Ta,Tssk-Tk,Tck-Tk,Tk,Fs,EmC,EmS,SBC,cf,sitev, &
-                        Qli,param, &
-                        Qlis,Qlns,Qlnc )                     !  Output: Qsns,Qsnc
+         CALL NETLONGRAD(Ta,Tssk-Tk,Tck-Tk,Tk,Fs,EmC,EmS,SBC,sitev, &
+                        Qli,param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc
 
 
 
 13      Ess    = SVP(Tssk-Tk)
         Esc    = SVP(Tck-Tk)  
 
-         CALL TURBFLUX(Ws,Wc,A,TK,Tck-tk,Ta,Tssk-Tk,RH,V,EA,p,param,sitev, &
+         CALL TURBFLUX(Wc,TK,Tck-tk,Ta,Tssk-Tk,RH,V,EA,p,param,sitev, &
                       d,Z0c,Vz,RKINc,RKINsc,Tac, Fs,Ess,Esc,   &                    ! Output variables
                           QHc,QEc,Ec,QHs,QEs,Es,QH,QE,E)          
 
@@ -1918,11 +1870,11 @@ SWISM=SWIT-SWIGM-SWIR
 !********** FUNCTION TO ESTIMATE SURFACE HEAT CONDUCTION FOR USE IN SOLVING SURF TEMP *********
 !                            ********  QcEst() *******
 
-       FUNCTION QcEst(Ws,p,Tssk,Tck,V,Zm,d,Z0c,Rimax,Rcastar,Cf,Fs, &
-                Qli,Hcan,Vz,Ta,Rh,RKINsc,Qps,To,Ps,Qsi,atff,COSZEN, &
-          APr,TAK, EA,A,Ac,Wc,Inmax, Qnetob,Iradfl,param,sitev)
+       FUNCTION QcEst(p,Tssk,Tck,V,d,Z0c,Cf,Fs, &
+                Qli,Vz,Ta,Rh,RKINsc,Qps,Qsi,atff,COSZEN, &
+                TAK, EA,A,Wc, Qnetob,Iradfl,param,sitev)
 
-        REAL k,n,Inmax,RH, Qps,Qnetob, RHOA,param(*),sitev(*)
+        REAL k,RH, Qps,Qnetob,param(*),sitev(*)
         INTEGER Iradfl
 
         data tk /273.15/     !  Temperature to convert C to K (273.15)
@@ -1959,7 +1911,7 @@ SWISM=SWIT-SWIGM-SWIR
         Ess    = SVP(Tssk-Tk)
         Esc    = SVP(Tck-Tk) 
 
-         CALL TURBFLUX(Ws,Wc,A,TK,Tck-Tk,Ta,Tssk-Tk,RH,V,EA,p,param,sitev, &
+         CALL TURBFLUX(Wc,TK,Tck-Tk,Ta,Tssk-Tk,RH,V,EA,p,param,sitev, &
                       d,Z0c,Vz,RKINc,RKINsc,Tac, Fs,Ess,Esc,   &   ! Output variables
                       QHc,QEc,Ec,QHs,QEs,Es,QH,QE,E)          
 
@@ -1975,13 +1927,11 @@ SWISM=SWIT-SWIGM-SWIR
                 CALL TRANSRADCAN (COSZEN,sitev,param,  &              ! Input variables , leaf parameters
                  Betab,Betad,Taub,Taud)   ! Output variables:
 
-         CALL NETSOLRAD(Ta,A,Betab,Betad,Wc,Taub,Taud, &
-             Inmax,Qsib,Qsid,param,Fs, &
-                            Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
+         CALL NETSOLRAD(A,Betab,Betad,Taub,Taud, &
+             Qsib,Qsid,Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
 
-        CALL NETLONGRAD(RH,Ta,Tssk-Tk,Tck-Tk,Tk,Fs,EmC,EmS,SBC,cf,sitev, &
-                        Qli,param, &
-                        Qlis,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
+        CALL NETLONGRAD(Ta,Tssk-Tk,Tck-Tk,Tk,Fs,EmC,EmS,SBC,sitev, &
+                        Qli,param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
 
 
         qcEst = qcEst + QSNs + QLNs

@@ -42,10 +42,9 @@ Subroutine nCDF3DRead (file_name,Var_name,SingleArray,i,j,rec)
 use netcdf
 
 integer, parameter :: NDIMS = 3 
-integer:: nDimensions, nVariables, nAttributes, unlimitedDimId, formatNum, dimlen1, dimlen2, dimlen3
-character (20) :: dimname1,  dimname2, dimname3, varname1
+integer:: nDimensions, nVariables, nAttributes
 character (50) :: FILE_NAME, Var_name
-integer :: start(NDIMS), count(NDIMS),VarId,  recid
+integer :: start(NDIMS), count(NDIMS),VarId
 integer:: i, j, rec
 real, dimension(1):: SingleArray  
 
@@ -79,11 +78,10 @@ use netcdf
 character (len = *), parameter :: LAT_NAME = "ycoord"
 character (len = *), parameter :: LON_NAME = "xcoord"
 character (len = *), parameter :: REC_NAME = "time"
-integer :: y_dimid, x_dimid, time_dimid
 integer, parameter :: NDIMS = 3
-integer:: nDimensions, nVariables, nAttributes, unlimitedDimId, formatNum, dimlen1, dimlen2, dimlen3
-character (20) :: dimname1,  dimname2, dimname3, varname
-character (50) :: FILE_NAME, time_name, y_NAME, x_NAME
+integer:: nDimensions, nVariables, nAttributes, dimlen1, dimlen2, dimlen3
+character (20) :: dimname1,  dimname2, dimname3
+character (50) :: FILE_NAME
 
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
@@ -107,8 +105,8 @@ Subroutine nCDF2DRead(file_name,varname,SingleArray,i,j)
 use netcdf
 
 integer, parameter :: NDIMS = 2 
-integer:: nDimensions, nVariables, nAttributes, unlimitedDimId, formatNum, dimlen1, dimlen2, VarID
-character (50) :: dimname1,dimname2, varname
+integer:: nDimensions, nVariables, nAttributes, VarID
+character (50) :: varname
 character (50) :: FILE_NAME
 integer :: start(NDIMS), count(NDIMS)
 integer:: i, j
@@ -146,26 +144,19 @@ Subroutine nCDF3DTimeRead(file_name,time_pos,time_val,numTimeStep,syear,smonth,s
 use netcdf
 
 ! integer, parameter :: NDIMS = 3 
-integer:: unlimitedDimId, numTimeStep
-character (50) :: FILE_NAME, Var_name="time", Rec_name="time"
+integer:: numTimeStep
+character (50) :: FILE_NAME, Rec_name="time"
 ! integer :: start(NDIMS), count(NDIMS)
-integer :: VarId,  recid, time_dimid
+integer :: VarId
 integer start1(1),count1(1),time_pos
-integer:: i, j, rec
 character (len = *), parameter :: UNITS = "units"
-integer:: dimlen2,dimlen1  
-Double precision :: JDS
-real:: sh
 Double precision:: time_val(1)
 integer, parameter :: MAX_ATT_LEN = 100
 character*(MAX_ATT_LEN) :: time_units_in
 integer :: att_len
-character*50:: CharYear, CharMonth, CharDay, CharHour
-character*50:: daysstring,sincestring,datestring,instring
+character*50:: daysstring,sincestring,datestring
 integer syear,smonth,sday
-real::  as,ys,ms
-LOGICAL:: NUMERIC, is_numeric
-CHARACTER(len=2):: STRING
+LOGICAL:: is_numeric
 
 !Open the file and see whats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                     
@@ -242,11 +233,10 @@ Subroutine nCDF2DArrayInfo(FILE_NAME,dimlen2,dimlen1)
 use netcdf
 !character (len = *), parameter :: LAT_NAME = "ycoord"
 !character (len = *), parameter :: LON_NAME = "xcoord"
-integer :: y_dimid, x_dimid
 integer, parameter :: NDIMS = 2
-integer:: nDimensions, nVariables, nAttributes, unlimitedDimId, formatNum, dimlen1, dimlen2
-character (20) :: dimname1,  dimname2, dimname3, varname
-character (200) :: FILE_NAME, y_NAME, x_NAME
+integer:: dimlen1, dimlen2
+character (20) :: dimname1,  dimname2
+character (200) :: FILE_NAME
 
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
@@ -272,11 +262,10 @@ Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingVa
 !WsFillValues (out) missing value attribute in a netCDF 
 
 use netcdf
-integer :: y_dimid, x_dimid
 integer, parameter :: NDIMS = 2
-integer:: nDimensions, nVariables, nAttributes, unlimitedDimId, formatNum, dimlen1, dimlen2,WSVarId
-character (20) :: dimname1,  dimname2, dimname3, varname
-character (50) :: FILE_NAME, y_NAME, x_NAME
+integer:: dimlen1, dimlen2,WSVarId
+character (20) :: dimname1,  dimname2
+character (50) :: FILE_NAME
 character (50) :: WatershedVARID
 character (len = *), parameter :: missing_value = "missing_value",fillvalue="_FillValue"
 integer::numAtts
@@ -380,7 +369,7 @@ END
 !================================================================
 
 !====================Sorrting function===========================
-SUBROUTINE SSORT (X, IY, N, KFLAG)
+SUBROUTINE SSORT (X, IY, N)
  
 !Source: http://www.personal.psu.edu/jhm/f90/lectures/28.html
 
@@ -392,7 +381,7 @@ SUBROUTINE SSORT (X, IY, N, KFLAG)
 !      N - number of values in array X to be sorted
 !      KFLAG - Not used in this implementation
 
-      INTEGER KFLAG, N
+      INTEGER N
 
       double precision X(1:N)
       INTEGER IY(N)
@@ -427,10 +416,9 @@ Subroutine NetCDFTimeArray(file_name,time_out,timelength)
 
 use netcdf
 integer, parameter :: NDIMS = 3
-integer:: unlimitedDimId, dimlen3
-character (50) :: FILE_NAME, Var_name="time", Rec_name="time"
-integer :: start(NDIMS), count(NDIMS),VarId,  recid, time_dimid
-integer:: i, j, rec
+character (50) :: FILE_NAME, Var_name="time"
+integer :: start(NDIMS), count(NDIMS),VarId
+integer:: i
 character (len = *), parameter :: UNITS = "units"
 integer:: dimlen2,dimlen1  
 integer timelength
@@ -545,12 +533,11 @@ character (50) :: FILE_NAME
 character (50):: DimName1,DimName2
 integer, parameter :: MAX_ATT_LEN = 100
 character(100) :: DimUnit1,DimUnit2
-integer:: ncidout,dimlen1,dimlen2,len1,len2,WSVarId
-character(100) :: MissingValues
+integer:: ncidout,dimlen1,dimlen2,len1,len2
 character (len = *), parameter :: UNITS = "units",missing_value = "missing_value"
 REAL:: DimValue1(dimlen1)
 REAL:: DimValue2(dimlen2)
-integer :: att_len,varid
+integer :: varid
 
 !Open the file and see whats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file    
@@ -575,10 +562,9 @@ use netcdf
 
 integer, parameter :: NDIMS = 3 
 character (50) :: FILE_NAME, Var_name
-integer :: start(NDIMS), count(NDIMS),VarId,recid
+integer :: start(NDIMS), count(NDIMS),VarId
 integer:: iycoord,jxcoord, rec
 real, dimension(rec):: AllVal  
-real::MissingValues
 count = (/ 1, 1, rec /)
 start = (/ 1, 1, 1 /)
 !Open the file and see hats inside

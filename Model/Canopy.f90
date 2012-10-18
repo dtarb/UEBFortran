@@ -126,12 +126,12 @@
 !****************** NET CANOPY & SUB CANOPY SOLAR RADIATION *********************************
 !      Computes the net canopy and sub-canopy solar radiation
 !      considering the multiple scatterings of radiation by the canopy and multile reflectios between the canopy and the snow surface
-        SUBROUTINE NETSOLRAD(Ta,A,Betab,Betad,Wc,Taub,Taud, &
-         Inmax,Qsib,Qsid,param,Fs, &
+        SUBROUTINE NETSOLRAD(A,Betab,Betad,Taub,Taud, &
+         Qsib,Qsid, &
                             Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
       
-        REAL A,Betab,Betad,Wc,Inmax,Taub,Taud,Qsib,Qsid
-        REAL param(*),Qsns, Qsnc
+        REAL A,Betab,Betad,Taub,Taud,Qsib,Qsid
+        REAL Qsns, Qsnc
 
 
 !       Net radiation at snow surface below canopy
@@ -159,12 +159,11 @@
 
 !****************** NET CANOPY & SUB CANOPY LONGWAVE RADIATION ******************************
 !     Computes the net canopy and beneath canopy longwave radiation
-        SUBROUTINE NETLONGRAD(RH,Ta,Tss,Tc,Tk,Fs,EmC,EmS,SBC,cf,sitev,Qli, &
-                               param, &
-                                     Qlis,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
+        SUBROUTINE NETLONGRAD(Ta,Tss,Tc,Tk,Fs,EmC,EmS,SBC,sitev,Qli, &
+                               param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
  
-        REAL RH,Ta,Tss,Tc,EmC,EmS,SBC,Fs,TaudL,sitev(*),LAI,G
-        REAL EmA,ea, Qlis, Qlns,Qlnc,EXPI,kk,Beta,Betad,param(*)
+        REAL Ta,Tss,Tc,EmC,EmS,SBC,Fs,sitev(*),LAI,G
+        REAL Qlns,Qlnc,EXPI,kk,Beta,Betad,param(*)
 
 
         Cc    = sitev(5)     ! Leaf Area Index 
@@ -230,12 +229,12 @@
 !****************  BULK AERODYNAMIC AND CANOPY BOUNDARY LAYER RESISTANCES  *******************
 !      Calculates resistances for the above and beneath canopy turbulent heat fluxes
  
-        SUBROUTINE AeroRes(p,Wc,V,Ta,Tss,Tc,Fs,param,sitev,Tk, &
+        SUBROUTINE AeroRes(V,Ta,Tss,param,sitev, &
                   d,Z0c,Vz,Rc,Ra,Rbc,Rl,RKINc,RKINa,Rkinbc,Rkinl)         ! Output variables
 
-        REAL z,d,k,Zm,Rimax,YcAge,Hcan,LAI,Vz,Ta,Tss,RKINsc,Kh, &
-         Lbmean,Rkinca,Ru,Ra,Rc,Rs,Rca,Ri ,Rcastar, Rustar,ndecay, &
-        param(*),sitev(*), Tac, Dc,Rastar,Rkinaa,V
+        REAL z,d,k,Zm,Rimax,Hcan,LAI,Vz,Ta,Tss,Kh, &
+         Lbmean,Ra,Rc,Rs,Ri,ndecay, &
+        param(*),sitev(*), Dc,Rastar,V
 
         data g   /9.81/        ! Gravitational acceleration (9.81 m/s^2)
       data k  /0.4/          ! Von Karmans constant (0.4)
@@ -359,7 +358,7 @@
         SUBROUTINE WINDTRANab(V,Zm,param,sitev, &
                              Vstar,Vh,d,z0c,Vz,Vc )               ! Out put wind speed within canopy at height 2 m
 
-        REAL k,V,Vz,Hcan,LAI,Beta,Tac,RHc,Z,Zm,Z0c,d,Vstar,Vh
+        REAL k,V,Vz,Hcan,LAI,Z,Zm,Z0c,d,Vstar,Vh
         REAL sitev(*),param(*) 
 
       data k  /0.4/           !  Von Karmans constant (0.4)
@@ -409,11 +408,11 @@
 !     Calculates the turbulent heat fluxes (sensible and latent
 !     heat fluxes) and condensation/sublimation.
 
-      SUBROUTINE TURBFLUX(Ws,Wc,A,TK,Tc,Ta,Tss,RH,V,EA,p,param,sitev, &
+      SUBROUTINE TURBFLUX(Wc,TK,Tc,Ta,Tss,RH,V,EA,p,param,sitev, &
                       d,Z0c,Vz,RKINc,RKINbc,Tac,Fs,Ess,Esc, &   ! Output variables
                       QHc,QEc,Ec,QHs,QEs,Es,QH,QE,E)          
                                                       
-      REAL Wc,RHOA,ESc,k,Apr, param(*),sitev(*),A,EA, LAI, EHo, EEo
+      REAL Wc,RHOA,ESc,k,Apr, param(*),sitev(*),EA, LAI
       REAL QHc,QEc,Ec,QHs,QEs,Es,QH,QE,E
     
 
@@ -450,7 +449,7 @@
        EEoC  = 0.0
        EEoS  = 0.0
 
-        CALL AeroRes(p,Wc,V,Ta,Tss,Tc,Fs,param,sitev,Tk, &
+        CALL AeroRes(V,Ta,Tss,param,sitev, &
                d,Z0c,Vz,Rc,Ra,Rbc,Rl,RKINc,RKINa,Rkinbc,Rkinl)         ! Output variables
        
 
@@ -510,10 +509,10 @@
 !************************** RATE OF INTERCEPTION AND MAX INTERCEPTION ***********************
 !     Calculates amount of snow intercepted by the canopy
 
-        SUBROUTINE INTERCEPT(Ta,LAI,p,Wc,dt,Inmax,param,sitev, &
+        SUBROUTINE INTERCEPT(LAI,p,Wc,dt,Inmax,param,sitev, &
                                     ieff,Ur,int)    ! Output variables
 
-        REAL p,LAI,CC,Inmax,ieff, Rhofs, Sbar,S,int,dt,Ur 
+        REAL p,LAI,CC,Inmax,ieff,int,dt,Ur 
         REAL Intma 
         REAL param(*),sitev(*)
         DOUBLE PRECISION Uc

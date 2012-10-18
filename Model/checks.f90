@@ -30,16 +30,13 @@
 !
 !**********************************************************************************************  
 
-subroutine checks(svfile,MaxNumofFile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
+subroutine checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
 
 parameter(n=32,m=11)
-integer:: MaxNumofFile,ModelStartDate(3),ModelEndDate(3)
-real:: ModelStartHour,ModelEndHour,Modeldt,UTCOffSet
-Character*200:: svfile,NCDFContainer(MaxNumofFile,n),inputname,inputcode,NCfile
+Character*200:: svfile
 Character*200:: SVname,SiteHeading,SVcode,StateSiteVName(n),StateSiteNCFile,StateSiteV
-Character*200:: InputTSFilename,InpVals,inputVName(m)
 Real:: StateSiteValue
-integer:: reason,IsInputFromNC(m),countinput,count,NumNCFiles(m),isVarFromNC(n),isSiteVarFromNC  
+integer:: reason,IsInputFromNC(m),countinput,count,NumNCFiles(m),isSiteVarFromNC  
 integer:: matched,x,totalNC
 
 
@@ -95,16 +92,15 @@ integer:: matched,x,totalNC
   
         Use netCDF
         parameter(n=32,m=11)
-        Character*200:: StateSiteVName(n),inputHeading
-        integer:: MaxNumofFile,ModelStartDate(3),ModelEndDate(3),dimlen2,dimlen1,dimlen3,dimlen4
-        real:: ModelStartHour,ModelEndHour,Modeldt,UTCOffSet
-        Character*200:: svfile,inputcon,NCDFContainer(MaxNumofFile,n),inputname,inputcode
+        Character*200:: StateSiteVName(n)
+        integer:: MaxNumofFile,dimlen2,dimlen1,dimlen3,dimlen4
+        Character*200:: svfile,NCDFContainer(MaxNumofFile,n)
         Character*200:: SVname,SiteHeading,SVcode,StateSiteV
-        Character*200:: InputTSFilename,InpVals,inputVName(m),WatershedFile
+        Character*200:: inputVName(m),WatershedFile
         Real:: StateSiteValue
-        integer:: reason,IsInputFromNC(m),countinput,count,NumNCFiles(m),isVarFromNC(n),isSiteVarFromNC  
+        integer:: reason,IsInputFromNC(m),NumNCFiles(m),isVarFromNC(n)  
         integer:: matched,totalNC,NCNumber
-        Character*200:: AllNCDFfile(totalNC),NCFile,varnameinncdf
+        Character*200:: AllNCDFfile(totalNC),NCFile
         Real, dimension(:), allocatable:: DimValue1,DimValue2,DimValue3,DimValue4
         Character*200:: DimUnit1,DimUnit2,DimUnit3,DimUnit4,DimName1,DimName2,DimName3,DimName4
         

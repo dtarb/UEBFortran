@@ -47,7 +47,7 @@
         integer:: irad, ireadalb
         CHARACTER*200 vfile
         ! define loop parameter
-        integer reason, paramcode
+        integer reason
         integer matched
         ParamSymbol = (/ "irad    ","ireadalb","tr      ","ts      ", &
               "ems     ","cg      ","z       ","zo      ","rho     ", &
@@ -92,7 +92,7 @@
 
 ! =================== for one point within the grid that the model is looping over 
       subroutine readsv(param,statev,sitev,svfile,slope,azi,lat,subtype, &
-      &dimlen2,dimlen1,ilat,jlon,dtbar,ts_last,longitude)
+      ilat,jlon,dtbar,ts_last,longitude)
     ! param (input and output) an array that holds all the paramter values
     ! statev (output) is state variable array that returns the initial conditions read from input files
     ! sitev (output)is site variables array that returns the site variables read from input files
@@ -105,12 +105,11 @@
     ! ilat (input) - latitude (row) index of the site where data is to be read and returned (from outside loop over space)
     ! jlat (input) - longitude (col) index of the site where data is to be read and returned (from outside loop over space)
       PARAMETER(n=32)
-      integer:: SVDT,reason, krecp,dimlen2,dimlen1, &
-           matched,isVarFromNC(n),subtype            
+      integer:: reason,matched,isVarFromNC(n),subtype            
       integer:: ilat,jlon
       real param(32)
       REAL statev(6),sitev(10),slope,azi,lat, StateSiteValue(n), &
-           SingleArray(1), vardefaults(n), dtbar(12),gsurf, subalb,ts_last,longitude
+           SingleArray(1), vardefaults(n), dtbar(12),ts_last,longitude
       !REAL, DIMENSION(16):: vardefaults
       CHARACTER*50 SiteHeading, SVcode, SVname, StateSiteVName(n)
       CHARACTER*50 SiteVarNameinNCDF(n)
