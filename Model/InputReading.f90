@@ -58,8 +58,8 @@
           Read (19,*)  Eyear, Emonth, Edate, Ehour
           Read (19,*)  dt
           Read (19,*)  UTCOffSet
-500    	  Read(19,*,iostat=reason, end=600)inputcode
-    	    if(reason .eq. 0) then
+500       Read(19,*,iostat=reason, end=600)inputcode
+            if(reason .eq. 0) then
             do i=1,n,1
                 inputname=inputcode(1:(SCAN (inputcode, ':')-1))
                 CALL lowercase(inputname,inputname)
@@ -185,8 +185,8 @@
           Read (99,*)  Modeldt
           Read (99,*)  UTCOffSet
 1300      Read(99,*,iostat=reason, end=1400)inputcode
-    	    if(reason .eq. 0) then
-    	     inputname=inputcode(1:(SCAN (inputcode, ':')-1))
+            if(reason .eq. 0) then
+             inputname=inputcode(1:(SCAN (inputcode, ':')-1))
              CALL lowercase(inputname,inputname)
              do i=1,n,1
                if(inputname .eq. trim(inputVName(i))) then

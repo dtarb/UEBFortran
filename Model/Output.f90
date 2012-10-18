@@ -91,25 +91,25 @@
         READ(109,*) xxs
         ! Read until end of file
 3200      Read(109,*,iostat=reason, end=3300)filecode
-    	    If(reason .eq. 0) then
-    	        trimcode=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
-    	        Call lowercase(trimcode,trimcode)
-    	        if(trimcode .eq. 'pointdetail')then
-    	            read(109,*,end=3300)xx
-    	            read(109,*,end=3300)xxs
-    	            NumOutPoint=NumOutPoint+1
-    	        else 
-    	            do i=1,n
-    	            Call lowercase(outSymbol(i),outSymbol(i))
-    	            if(trimcode .eq. trim(outSymbol(i)))then
-    	               OutCount=OutCount+1
-    	               exit
-    	            endif
-    	            enddo
-    	            read(109,*,end=3300)xxs
-    	        endif
-    	        go to 3200
-    	    endif
+            If(reason .eq. 0) then
+                trimcode=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
+                Call lowercase(trimcode,trimcode)
+                if(trimcode .eq. 'pointdetail')then
+                    read(109,*,end=3300)xx
+                    read(109,*,end=3300)xxs
+                    NumOutPoint=NumOutPoint+1
+                else 
+                    do i=1,n
+                    Call lowercase(outSymbol(i),outSymbol(i))
+                    if(trimcode .eq. trim(outSymbol(i)))then
+                       OutCount=OutCount+1
+                       exit
+                    endif
+                    enddo
+                    read(109,*,end=3300)xxs
+                endif
+                go to 3200
+            endif
  3300     close(109)       
         return
         end subroutine NumOutFiles
@@ -188,13 +188,13 @@
         OutNum=0
         ! Read until end of file
 4500      Read(109,*,iostat=reason, end=4600)filecode
-    	    If(reason .eq. 0) then
-    	    matched = .false.
-    	    OUTname=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
-    	    CALL lowercase(OutName,OutName)
-    	     do i=1,n,1
-    	        CALL lowercase(outSymbol(i),outSymbol(i))
-    	         If(OutNum .le. OutCount)then
+            If(reason .eq. 0) then
+            matched = .false.
+            OUTname=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
+            CALL lowercase(OutName,OutName)
+             do i=1,n,1
+                CALL lowercase(outSymbol(i),outSymbol(i))
+                 If(OutNum .le. OutCount)then
                if(OutName .eq. trim(outSymbol(i)))then
                     OutNum=OutNum+1
                     OutVar(OutNum)=i  !OutName
@@ -313,8 +313,8 @@
       
 
         do i=1,outcount
-    	    CALL lowercase(outSymbol(i),outSymbol(i))
-    	    CALL lowercase(OutUnits(i),OutUnits(i))
+            CALL lowercase(outSymbol(i),outSymbol(i))
+            CALL lowercase(OutUnits(i),OutUnits(i))
             OutputNCContainer(1,i)=outSampleFile(i)
             do j=2,NumofFile
             !assumption=given netCDF file names cannot ave a "." withn filename.

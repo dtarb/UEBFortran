@@ -94,18 +94,18 @@
  
       INTEGER*4 YEAR,DAY,DMON(12),DM, MONTH,I       ! 30/03/2004 ITB 
       INTEGER*4 LYEAR  ! 30/03/2004 ITB  
-	real  hour, dt  ! DGT Dec 10, 2004.  Fixing ITB errors 
+        real  hour, dt  ! DGT Dec 10, 2004.  Fixing ITB errors 
    
       DATA (DMON(I),I=1,12)/31,28,31,30,31,30,31,31,30,31,30,31/
       HOUR=HOUR+DT
-	DM=DMON(MONTH)
+        DM=DMON(MONTH)
 !  check for leap years 
       if(month .eq. 2)dm=lyear(year)
  10   continue
       IF(HOUR.GE.24.0) THEN
         HOUR=HOUR-24.0
         DAY=DAY+1
-	go to 10
+        go to 10
       ENDIF
  20   continue
       IF(DAY.GT.DM) THEN
@@ -114,10 +114,10 @@
         IF(MONTH.GT.12) THEN
           MONTH=1
           YEAR=YEAR+1
-	    DM=DMON(MONTH)
+            DM=DMON(MONTH)
           if(month .eq. 2)dm=lyear(year)
-	  endif
-	  go to 20
+          endif
+          go to 20
       ENDIF
       RETURN
       END
@@ -137,8 +137,8 @@
       ELSE
          lyear=29
       ENDIF
-	return
-	end
+        return
+        end
 
 !**************************** atf () ****************************
 !    to get the atmospheric transmissivity using the Bristow and Campbell
@@ -174,7 +174,7 @@
       SLOPE1=SLOPE*CRAD
       AZI1=AZI*CRAD
       LAT1=LAT*CRAD
-	FJULIAN=FLOAT(JULIAN(year,MONTH,DAY))
+        FJULIAN=FLOAT(JULIAN(year,MONTH,DAY))
       D=CRAD*23.5*SIN((FJULIAN-82.0)*0.017214206321)  
 ! 0.017214206321 is 2 pi / 365  
 ! D is solar declination
@@ -185,13 +185,13 @@
 !     to make the code work for polar conditions
 ! TD is half day length, i.e. the time from noon to sunset.  Sunrise is at -TD
       tanprod=TAN(LAT1)*TAN(D)
-	if(tanprod .gt. 1.)then
-	  td=pi  ! This is the condition for perpetual light
-	else if(tanprod .lt. -1.)then
-	  td=0   ! The condition for perpetual night
-	else
-	  td=acos(-tanprod)  ! The condition where there is a sunrise and set
-	endif
+        if(tanprod .gt. 1.)then
+          td=pi  ! This is the condition for perpetual light
+        else if(tanprod .lt. -1.)then
+          td=0   ! The condition for perpetual night
+        else
+          td=acos(-tanprod)  ! The condition where there is a sunrise and set
+        endif
 !  Equivalent longitude offset.  Modified on 1/8/04
 !  so that it correctly accounts for shift in longitude if equivalent 
 !  plane slope goes over a pole.  Achieved using atan2.
@@ -206,13 +206,13 @@
 ! Keep track of beginning and end of exposure of equiv plane to sunlight
       IF(tpeqp .gt. 1.0) THEN
           TPbeg=-pi   ! perpetual light
-	    tpend=pi
+            tpend=pi
       ELSEif(tpeqp .lt. -1.)then
           TPbeg=0.0  ! perpetual dark
           tpend=0.0 
-	else
-	    tpbeg = -acos(-tpeqp)-ddt
-	    tpend = acos(-tpeqp)-ddt
+        else
+            tpbeg = -acos(-tpeqp)-ddt
+            tpend = acos(-tpeqp)-ddt
       ENDIF 
 
 !  Start and end times for integration of radiation exposure
@@ -231,13 +231,13 @@
 !  where a poleward facing slope may be illuminated at night more than the day.
 !  Add this in
       if(tpbeg .lt. -pi)then
-	  T1=AMAX1(T,-tpbeg+2*pi,-TD)
-	  T2=AMIN1(T+DELT1,TD)
-	  if(t2 .gt. t1)then
-	    hri=hri+(SIN(D)*SIN(LP)*(T2-T1)+COS(D)*COS(LP)*(SIN(T2+DDT) &
+          T1=AMAX1(T,-tpbeg+2*pi,-TD)
+          T2=AMIN1(T+DELT1,TD)
+          if(t2 .gt. t1)then
+            hri=hri+(SIN(D)*SIN(LP)*(T2-T1)+COS(D)*COS(LP)*(SIN(T2+DDT) &
             -SIN(T1+DDT)))/(COS(SLOPE1)*DELT1)
-	  endif
-	endif
+          endif
+        endif
 ! for the purposes of calculating albedo we need a cosine of the
 ! illumination angle.  This does not have slope correction so back
 ! this out again.  This is an average over the time step
@@ -273,18 +273,18 @@
 !    cover fraction is assumed to be 1.
 !
       subroutine cloud(param,atff,cf)
-	REAL param(*),atff,cf
+        REAL param(*),atff,cf
 
-      as     = param(28)			! Fraction of extraterrestaial radiation on cloudy day,Shuttleworth (1993)  
-	bs     = param(29)			! (as+bs):Fraction of extraterrestaial radiation on clear day, Shuttleworth (1993) 
+      as     = param(28)                        ! Fraction of extraterrestaial radiation on cloudy day,Shuttleworth (1993)  
+        bs     = param(29)                      ! (as+bs):Fraction of extraterrestaial radiation on clear day, Shuttleworth (1993) 
  
-	IF (atff.GE.(as+bs)) THEN 
-			cf=0								 ! Cloudiness fraction
-		ELSE IF (atff.LE.as) THEN
-			cf=1
-		ELSE 
-			cf    = 1.-(atff -as)/bs
-	END IF
+        IF (atff.GE.(as+bs)) THEN 
+                        cf=0                                                             ! Cloudiness fraction
+                ELSE IF (atff.LE.as) THEN
+                        cf=1
+                ELSE 
+                        cf    = 1.-(atff -as)/bs
+        END IF
    
       RETURN
       END
@@ -293,10 +293,10 @@
 !
       subroutine qlif(TA,RH,TK,SBC,Ema,Eacl,cf,qliff )
 
-	REAL TA,RH,TK,SBC,Ema,Eacl,cf,qliff
+        REAL TA,RH,TK,SBC,Ema,Eacl,cf,qliff
 
         TAK  = TA + TK
-	  EA   = SVPW(TA)*RH
+          EA   = SVPW(TA)*RH
 !******************************************************  old option
 !    
       EAcl   =  1.08*(1.0-EXP(-(EA/100.0)**((TAK)/2016.0)))   ! Clear sky emissivity

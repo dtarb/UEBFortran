@@ -59,7 +59,7 @@
         OPEN(11,FILE=vfile,STATUS='OLD', ACTION='READ')
         READ(11,*) ParamHeading
         ! Read until end of file
-100    	READ(11,*,iostat=reason, end=200)filecode
+100     READ(11,*,iostat=reason, end=200)filecode
         CALL lowercase(filecode,filecode)
         if (reason .eq. 0)then
             do i=1,n,1
@@ -136,12 +136,12 @@
       OPEN(8,FILE=svfile,STATUS='OLD')
       Read (8,*)  SiteHeading
       ! Here we start a loop that reads 3 lines at a time and determines the 
-300    	  Read(8,*,iostat=reason, end=400)SVcode
-	  if(reason .eq. 0) then  ! anything other than 0 means some sort of 
-	                          ! quirk in the read - we are not currently checking for this
-	    SVname=SVcode(1:(SCAN (SVcode, ':')-1))
-	    CALL lowercase(SVcode,SVcode)
-	    matched=0
+300       Read(8,*,iostat=reason, end=400)SVcode
+          if(reason .eq. 0) then  ! anything other than 0 means some sort of 
+                                  ! quirk in the read - we are not currently checking for this
+            SVname=SVcode(1:(SCAN (SVcode, ':')-1))
+            CALL lowercase(SVcode,SVcode)
+            matched=0
         do i=1,n,1
             CALL lowercase(StateSiteVName(i),StateSiteVName(i))
             CALL lowercase(SVname,SVname)
