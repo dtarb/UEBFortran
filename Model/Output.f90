@@ -52,7 +52,7 @@
         integer:: NumTimeStep, NumofFile,NumOutPoint,reason,OutCount
         character*200 trimcode,filecode,xxs,OutControlFILE
         CHARACTER(200), DIMENSION(n) :: outSymbol
-        integer:: netCDFDataValPerfile,LengthOutFile 
+        integer:: netCDFDataValPerfile 
         
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
@@ -128,21 +128,16 @@
         
         parameter(n = 66)
         integer:: OutCount
-        Character (200) outputHeading
-        integer:: dimlen2,dimlen1,dimlen3,intvar,NumofFile
+        integer:: dimlen2,dimlen1,NumofFile
         CHARACTER*200 outname,OutControlFILE,outHeading,filecode
         CHARACTER(200), DIMENSION(n) :: outSymbol ! unused: ,OutUnits
         CHARACTER(200),DIMENSION(OutCount)::outSampleFile
         integer OutVar(Outcount)
-        CHARACTER(200),DIMENSION(OutCount):: outputfolder
-        CHARACTER(200) :: outputvarfile,outFolderName,makedirectory
+        CHARACTER(200) :: outFolderName
         ! unused: CHARACTER(200) ::string
-        Integer:: reason, ModelStartDate(3),ModelEndDate(3)
+        Integer:: reason
         integer NumOutPoint
-        Real:: ModelStartHour,ModelEndHour,Modeldt
-        Double precision:: JMSD,JMED,MStartHour,MEndHour
-        integer:: NumofF,NumTimeStep,NumTS
-        real:: netCDFSizePerfile
+        integer::NumTimeStep
         Integer:: NumTimeStepPerFile(NumofFile)
         integer OutPoint(NumOutpoint,2),numOutPtRead
         logical matched
@@ -224,12 +219,7 @@
         end subroutine OutputFiles
         !===End of reading the values from outconrol.dat file ==
 
-!        Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2 &
-!       ,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2, &
-!       NumofFile,outcount,Outvar,NumTimeStepPerFile,outSampleFile, &
-!       OutputNCContainer,NCIDARRAY)
-
-        Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,&
+        Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
         &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         use netCDF
@@ -259,7 +249,7 @@
         character (20) :: DimName1,DimName2
         character (100) :: DimUnit1,DimUnit2
         character (200) :: time_unit,NCOutfileName
-        REAL:: DimValue1(dimlen1),DimValue2(dimlen1)
+
         Integer:: ncid
         integer :: dimids(NDIMS)
         integer::x_dimid,y_dimid,time_dimid,x_varid,y_varid,time_varid
@@ -398,8 +388,7 @@
     
     integer, parameter :: NDIMS = 3
     integer::incfile,ioutv,outcount,NumTimeStep
-    character (50) :: FILE_NAME
-    integer :: start(NDIMS), count(NDIMS),VarId,recid
+    integer :: start(NDIMS), count(NDIMS)
     integer:: iycoord,jxcoord, timerec
     integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
     integer::NCIDARRAY(NumofFile,outcount),OutVar(outcount)
@@ -415,14 +404,12 @@
     call check(nf90_put_var(NCIDARRAY(incfile,ioutv),4,OutVarValue(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2),outvar(ioutv)),start, count))
     End Subroutine 
     
-    Subroutine OutputTimenetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT,jxcoord,iycoord)
+    Subroutine OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
         use NETCDF
         integer, parameter :: NDIMS = 3
         integer::outcount
-        integer::incfile,ioutv,OutVar(outcount)
-        character (50) :: FILE_NAME
-        integer :: start(NDIMS), count(NDIMS),VarId,recid
-        integer:: iycoord,jxcoord, timerec,NCIDARRAY(NumofFile,outcount)
+        integer::incfile,ioutv
+        integer:: timerec,NCIDARRAY(NumofFile,outcount)
         integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
         Double precision::FNDJDT(NumTimeStep)
         timerec=NumTimeStepPerFile(incfile)

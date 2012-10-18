@@ -41,10 +41,10 @@
         
         PARAMETER(n=11)
         ! TA,P,V,RH,trange,QSIOBS,QNETOB,qg,qli,inputcon, iloop
-        integer:: IPDT,reason,ilatp,dimlen2,dimlen1, IsVarFromNC(n),InumOfFile(n),IsInputFromNC(n)
+        integer:: reason,InumOfFile(n),IsInputFromNC(n)
         integer:: Syear, Smonth, sdate,  Eyear, Emonth, Edate !s for tartng date-time and e for ending date-time
-        real::  shour, Ehour, dt, EndingDate,VARVALUES(n),UTCOffSet     !dt=time increment in hours   
-        CHARACTER*200 svfile, inputHeading, inputcode, inputname, inputcon, inputVName(n), InputNCFilename(n), InputTSFilename(n),Readfile
+        real::  shour, Ehour, dt,VARVALUES(n),UTCOffSet     !dt=time increment in hours   
+        CHARACTER*200 inputHeading, inputcode, inputname, inputcon, inputVName(n), InputNCFilename(n), InputTSFilename(n)
         CHARACTER*200 NCfileContain, NCfileContainer,varnameinncdf(n),inputvarname(n)
         !InputNCFilename(n)=here inpdex file names will be stored for those variables are both spatially-temporally variable (SVTV)
         !InputNCFilename(n)=here time series text file names will be stored for those variables are both temporally variable but spatially constant(SCTV)
@@ -128,13 +128,12 @@
         Use netCDF
         
         parameter(n=11)                                         !n is  loop variable
-        integer:: InumOfFile(n), IsInputFromNC(n), reason, NumNCFiles(n),nrefyr,nrefmo,nrefday,count
+        integer:: IsInputFromNC(n), reason, NumNCFiles(n),nrefyr,nrefmo,nrefday,count
         integer::syear,smonth,sday,first
         integer:: ModelStartDate(3),  ModelEndDate(3)  
         real:: ModelStartHour, ModelEndHour,Modeldt,InpVals(n)  
         integer:: NCfileNumtimesteps(MaxNumofFile,n)
         integer:: NOofTS(n)
-        double precision NCStartTime(MaxNumofFile,n) 
         real:: UTCOffSet
         character*200:: NCDFContainer(MaxNumofFile,n)
         !  Arrays to hold temporary information before sort
@@ -143,29 +142,21 @@
         double precision, allocatable :: tempstarttime(:)
         integer,allocatable :: iy(:)           
         CHARACTER*200 inputHeading, inputcode, inputname, inputcon, inputVName(n), InputNCFilename(n)
-        CHARACTER*200 InputTSFilename(n),Readfile, NCfileContainer
+        CHARACTER*200 InputTSFilename(n)
         CHARACTER*200 NCfileContain 
         Character*50::varnameinncdf(n)
         Character*200:: Rec_name,File_name
-        integer:: VarID, ArrayStart,ArrayEnd
+        integer:: VarID
         Integer:: FileNextT(3)
         REAL:: FileNextH, FileNextVal
-        Double precision:: FileNextHR
         integer:: FileOpenFlag(n)
-        Double precision:: FileNextDateJDT
         Character*200:: TSFile, CurrentInputVariable(n)
-        integer:: TSCounts
-        Double precision, Allocatable :: AllTimeSteps(:)
-        Double precision:: ModelStartJDT, ModelEndJDT,NCRefernceJDT,RefHour
-        Integer:: TotalTS,StartY,StartM,StartD
-        Real:: TVal
         integer::arrayx
-        Character*200:: file_nameM
         character (len = *), parameter :: missing_value = "missing_value",fillvalue='_FillValue'
-        real:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n),VarMissval
+        real:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
         integer::  numAtts
         character (len = 50):: AttName
-        Character*200, Allocatable:: AllFiles(:)
+
         allocate(tempfilelist(MaxNumofFile))
         allocate(tempfilesteps(MaxNumofFile))
         allocate(tempstarttime(MaxNumofFile))
@@ -294,8 +285,7 @@
         End subroutine
         
         subroutine TimeSeriesAndTimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &varnameinncdf,arrayx,NOofTS,TSV,Allvalues)
+        arrayx,NOofTS,TSV,Allvalues)
         
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! NumNCFiles(n) (input)  Array giving the number of NC files for NC variables
@@ -320,7 +310,7 @@
         use netcdf
         Parameter(n=11)
         integer:: arrayx
-        integer:: VarID,ncidout,NCfileNumtimesteps(MaxNumofFile,n)
+        integer:: VarID,ncidout
         Character:: Rec_Name
         integer:: MaxNumofFile
         integer:: TScounts,FileOpenFlag(n),IsInputFromNC(n),NUMNCFILES(n)
@@ -337,17 +327,12 @@
         Double precision:: TSV(arrayx,11)
         Double precision,allocatable ::AllTimeSteps(:)
         character*200:: CurrentInputVariable(n)
-        integer::TScount,StartY,StartM,StartD
+        integer::StartY,StartM,StartD
         Double precision:: NCRfeferenceJDT
-        Double precision:: arraymin,arraymax
-        REAL:: MODELSTARTHOUR,MODELENDHOUR,MODELDT
-        integer:: MODELSTARTDATE(3),MODELENDDATE(3)
-        Character*50:: VARNAMEINNCDF(n)
         double precision:: RefHour
         Integer::TotalTS
         Double precision:: TVal(1)
         integer:: ArrayStart,ArrayEnd
-        integer:: InputVarId
         
         Varid=3  !  We require that time is the 3rd dimension
         RefHour=0.00
@@ -396,7 +381,7 @@
 
         
         Subroutine Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-            &NCfileNumtimesteps,NOofTS,arrayx,TSV,Allvalues,VarMissingValues,VarfILLValues)
+            &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
             
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)    
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -419,14 +404,12 @@
         Character*200:: NCDFContainer(MaxNumofFile,n)
         Character*50:: varnameinncdf(n)
         integer::iycoord,jxcoord,NCfileNumtimesteps(MaxNumofFile,n)
-        Double precision:: TimeMinPerFile(MaxNumofFile,n),TimeMaxPerFile(MaxNumofFile,n)
         character*50:: var_name
         Character*200::File_nameM
-        integer:: arrayx,Dt
+        integer:: arrayx
         integer:: ArrayStart,ArrayEnd,IsInputFromNC(n),rec
         Real:: Allvalues(arrayx,n)
         Real, allocatable :: AllVal(:)
-        Double precision:: TSV(arrayx,n)
         REAL:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
         Do i = 1,n 
             ArrayEnd=0
@@ -455,8 +438,8 @@
         
         End Subroutine
         
-        Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelEndDate,ModelStartDate,ModelStartHour,&
-        &ModelEndHour,nrefyr,nrefmo,nrefday,Year,Month,Day,Hour,ModelDt,InpVals,CurrentArrayPos,CurrentModelDT,istep)
+        Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
+        nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
         
         ! inputvarname (n) (input) Name of the variables that are provided inside inputcontrol.dat file
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)   
@@ -480,12 +463,11 @@
 
         Parameter(n=11)
         Character*200:: INPUTVARNAME(n)
-        integer::arrayx,ModelEndDate(3),ModelStartDate(3),Year,Month,Day,ArrayPos(n),istep
-        REAL:: Allvalues(Arrayx,n),ModelStartHour,ModelEndHour,modeldt,InpVals(n),dt
+        integer::arrayx,ModelStartDate(3),istep
+        REAL:: Allvalues(Arrayx,n),ModelStartHour,InpVals(n)
         Double precision:: TSV(Arrayx,n)
-        REAL:: Hour
         Double precision:: CurrentModelDT,RefJD
-        Double precision:: FileCurrentDT(n),FileNextDT(n),SJD,EJD,RefHour,SHOUR
+        Double precision:: FileCurrentDT(n),FileNextDT(n),SJD,RefHour,SHOUR
         Integer:: CurrentArrayPos(n),NextArrayPos(n),IsInputFromNC(n),nrefyr,nrefmo,nrefday
         integer:: NOOFTS(n)
         Double precision:: Tol
