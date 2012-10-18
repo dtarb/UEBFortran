@@ -75,8 +75,9 @@
                  Betab,Betad,Taub,Taud)                     ! Output variables: Transmission and Reflection fractions
 
     
-        REAL sitev(*),param(*),LAI,COSZEN,EXPI,G, kk
+        REAL sitev(*),param(*),LAI,COSZEN,G, kk
         REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
+        double precision EXPI, EXPINT
 
 
         Cc    = sitev(5)     ! Leaf Area Index 
@@ -163,7 +164,8 @@
                                param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
  
         REAL Ta,Tss,Tc,EmC,EmS,SBC,Fs,sitev(*),LAI,G
-        REAL Qlns,Qlnc,EXPI,kk,Beta,Betad,param(*)
+        REAL Qlns,Qlnc,kk,Beta,Betad,param(*)
+        double precision EXPI, EXPINT
 
 
         Cc    = sitev(5)     ! Leaf Area Index 
@@ -596,6 +598,7 @@
 !     Computes the exponential integral function for the given value      
         FUNCTION EXPINT (LAI)
         REAL LAI
+        double precision EXPINT
         DOUBLE PRECISION a0,a1,a2,a3,a4,a5,b1,b2,b3,b4
         IF (LAI.EQ.0)THEN
             EXPINT=1.                          
