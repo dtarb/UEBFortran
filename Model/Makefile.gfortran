@@ -1,4 +1,4 @@
-DEBUG = #-Wall 
+DEBUG = -Wall 
 
 FC=gfortran
 FFLAGS= ${DEBUG} -g3 -ffree-line-length-none -I/usr/include

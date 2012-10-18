@@ -40,12 +40,12 @@
         READ(1099,*,iostat=reason)AggoutHeading
 45000   Read(1099,*,iostat=reason, end=46000)filecode
         
-	    If(reason .eq. 0) then
-	        matched = .false.
-	        OUTname=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
-	        CALL lowercase(OUTname,OUTname)
-	        do i=1,n
-	           CALL lowercase(outSymbol(i),outSymbol(i))
+            If(reason .eq. 0) then
+                matched = .false.
+                OUTname=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
+                CALL lowercase(OUTname,OUTname)
+                do i=1,n
+                   CALL lowercase(outSymbol(i),outSymbol(i))
                if(OutName .eq. outSymbol(i))then
                     AggOutNum=AggOutNum+1
                     matched = .true.
@@ -83,13 +83,13 @@
         AOutNum=0
         ! Read until end of file
 35000      Read(10999,*,iostat=reason, end=36000)filecode
-    	   If(reason .eq. 0) then
-    	   matched = .false.
-    	   OUTname=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
-    	   CALL lowercase(OUTname,OUTname)
-    	   do i=1,n,1
-    	        CALL lowercase(outSymbol(i),outSymbol(i))
-    	        If(OutNum .le. AggOutNum)then
+           If(reason .eq. 0) then
+           matched = .false.
+           OUTname=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
+           CALL lowercase(OUTname,OUTname)
+           do i=1,n,1
+                CALL lowercase(outSymbol(i),outSymbol(i))
+                If(OutNum .le. AggOutNum)then
                     if(OutName .eq. trim(outSymbol(i)))then
                         AOutNum=AOutNum+1
                         AggOutVarnum(AOutNum)=i  !OutName

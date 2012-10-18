@@ -423,8 +423,8 @@
       ALLOCATE(Taveprevday(nstepday))
 !  Initialize Tsbackup and TaveBackup
       DO 3 i = 1,nstepday
-		Tsprevday(i)=-9999.
-		Taveprevday(i)=-9999.0
+                Tsprevday(i)=-9999.
+                Taveprevday(i)=-9999.0
  3    CONTINUE
 
       IF(ts_last .le. -9999.)THEN    
@@ -436,13 +436,13 @@
 
 !****************** To compute Ave.Temp (For Previous day temp.)  ******************************
 
-   	  Us   = statev(1)                  ! Ub in UEB
-      Ws   = statev(2)			        ! W in UEB
-	  Wc   = statev(4)
-	  Apr  = sitev(2)				    ! Atm. Pressure  (PR in UEB)
-      cg   = param(4)					! Ground heat capacity (nominally 2.09 KJ/kg/C)
-      rhog = param(8)					! Soil Density (nominally 1700 kg/m^3)
-      de   = param(11)				    ! Thermally active depth of soil (0.1 m)
+          Us   = statev(1)                  ! Ub in UEB
+      Ws   = statev(2)                          ! W in UEB
+          Wc   = statev(4)
+          Apr  = sitev(2)                                   ! Atm. Pressure  (PR in UEB)
+      cg   = param(4)                                   ! Ground heat capacity (nominally 2.09 KJ/kg/C)
+      rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
+      de   = param(11)                              ! Thermally active depth of soil (0.1 m)
       
       !  Glacier adjustment of ws
     IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
@@ -451,12 +451,12 @@
         WGT=1.0
     END IF
     
-	  Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
+          Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
       Taveprevday(nstepday) = Tave
       
 !   initialize variables for mass balance
       Ws1   = statev(2)
-	  Wc1   = statev(4)     
+          Wc1   = statev(4)     
       cumP = 0.
       cumEs = 0.
       cumEc = 0.
@@ -538,13 +538,13 @@
             CALL atf(atff,trange,month,dtbar,bca,bcc)
             IF(IRAD.EQ.0) THEN                     
                 INPT(5,1)=atff*IO*HRI
-    			  CALL cloud(param,atff,cf)   ! For cloudiness fraction
+                          CALL cloud(param,atff,cf)   ! For cloudiness fraction
             ELSE 
                If(QSIOBS .lt. 0) then
-		         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
-		         write(66,*)"at date",year,month,day,hour
-		         write(66,*)"was set to zero."
-                 QSIOBS=0	
+                         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
+                         write(66,*)"at date",year,month,day,hour
+                         write(66,*)"was set to zero."
+                 QSIOBS=0       
                Endif
 !      Need to call HYRI for horizontal surface to perform horizontal
 !      measurement adjustment
@@ -567,10 +567,10 @@
                !cf = 1.-atff/bca          ! Cf based on solar radiation measurement
             ENDIF
              
-		  IF(irad .lt. 2)THEN    
+                  IF(irad .lt. 2)THEN    
                 CALL qlif(TA,RH,TK,SBC,Ema,Eacl,cf,inpt(6,1) )
-		  Else
-				inpt(6,1)=qli
+                  Else
+                                inpt(6,1)=qli
           ENDIF 
 
           IRADFL=0                        ! Long wave or shortwave either measured and calculated
@@ -611,7 +611,7 @@
         statev(3)=Snowalb
        endif 
 !      iflag(5) = 4        ! yjs Surface temperature modeling method, read above from input file
-! 	   iflag(5)  model option for surface temperature approximation (This is read as a model parameter stmflag
+!          iflag(5)  model option for surface temperature approximation (This is read as a model parameter stmflag
 !              1) the Simple Gradient, almost the same as Original UEB,
 !              2) Simple Gradient approach with shallow snow correction. 
 !              3) The classical force-restore approach.
