@@ -294,7 +294,7 @@
          "int      ","ieff     ","Ur       ","SWEc     ","Tc       ", &
          "Tac      ","QHc      ","QEc      ","Ec       ","Qpc      ", &
          "Qmc      ","Mc       ","FMc      ","MassError","SWIGM    ", &
-         "SWISM    ","SWIR    "/)
+         "SWISM    ","SWIR     "/)
 
         OutUnits = (/ "unitless","unitless","unitless","unitless", &
            "deg C   ","m/hr    ","m/s     ","unitless","kJ/m2/hr", &
