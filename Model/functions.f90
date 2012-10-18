@@ -416,6 +416,7 @@ Subroutine NetCDFTimeArray(file_name,time_out,timelength)
 
 use netcdf
 integer, parameter :: NDIMS = 3
+integer :: dimlen3
 character (50) :: FILE_NAME, Var_name="time"
 integer :: start(NDIMS), count(NDIMS),VarId
 integer:: i
