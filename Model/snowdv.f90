@@ -189,7 +189,7 @@
          "int      ","ieff     ","Ur       ","SWEc     ","Tc       ", &
          "Tac      ","QHc      ","QEc      ","Ec       ","Qpc      ", &
          "Qmc      ","Mc       ","FMc      ","MassError","SWIGM    ", &
-         "SWISM    ","SWIR    "/)
+         "SWISM    ","SWIR     "/)
          
 !  Constant data set
       data to /0.0/        !  Temperature of freezing (0 C)a
@@ -715,7 +715,7 @@
     toutnc=toutnc+tresult-tlast
     tlast=tresult
     numgrid=numgrid+1
-    write(6,FMT="(A1,A,t30,F6.2$,A)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
+    write(6,FMT="(A1,A,t30,F6.2,A$)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
     
        END DO  !  These are the end of the space loop
      END DO
