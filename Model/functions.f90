@@ -32,13 +32,14 @@
 
 !!==================3-D netcdf file reading starts and reads a single value ata time=============================================
 Subroutine nCDF3DRead (file_name,Var_name,SingleArray,i,j,rec)
+
 !Task: provides the value of a variable for a particular x- and y-coordinate
 !file_name (in) 2-D netccdf file name
 !varname (in) variable name 
 !SingleArray (output) array that holds the value
 !i (in) partcular y-coordinate
 !j (in) partcular x-coordinate
-
+Implicit None
 use netcdf
 
 integer, parameter :: NDIMS = 3 
@@ -73,7 +74,7 @@ Subroutine nCDF3DArrayInfo (FILE_NAME,dimlen2,dimlen1,dimlen3)
 !Dimlen2 (out) length of y-coordinate
 !dimlen1 (out) length of x-coordinate
 !dimlen3 (out) length of time steps
-
+Implicit None
 use netcdf
 character (len = *), parameter :: LAT_NAME = "ycoord"
 character (len = *), parameter :: LON_NAME = "xcoord"
@@ -101,7 +102,7 @@ Subroutine nCDF2DRead(file_name,varname,SingleArray,i,j)
 !SingleArray (output) array that holds the value
 !i (in) partcular y-coordinate
 !j (in) partcular x-coordinate
-
+Implicit None
 use netcdf
 
 integer, parameter :: NDIMS = 2 
@@ -141,6 +142,7 @@ Subroutine nCDF3DTimeRead(file_name,time_pos,time_val,numTimeStep,syear,smonth,s
 !!  Note - the first call of this should have time_pos as 1 to determine numTimeStep. 
 !!  Thereafter it is responsibility of calling program to not input a time_pos greater than numTimeStep
 
+Implicit None
 use netcdf
 
 ! integer, parameter :: NDIMS = 3 
@@ -229,7 +231,7 @@ Subroutine nCDF2DArrayInfo(FILE_NAME,dimlen2,dimlen1)
 !FILE_NAME (in) 2-D netccdf file
 !Dimlen2 (out) length of y-coordinate
 !dimlen1 (out) length of x-coordinate
-
+Implicit None
 use netcdf
 !character (len = *), parameter :: LAT_NAME = "ycoord"
 !character (len = *), parameter :: LON_NAME = "xcoord"
@@ -260,7 +262,7 @@ Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingVa
 !WatershedVARID (in) vaiable ID (in this case watershed variable ID)
 !WsMissingValues (out) missing value attribute for a variable in a netCDF 
 !WsFillValues (out) missing value attribute in a netCDF 
-
+Implicit None
 use netcdf
 integer, parameter :: NDIMS = 2
 integer:: dimlen1, dimlen2,WSVarId
@@ -323,7 +325,7 @@ SUBROUTINE JULDAT (I,M,K,H,TJD)
 !K = DAY OF MONTH (IN)
 !H = UT HOURS (IN)
 !TJD = JULIAN DATE (OUT)
-
+Implicit None
 DOUBLE PRECISION H,TJD
 Integer:: I,M,K
 !JD=JULIAN DAY NO FOR DAY BEGINNING AT GREENWICH NOON ON GIVEN DATE
@@ -346,7 +348,7 @@ SUBROUTINE CALDAT (TJD,I,M,K,H)
 !M = MONTH NUMBER (OUT)
 !K = DAY OF MONTH (OUT)
 !H = UT HOURS (OUT)
-
+Implicit None
 DOUBLE PRECISION TJD,H,DJD,DMOD
 Integer:: I,M,K
 DJD = TJD + 0.5D0
@@ -370,7 +372,7 @@ END
 
 !====================Sorrting function===========================
 SUBROUTINE SSORT (X, IY, N)
- 
+Implicit None
 !Source: http://www.personal.psu.edu/jhm/f90/lectures/28.html
 
 !      Description of Parameters
@@ -413,7 +415,7 @@ Subroutine NetCDFTimeArray(file_name,time_out,timelength)
 !file_name (in) 2-D netccdf file
 !time_out (out) array that holds all the time dimension values
 !timelength (out) the length of time dimension
-
+Implicit None
 use netcdf
 integer, parameter :: NDIMS = 3
 integer :: dimlen3
@@ -476,7 +478,7 @@ subroutine lowercase(str,lcstr)
 !Task: converts a upper case (capital)/mixed string to a lower case string
 !Str (in) string that needs to be converted to loer class
 !lcstr (out) string after lower class conversion
-
+Implicit None
 
 character (len=*):: str
 character (len=len_trim(str)):: lcstr
@@ -528,7 +530,7 @@ Subroutine SpatialCoordinate(File_name,dimlen1,dimlen2,DimName1,DimName2,DimValu
 ! DimValue2(out) values in dimension (lat) 1
 ! DimUnit1(out) unit of dimension (lon) 1
 ! DimUnit2(out) unit of dimension (lat) 2
-
+Implicit None
 use netcdf
 character (50) :: FILE_NAME
 character (50):: DimName1,DimName2
@@ -560,7 +562,7 @@ End Subroutine SpatialCoordinate
 
 SubRoutine NCDFReadAllTS(file_name,Var_name,AllVal,iycoord,jxcoord,rec)
 use netcdf
-
+Implicit None
 integer, parameter :: NDIMS = 3 
 character (50) :: FILE_NAME, Var_name
 integer :: start(NDIMS), count(NDIMS),VarId

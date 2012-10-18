@@ -38,9 +38,10 @@
 !bca (out) A in Bristow-Campbell formula for atmospheric transmittance
 !bcc (out) C in Bristow-Campbell formula for atmospheric transmittance
 !vfile (in0 file that stores paramter values
-
+        Implicit None
         Character (100) ParamHeading
         CHARACTER*15 filecode, ParamName
+        integer::n
         parameter(n = 34)
         CHARACTER(10), DIMENSION(n) :: ParamSymbol
         Real ParamValue(n), param(*), bca, bcc
@@ -48,7 +49,7 @@
         CHARACTER*200 vfile
         ! define loop parameter
         integer reason
-        integer matched
+        integer matched,i
         ParamSymbol = (/ "irad    ","ireadalb","tr      ","ts      ", &
               "ems     ","cg      ","z       ","zo      ","rho     ", &
               "rhog    ","lc      ","ks      ","de      ","avo     ", &
@@ -104,6 +105,8 @@
     ! dimlen1 (input) - latitude dimension (number of rows) in netcdf grid covering the model domain
     ! ilat (input) - latitude (row) index of the site where data is to be read and returned (from outside loop over space)
     ! jlat (input) - longitude (col) index of the site where data is to be read and returned (from outside loop over space)
+      Implicit None
+      integer:: n,i
       PARAMETER(n=32)
       integer:: reason,matched,isVarFromNC(n),subtype            
       integer:: ilat,jlon

@@ -31,7 +31,8 @@
 !**********************************************************************************************  
 
 subroutine checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
-
+Implicit None
+integer::n,m,i
 parameter(n=32,m=11)
 Character*200:: svfile
 Character*200:: SVname,SiteHeading,SVcode,StateSiteVName(n),StateSiteNCFile,StateSiteV
@@ -89,8 +90,9 @@ integer:: matched,x,totalNC
   End Subroutine checks
   
   subroutine NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile)
-  
         Use netCDF
+        Implicit None
+        integer::n,m,i,j,ii
         parameter(n=32,m=11)
         Character*200:: StateSiteVName(n)
         integer:: MaxNumofFile,dimlen2,dimlen1,dimlen3,dimlen4
