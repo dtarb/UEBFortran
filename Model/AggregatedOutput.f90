@@ -30,6 +30,7 @@
 !
 !**********************************************************************************************           
         Subroutine AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
+        Implicit None
         integer, parameter:: n=66
         character* 200:: AggOutControl, outSymbol(n),AggoutHeading,filecode,OUTname
         Integer:: AggOutNum,reason
@@ -63,6 +64,7 @@
         
         
         Subroutine AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum)
+        Implicit None
         use netCDF
         
         integer, parameter:: n=66
@@ -136,6 +138,7 @@
         End Subroutine AggOutWSUniqueID
          
         Subroutine WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray)
+        Implicit None
         use netcdf
         
         integer:: dimlen1,dimlen2

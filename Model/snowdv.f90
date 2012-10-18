@@ -47,6 +47,15 @@
 
       ! for netCDF declaration
       use netcdf
+      Implicit None
+      integer::nsv,npar,nxv,niv,nov
+      real::to,tk,sbc,hf,hneu,cw,cs,cp,rag,k,hff,rhoi,rhow,pi,narg,UTCOFFSET,ETIME,g,w1day,dt
+      integer::NUMTIMESTEP,NREFYR,NREFMO,NREFDAY
+      REAL::us,ws,wc,apr,cg,rhog,de,tave,ws1,wc1,cump,cumes,cumec,cummr,numop,ta,p,v,rh,tmin,tmax,TRANGE,QSIOBS,QG,QLI
+      real::tavg,qnetob,snowalb,coszen,atff,cf,hri,atfimplied,ema,eacl,iradfl,dstorage,ERRMBAL,HRI0
+      integer:: juniqueid,ivar
+      integer::month
+      integer::ii,iycoord,jxcoord,iunit,totaldday,NSTEPDAY,i
       PARAMETER(nsv=10,npar=32,nxv=6,niv=8,nov=14)
       integer :: OutCount,ioutv,totalgrid,numgrid
       integer, parameter :: NDIMS = 3

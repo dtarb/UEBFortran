@@ -128,7 +128,7 @@
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
         Use netCDF
-        
+        Implicit None
         parameter(n=11)                                         !n is  loop variable
         integer:: IsInputFromNC(n), reason, NumNCFiles(n),nrefyr,nrefmo,nrefday,count
         integer::syear,smonth,sday,first
@@ -308,7 +308,7 @@
         ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. Time from TS files are stored as
         !                          julian and Time from NC files are stored as day/hour from the reference date (time unit in NC).
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
-        
+        Implicit None
         use netcdf
         Parameter(n=11)
         integer:: arrayx
@@ -400,7 +400,7 @@
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
-        
+        Implicit None
         Parameter(n=11)
         integer:: MaxNumofFile,NOofTS(n),NUMNCFILES(n)
         Character*200:: NCDFContainer(MaxNumofFile,n)
@@ -442,7 +442,7 @@
         
         Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
         nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
-        
+        Implicit None
         ! inputvarname (n) (input) Name of the variables that are provided inside inputcontrol.dat file
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)   
         ! NoofTS(n) (input).  The number of combined NC time steps for each variable
