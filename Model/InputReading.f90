@@ -33,7 +33,9 @@
 ! ============================== This subroutine reads the values from input control file ========================================
 
  subroutine InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
+   implicit none
  
+   integer :: n
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! inputvarname (output) Name of the variables that are provided inside inputcontrol.dat file
