@@ -110,8 +110,9 @@
        else
            Taubh =  EXP(- kk*G*Rho*Hcan/COSZEN)                 ! Transmission function for deep canopy : Direct
        endif
-         Taudh =  (1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
-              (kk*G*Rho*Hcan)**2*EXPI                     ! Transmission function for deep canopy : Diffuse
+        ! FIXME: check the loss of precision fro
+          Taudh =  real((1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
+              (kk*G*Rho*Hcan)**2*EXPI)                     ! Transmission function for deep canopy : Diffuse
          Beta   = (1-kk)/(1+kk)                                ! BetaPrime : reflection coefficient for infinitely deep canopy
 
 !     Finite Canopy Solution
@@ -201,8 +202,10 @@
         EXPI  = EXPINT(kk*G*LAI)                        
 
 !     Deep canopy solution
-         Taudh =  (1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
-              (kk*G*Rho*Hcan)**2*EXPI                               ! Transmission function for deep canopy : Diffuse
+
+        ! FIXME: check the loss of precision fro
+         Taudh =  real((1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
+              (kk*G*Rho*Hcan)**2*EXPI)                               ! Transmission function for deep canopy : Diffuse
 
 !        Finite canopy solution
          Taud   = (Taudh-Beta**2*Taudh) /(1-Beta**2*Taudh**2)         ! Transmission function for finite canopy depth
@@ -545,7 +548,9 @@
 
 !       Unloading rate
         
-        Ur = Uc*(Wc+(int*dt)/2)       ! Melt and Evap. are subtracted 
+      ! FIXME: uc is double and ur is passed in and is likely real.
+      ! does uc really need to be double?
+        Ur = real(Uc*(Wc+(int*dt)/2))       ! Melt and Evap. are subtracted 
                                           ! half of the current interception is also considered for unloading
         RETURN  
         END

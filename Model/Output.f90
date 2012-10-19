@@ -79,10 +79,10 @@
         Call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3) &
         ,MEndHour,JMED) !JMED= julian model start date-time
      
-        netCDFDataValPerfile=1.5*1000*1000*1000/5.5   !  Determined experimentally
+        netCDFDataValPerfile=int(1.5*1000*1000*1000/5.5) !  Determined experimentally
         !netCDFDataValPerfile=1.5*1000*50/5.5   !   Small for debugging
         tol=5./(60.*24.)     !  5 min tolerance
-        NumTimeStep=(((JMED+tol-JMSD)/(Modeldt/24)) + 1)
+        NumTimeStep=int(((JMED+tol-JMSD)/(Modeldt/24)) + 1)
         ntsperfile=max(netCDFDataValPerfile/(dimlen1*dimlen2),1)
         NumofFile=NumTimeStep/ntsperfile+1  ! The +1 is to round up integer calculation
         NumOutPoint=0
@@ -166,7 +166,7 @@
          "SWISM    ","SWIR     "/)
      
         if( NumofFile .gt. 1)then
-            netCDFDataValPerfile=1.5*1000*1000*1000/5.5   !  Determined experimentally
+            netCDFDataValPerfile=int(1.5*1000*1000*1000/5.5) !  Determined experimentally
             !netCDFDataValPerfile=1.5*1000*50/5.5   !   Small for debugging
             ntsperfile=max(netCDFDataValPerfile/(dimlen1*dimlen2),1)
             lastfilents=NumTimeStep-(NumofFile-1)*ntsperfile

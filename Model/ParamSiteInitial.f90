@@ -45,7 +45,7 @@
         parameter(n = 34)
         CHARACTER(10), DIMENSION(n) :: ParamSymbol
         Real ParamValue(n), param(*), bca, bcc
-        integer:: irad, ireadalb
+        real :: irad, ireadalb
         CHARACTER*200 vfile
         ! define loop parameter
         integer reason
@@ -108,9 +108,9 @@
       Implicit None
       integer:: n,i
       PARAMETER(n=32)
-      integer:: reason,matched,isVarFromNC(n),subtype            
+      integer:: reason,matched,isVarFromNC(n)            
       integer:: ilat,jlon
-      real param(32)
+      real param(32),subtype
       REAL statev(6),sitev(10),slope,azi,lat, StateSiteValue(n), &
            SingleArray(1), vardefaults(n), dtbar(12),ts_last,longitude
       !REAL, DIMENSION(16):: vardefaults

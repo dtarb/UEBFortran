@@ -50,10 +50,10 @@
       Implicit None
       integer::nsv,npar,nxv,niv,nov
       real::to,tk,sbc,hf,hneu,cw,cs,cp,rag,k,hff,rhoi,rhow,pi,narg,UTCOFFSET,ETIME,g,w1day,dt
-      integer::NUMTIMESTEP,NREFYR,NREFMO,NREFDAY
-      REAL::us,ws,wc,apr,cg,rhog,de,tave,ws1,wc1,cump,cumes,cumec,cummr,numop,ta,p,v,rh,tmin,tmax,TRANGE,QSIOBS,QG,QLI
-      real::tavg,qnetob,snowalb,coszen,atff,cf,hri,atfimplied,ema,eacl,iradfl,dstorage,ERRMBAL,HRI0
-      integer:: juniqueid,ivar
+      integer::NUMTIMESTEP,NREFYR,NREFMO,NREFDAY,NumOP
+      REAL::us,ws,wc,apr,cg,rhog,de,tave,ws1,wc1,cump,cumes,cumec,cummr,ta,p,v,rh,tmin,tmax,TRANGE,QSIOBS,QG,QLI
+      real::tavg,qnetob,snowalb,coszen,atff,cf,hri,atfimplied,ema,eacl,dstorage,ERRMBAL,HRI0
+      integer:: juniqueid,ivar,iradfl
       integer::month
       integer::ii,iycoord,jxcoord,iunit,totaldday,NSTEPDAY,i
       PARAMETER(nsv=10,npar=32,nxv=6,niv=8,nov=14)
@@ -324,7 +324,9 @@
         tcomp=0.
         tout=0.
         tagg=0.
-        tlast=tresult
+        ! EBo 2012/10/19 -- tlast was set to tresult which was not set
+        ! yet. TNCCreate makes the most sense here.
+        tlast=TNCCreate
        totalgrid=dimlen1*dimlen2     
 !      Start loop over space
        numgrid=0
@@ -341,7 +343,8 @@
        CALL Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
             &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
 
-       StepInADay=24/modeldt     
+       ! FIXME: what if the result is fractional
+       StepInADay=int(24/modeldt)
        If (inputvarname(5) .NE. 'tmin')THEN
             NoofTS(5)=NoofTS(1)
             TSV(1:arrayx,5)=TSV(1:arrayx,1)
@@ -402,7 +405,9 @@
 
 !  Block of code to replicate variables from UEBVeg before time loop
        dt=Modeldt
-      nstepday=24/dt
+
+       ! FIXME: what if the result is fractional
+       nstepday=int(24/dt)
 
       ALLOCATE(Tsprevday(nstepday))
       ALLOCATE(Taveprevday(nstepday))
