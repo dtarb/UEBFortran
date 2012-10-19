@@ -35,7 +35,7 @@
  subroutine InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
    implicit none
  
-   integer :: n
+   integer :: n, i, xx, MaxNumofFile, count
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! inputvarname (output) Name of the variables that are provided inside inputcontrol.dat file
@@ -129,6 +129,7 @@
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
         Use netCDF
         Implicit None
+        integer :: n, i, ii, iii, xx, k, kflag, ncidout, NumTimeStepEachNC, MaxNumofFile, InputVarId
         parameter(n=11)                                         !n is  loop variable
         integer:: IsInputFromNC(n), reason, NumNCFiles(n),nrefyr,nrefmo,nrefday,count
         integer::syear,smonth,sday,first
@@ -308,8 +309,9 @@
         ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. Time from TS files are stored as
         !                          julian and Time from NC files are stored as day/hour from the reference date (time unit in NC).
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
-        Implicit None
         use netcdf
+        Implicit None
+        integer :: n, i, k, FileCount, NumTimeStepEachNC
         Parameter(n=11)
         integer:: arrayx
         integer:: VarID,ncidout
@@ -401,6 +403,7 @@
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
         Implicit None
+        integer :: n, i, jj, k
         Parameter(n=11)
         integer:: MaxNumofFile,NOofTS(n),NUMNCFILES(n)
         Character*200:: NCDFContainer(MaxNumofFile,n)
@@ -463,6 +466,7 @@
         ! CurrentModelDT (input) current model timestep in julian
         ! istep (input) Current model time position
 
+        integer :: n, i
         Parameter(n=11)
         Character*200:: INPUTVARNAME(n)
         integer::arrayx,ModelStartDate(3),istep

@@ -33,7 +33,7 @@
         Implicit None
         integer, parameter:: n=66
         character* 200:: AggOutControl, outSymbol(n),AggoutHeading,filecode,OUTname
-        Integer:: AggOutNum,reason
+        Integer:: AggOutNum,reason, i
         logical:: matched
         AggOutNum=0
 
@@ -64,15 +64,15 @@
         
         
         Subroutine AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum)
-        Implicit None
         use netCDF
+        Implicit None
         
         integer, parameter:: n=66
         character*200:: AggOutControl, outSymbol(n),AggoutHeading,OutName,filecode,Watershedfile,WatershedVARID
         integer::AggOutNum,OutNum,Reason,dimlen2,dimlen1,AOutNum
         Logical:: matched,found
         Character*200:: AggOutVar(AggOutNum)
-        integer:: AggOutVarnum(AggOutNum)
+        integer:: AggOutVarnum(AggOutNum), i, j
         integer:: IDVALUEDim,uniqueIDNumber,ncidout,WSVarId
         integer,dimension(:,:),allocatable:: IDVALUE
         integer,dimension(:),allocatable:: IDVALUEAllocate
@@ -138,15 +138,15 @@
         End Subroutine AggOutWSUniqueID
          
         Subroutine WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray)
-        Implicit None
         use netcdf
+        Implicit None
         
         integer:: dimlen1,dimlen2
         integer, parameter:: n=66
         character*200:: Watershedfile,WatershedVARID
         integer:: IDVALUEDim,uniqueIDNumber,ncidout,WSVarId
         logical:: found
-        integer:: UniqueIDArray(uniqueIDNumber)
+        integer:: UniqueIDArray(uniqueIDNumber), i, j
         integer,dimension(:,:),allocatable:: IDVALUE
         integer,dimension(:),allocatable:: IDVALUEAllocate
         IDVALUEDim=dimlen2*dimlen1
