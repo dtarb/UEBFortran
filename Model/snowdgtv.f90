@@ -133,7 +133,7 @@
     real taveprevday(*)
     integer iTsMethod       !yjs Add model time initialization 09/19/2000
     integer windfl
-    REAL::SWIT,SWISM, SWIR,SWIGM
+    REAL::SWIT,SWISM, SWIR,SWIGM,mm,LAI,Lambda
       Real OutArr(53)
         common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
@@ -1035,7 +1035,7 @@ SWISM=SWIT-SWIGM-SWIR
 
 !*****************  UPDATING THE MASS BALANCE AT CANOPY
 
-12      FMc = int-Ec-Mc-Ur
+      FMc = int-Ec-Mc-Ur
 
 !*****************  UPDATING THE MASS and ENERGY BALANCE AT SUB-CANOPY
 
@@ -1089,6 +1089,7 @@ SWISM=SWIT-SWIGM-SWIR
         REAL sitev(*)
         real mtime(*)
         integer iTsMethod
+        real iterC, lans, lang
 
 !     common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
@@ -1363,7 +1364,7 @@ SWISM=SWIT-SWIGM-SWIR
         endif
 
 !     Here do the bisection
-       niter = log((Tub-Tlb)/tol)/log(2.)   ! Number of iterations needed for temperature tolerance
+       niter = int(log((Tub-Tlb)/tol)/log(2.)) ! Number of iterations needed for temperature tolerance
          do iter  =1,niter
            Tssk = 0.5*(tub+tlb)
            F1   = SURFEBsc(Tssk,Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
@@ -1440,7 +1441,15 @@ SWISM=SWIT-SWIGM-SWIR
            Qpcin, Rkinsc,Vz,Tssk,Tk,Tak,EA,RHO,Fs,   &
            tave,SmeltC)
         
-                                                                          
+        ! FIXME: all these functions should have implicit none set
+        !implicit none ! type mismatches...
+
+        !real tck, wc, a, p, ta, v, rh, qsi, atff, cf, qli, coszen
+        !real emc, ems, iradfl, qnetob, qpcin, rkinsc, vz, tk, tak, ea
+        !real rho, fs, tave 
+
+        real lang, lans
+
         real Tssk,k, SmeltC
         REAL param(*)
         REAL sitev(*)
@@ -1563,7 +1572,7 @@ SWISM=SWIT-SWIGM-SWIR
         endif
 
 !     Here do the bisection
-       niter = log((Tub-Tlb)/tol)/log(2.)   ! Number of iterations needed for temperature tolerance
+       niter = int(log((Tub-Tlb)/tol)/log(2.))   ! Number of iterations needed for temperature tolerance
          do iter  =1,niter
            Tck = 0.5*(tub+tlb)
            F1   = SURFEBc(Tck,Wc,A,P,Ta,V,RH,Fs,Cf,Qli, &
@@ -1620,13 +1629,24 @@ SWISM=SWIT-SWIGM-SWIR
       FUNCTION SURFEBsc(Tssk, Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
      Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
         Qp, Rkinc,Rkinsc,Vz,Tck,EA, &
-        FkappaS,RHO,TherC,tave,refDepth)                                                                 ! Heat and vapor conductance for neutral
+        FkappaS,RHO,TherC,tave,refDepth)  ! Heat and vapor conductance for neutral
+        implicit none
 
         real param(*),sitev(*)
         integer iTsMethod,Iradfl
         real LanS, LanG,LanE,LanE_Ze, LanE_de, LanE_ze2,LanE_de2
         real cg,rho,rhog,rd1,fkappas,TherC
-      real tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave,TsAvek
+        real tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave,TsAvek
+
+        real ea, tck, vz, rkinsc, rkinc, qp, qnetob, ems, emc
+        real coszen, atff, qsi, qli, cf, fs, rh, v, ta, p, a
+        real wc, ws, us, tssk, dt, tave, refdepth, apr, betab
+        real betad, cc, cp, cs, d, d1, de, de2, dlf, ec, e
+        real esc, ess, fkappag, hcan, lai, qcs, qe, qec, qes
+        real qh, qhc, qhs, qlnc, qps, qsib, es, hneu, qlns
+        real qsid, qsnc, qsns, rag, rhow, sbc, tac, taub, taud
+        real taufb, taufd, tk, w1day, wlf, z, z0c, ze, ze2, zo
+        real zs, surfebsc, svp
 
 !       common /ts_save/ ts_old, tave_old, Ts_ave, Tave_ave 
          common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
@@ -1659,6 +1679,10 @@ SWISM=SWIT-SWIGM-SWIR
 
         Zs     =  Ws*rhow/rho                   ! Snow Depth  
         Tsavek = Tave + Tk
+
+        ! FIXME: Qps is uninitialized and I have no idea what to set it to
+        ! setting to 0.0 for now
+        Qps=0.0 ! EBo -- define properly
       Qp     =  Qps
 
 
@@ -1860,7 +1884,8 @@ SWISM=SWIT-SWIGM-SWIR
                             SURFEBc = QSNc+QLNc+QPc+QHc+QEc
               
                         ELSE
-                            surfeb = surfeb + qnetob
+                            ! FIXME: "surfeb = surfeb + qnetob" probablyu should be surfebc
+                            surfebc = surfebc + qnetob
                 ENDIF
 
         RETURN
@@ -1876,6 +1901,7 @@ SWISM=SWIT-SWIGM-SWIR
 
         REAL k,RH, Qps,Qnetob,param(*),sitev(*)
         INTEGER Iradfl
+        real LAI
 
         data tk /273.15/     !  Temperature to convert C to K (273.15)
         data Rag /287.0/     !  Ideal Gas constant for dry air (287 J/kg/K) (name changed)
