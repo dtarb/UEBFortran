@@ -39,14 +39,14 @@ Subroutine nCDF3DRead (file_name,Var_name,SingleArray,i,j,rec)
 !SingleArray (output) array that holds the value
 !i (in) partcular y-coordinate
 !j (in) partcular x-coordinate
-Implicit None
 use netcdf
+Implicit None
 
 integer, parameter :: NDIMS = 3 
 integer:: nDimensions, nVariables, nAttributes
 character (50) :: FILE_NAME, Var_name
 integer :: start(NDIMS), count(NDIMS),VarId
-integer:: i, j, rec
+integer:: i, j, rec, ncidout
 real, dimension(1):: SingleArray  
 
 count = (/ 1, 1, 1 /)
@@ -74,13 +74,13 @@ Subroutine nCDF3DArrayInfo (FILE_NAME,dimlen2,dimlen1,dimlen3)
 !Dimlen2 (out) length of y-coordinate
 !dimlen1 (out) length of x-coordinate
 !dimlen3 (out) length of time steps
-Implicit None
 use netcdf
+Implicit None
 character (len = *), parameter :: LAT_NAME = "ycoord"
 character (len = *), parameter :: LON_NAME = "xcoord"
 character (len = *), parameter :: REC_NAME = "time"
 integer, parameter :: NDIMS = 3
-integer:: nDimensions, nVariables, nAttributes, dimlen1, dimlen2, dimlen3
+integer:: nDimensions, nVariables, nAttributes, dimlen1, dimlen2, dimlen3, ncidout
 character (20) :: dimname1,  dimname2, dimname3
 character (50) :: FILE_NAME
 
@@ -102,11 +102,11 @@ Subroutine nCDF2DRead(file_name,varname,SingleArray,i,j)
 !SingleArray (output) array that holds the value
 !i (in) partcular y-coordinate
 !j (in) partcular x-coordinate
-Implicit None
 use netcdf
+Implicit None
 
 integer, parameter :: NDIMS = 2 
-integer:: nDimensions, nVariables, nAttributes, VarID
+integer:: nDimensions, nVariables, nAttributes, VarID, ncidout
 character (50) :: varname
 character (50) :: FILE_NAME
 integer :: start(NDIMS), count(NDIMS)
@@ -142,14 +142,14 @@ Subroutine nCDF3DTimeRead(file_name,time_pos,time_val,numTimeStep,syear,smonth,s
 !!  Note - the first call of this should have time_pos as 1 to determine numTimeStep. 
 !!  Thereafter it is responsibility of calling program to not input a time_pos greater than numTimeStep
 
-Implicit None
 use netcdf
+Implicit None
 
 ! integer, parameter :: NDIMS = 3 
 integer:: numTimeStep
 character (50) :: FILE_NAME, Rec_name="time"
 ! integer :: start(NDIMS), count(NDIMS)
-integer :: VarId
+integer :: VarId, isep1, isep2, isep3, ncidout
 integer start1(1),count1(1),time_pos
 character (len = *), parameter :: UNITS = "units"
 Double precision:: time_val(1)
@@ -231,12 +231,12 @@ Subroutine nCDF2DArrayInfo(FILE_NAME,dimlen2,dimlen1)
 !FILE_NAME (in) 2-D netccdf file
 !Dimlen2 (out) length of y-coordinate
 !dimlen1 (out) length of x-coordinate
-Implicit None
 use netcdf
+Implicit None
 !character (len = *), parameter :: LAT_NAME = "ycoord"
 !character (len = *), parameter :: LON_NAME = "xcoord"
 integer, parameter :: NDIMS = 2
-integer:: dimlen1, dimlen2
+integer:: dimlen1, dimlen2, ncidout
 character (20) :: dimname1,  dimname2
 character (200) :: FILE_NAME
 
@@ -262,15 +262,16 @@ Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingVa
 !WatershedVARID (in) vaiable ID (in this case watershed variable ID)
 !WsMissingValues (out) missing value attribute for a variable in a netCDF 
 !WsFillValues (out) missing value attribute in a netCDF 
-Implicit None
 use netcdf
+Implicit None
 integer, parameter :: NDIMS = 2
+integer :: wsfillvalues, iii
 integer:: dimlen1, dimlen2,WSVarId
 character (20) :: dimname1,  dimname2
 character (50) :: FILE_NAME
 character (50) :: WatershedVARID
 character (len = *), parameter :: missing_value = "missing_value",fillvalue="_FillValue"
-integer::numAtts
+integer::numAtts, ncidout
 character (len = 50):: AttName
 real::WSMissingValues
 !Open the file and see hats inside
@@ -326,7 +327,7 @@ SUBROUTINE JULDAT (I,M,K,H,TJD)
 !H = UT HOURS (IN)
 !TJD = JULIAN DATE (OUT)
 Implicit None
-DOUBLE PRECISION H,TJD
+DOUBLE PRECISION H,TJD,JD
 Integer:: I,M,K
 !JD=JULIAN DAY NO FOR DAY BEGINNING AT GREENWICH NOON ON GIVEN DATE
 JD = K-32075+1461*(I+4800+(M-14)/12)/4+367*(M-2-(M-14)/12*12)/12-3*((I+4900+(M-14)/12)/100)/4
@@ -349,8 +350,7 @@ SUBROUTINE CALDAT (TJD,I,M,K,H)
 !K = DAY OF MONTH (OUT)
 !H = UT HOURS (OUT)
 Implicit None
-DOUBLE PRECISION TJD,H,DJD,DMOD
-Integer:: I,M,K
+DOUBLE PRECISION TJD,H,DJD,DMOD,JD,L,N,I,M,K
 DJD = TJD + 0.5D0
 JD = DJD
 H = DMOD (DJD,1.D0)*24 ! 24.D0
@@ -415,8 +415,8 @@ Subroutine NetCDFTimeArray(file_name,time_out,timelength)
 !file_name (in) 2-D netccdf file
 !time_out (out) array that holds all the time dimension values
 !timelength (out) the length of time dimension
-Implicit None
 use netcdf
+Implicit None
 integer, parameter :: NDIMS = 3
 integer :: dimlen3
 character (50) :: FILE_NAME, Var_name="time"
@@ -427,14 +427,14 @@ integer:: dimlen2,dimlen1
 integer timelength
 Double precision :: JDS
 Double precision, dimension(:), allocatable :: time_in
-double precision time_out(timelength)
+double precision time_out(timelength), ys
 
 !Double precision:: time_in(dimlen3),time_out(dimlen3)
 integer, parameter :: MAX_ATT_LEN = 100
 character*(MAX_ATT_LEN) :: time_units_in
-integer :: att_len
+integer :: att_len, ncidout
 character*50:: CharYear, CharMonth, CharDay, CharHour
-real::  shour,as,ys,ms
+double precision::  shour,as,ms, sday,smonth,syear
 
 count = (/ 1, 1, 1 /)
 start = (/ 1, 1, 1 /)
@@ -460,7 +460,8 @@ read (CharMonth,*)smonth
 read (CharDay,*)sday
 read (CharHour,*)shour
 as=(14.0-Smonth)/12.0
-ys=Syear+4800.-a
+! FIXME: the following line read "ys=Syear+4800.-a" changing to as
+ys=Syear+4800.-as
 ms=Smonth+12.*as-3.
 JDS=Sday+(153.*ms+2.)/5.+365.*ys+ys/4.-ys/100.+ys/400.-32045.+(Shour-12.)/24.
 
@@ -482,6 +483,7 @@ Implicit None
 
 character (len=*):: str
 character (len=len_trim(str)):: lcstr
+integer :: i, iav, ilen, ioffset, iqc, iquote
 
 ilen=len_trim(str)
 ioffset=iachar('A')-iachar('a')
@@ -530,8 +532,8 @@ Subroutine SpatialCoordinate(File_name,dimlen1,dimlen2,DimName1,DimName2,DimValu
 ! DimValue2(out) values in dimension (lat) 1
 ! DimUnit1(out) unit of dimension (lon) 1
 ! DimUnit2(out) unit of dimension (lat) 2
-Implicit None
 use netcdf
+Implicit None
 character (50) :: FILE_NAME
 character (50):: DimName1,DimName2
 integer, parameter :: MAX_ATT_LEN = 100
@@ -566,7 +568,7 @@ Implicit None
 integer, parameter :: NDIMS = 3 
 character (50) :: FILE_NAME, Var_name
 integer :: start(NDIMS), count(NDIMS),VarId
-integer:: iycoord,jxcoord, rec
+integer:: iycoord,jxcoord, rec, ncidout
 real, dimension(rec):: AllVal  
 count = (/ 1, 1, rec /)
 start = (/ 1, 1, 1 /)
