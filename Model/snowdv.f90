@@ -71,7 +71,7 @@
       CHARACTER*200 MainHeading
       Character*50 varnameinncdf(11)
       CHARACTER*200 pfile,inputcon,StateSiteVName(32)
-      CHARACTER* 200 Watershedfile,AggOutControl,AggdOutput
+      CHARACTER*200 Watershedfile,AggOutControl,AggdOutput
       CHARACTER*200 afile
       INTEGER YEAR,DAY,iflag(6)                        ! Pass a flag to control surface temperature modeling 
       REAL IO, LAT,Ts_last
@@ -158,7 +158,6 @@
        Integer:: MYEAR,MMONTH,MDAY
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
        integer::modx,totaldayMOne,totalDay,StepInADay,gg
-       REAL:: TNCCreate,TInputCheck
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
       ! differences and conforms to later Fortran-2003 standards.
@@ -259,9 +258,10 @@
       allocate(DimValue2(dimlen2))
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
       
-      TInputCheck = ETIME(tarray)
-      write(6,*)'Time to check inputs',TInputCheck
-      write(636,*)'Check Inputs',TInputCheck, ' seconds'
+      tresult = ETIME(tarray)
+      tlast=tresult
+      write(6,*)'Time to check inputs',tresult
+      write(636,*)'Check Inputs',tresult, ' seconds'
 ! Output file creation
         CALL NumOutFiles(OutControlFILE,ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
                          &dimlen2,dimlen1,NumTimeStep,NumofFile,NumOutPoint,OutCount)                  
@@ -279,7 +279,7 @@
 !  suggest concatenate outputfolder and outSamplefile into one string array
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
-        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,&
+        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
                         &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         Allocate(StartEndNCDF(NumofFile,2))                
@@ -316,17 +316,15 @@
         
        write(6,*)"Starting loop over grid cells"
       !  Initialize timing results
-        TNCCreate= ETIME(tarray)
-        write(6,*)'Time to create netCDFs ',(TNCCreate-TInputCheck)
-        write(636,*)'Create netCDFs ',(TNCCreate-TInputCheck),' seconds'
+        tresult= ETIME(tarray)
+        write(6,*)'Time to create netCDFs ',(tresult-tlast)
+        write(636,*)'Create netCDFs ',(tresult-tlast),' seconds'
+        tlast=tresult
         !write(6,*)'Initializing time tracking:',tarray(1),tarray(2),tresult
         tio=0.
         tcomp=0.
         tout=0.
         tagg=0.
-        ! EBo 2012/10/19 -- tlast was set to tresult which was not set
-        ! yet. TNCCreate makes the most sense here.
-        tlast=TNCCreate
        totalgrid=dimlen1*dimlen2     
 !      Start loop over space
        numgrid=0
@@ -339,12 +337,15 @@
         !  read site variables and initial conditions of state variables
        if((IDNumber(1) .ne. 0).or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  !  Omit calculations if not in the watershed
          !  TODO change the above to also exclude netcdf no data values
-       CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,dimlen2,dimlen1,iycoord,jxcoord,dtbar,Ts_last,longitude)
+       CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude)
        CALL Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
             &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
 
        ! FIXME: what if the result is fractional
-       StepInADay=int(24/modeldt)
+       !  Time steps must divide exactly in to a day because we use logic that requires the values from the same time
+       !  step on the previous day.  Consider in future making the specification of time step as number of time
+       !  steps in a day, not modeldt to ensure this       
+       StepInADay=int(24/modeldt+0.5)  ! closest rounding
        If (inputvarname(5) .NE. 'tmin')THEN
             NoofTS(5)=NoofTS(1)
             TSV(1:arrayx,5)=TSV(1:arrayx,1)
@@ -407,7 +408,8 @@
        dt=Modeldt
 
        ! FIXME: what if the result is fractional
-       nstepday=int(24/dt)
+       !  should not be fractional (except numerically)
+       nstepday=int(24/dt+0.5)  ! closest rounding
 
       ALLOCATE(Tsprevday(nstepday))
       ALLOCATE(Taveprevday(nstepday))
