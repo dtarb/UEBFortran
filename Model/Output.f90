@@ -125,7 +125,8 @@
        OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
         ! OutNCfiles output a array that contains all the putput NC files
         ! outputvarfile input a file that lists all the variables that a user wants as outputs
-        
+        implicit none
+        integer n,i,netCDFDataValPerfile,ntsperfile,lastfilents
         parameter(n = 66)
         integer:: OutCount
         integer:: dimlen2,dimlen1,NumofFile
@@ -223,6 +224,8 @@
         &DimUnit2,NumofFile,outcount,Outvar,&
         &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         use netCDF
+        implicit none
+        integer n,i,j,LengthOutFile
         parameter(n=66)
         integer:: outcount
         ! unused: character*200::outputfolder(outcount)

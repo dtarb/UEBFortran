@@ -75,9 +75,9 @@
                  Betab,Betad,Taub,Taud)                     ! Output variables: Transmission and Reflection fractions
 
     
-        REAL sitev(*),param(*),LAI,COSZEN,G, kk
-        REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
-        double precision EXPI, EXPINT
+	REAL sitev(*),param(*),LAI,COSZEN,EXPI,G, kk
+	REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
+        double precision EXPINT
 
 
         Cc    = sitev(5)     ! Leaf Area Index 
@@ -101,7 +101,7 @@
 !     Multiple scattering light penetration
          kk    = sqrt(1-alpha)                             ! k-prime in the paper
 
-        EXPI  = EXPINT(kk*G*LAI)                           ! Exponential integral function      
+        EXPI  = real(EXPINT(kk*G*LAI))                           ! Exponential integral function      
 
 !      Deep Canopy Solution
 !   Avoid divide by 0 error when COSZEN is 0
@@ -110,10 +110,9 @@
        else
            Taubh =  EXP(- kk*G*Rho*Hcan/COSZEN)                 ! Transmission function for deep canopy : Direct
        endif
-        ! FIXME: check the loss of precision fro
-          Taudh =  real((1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
-              (kk*G*Rho*Hcan)**2*EXPI)                     ! Transmission function for deep canopy : Diffuse
-         Beta   = (1-kk)/(1+kk)                                ! BetaPrime : reflection coefficient for infinitely deep canopy
+	 Taudh =  (1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
+     	      (kk*G*Rho*Hcan)**2*EXPI                     ! Transmission function for deep canopy : Diffuse
+     	 Beta   = (1-kk)/(1+kk)                                ! BetaPrime : reflection coefficient for infinitely deep canopy
 
 !     Finite Canopy Solution
        Taub   = Taubh*(1-Beta**2)/(1-Beta**2*Taubh**2)     ! Direct fraction of radiation transmitted down through the canopy 
@@ -165,8 +164,8 @@
                                param,Qlns,Qlnc )                     !  Output: Qsns,Qsnc 
  
         REAL Ta,Tss,Tc,EmC,EmS,SBC,Fs,sitev(*),LAI,G
-        REAL Qlns,Qlnc,kk,Beta,Betad,param(*)
-        double precision EXPI, EXPINT
+        REAL Qlns,Qlnc,kk,Beta,Betad,param(*),EXPI
+        double precision EXPINT
 
 
         Cc    = sitev(5)     ! Leaf Area Index 
@@ -199,13 +198,11 @@
 !     Upward scattered 
          Beta = (1-kk)/(1+kk)
 
-        EXPI  = EXPINT(kk*G*LAI)                        
+        EXPI  = Real(EXPINT(kk*G*LAI))                     
 
 !     Deep canopy solution
-
-        ! FIXME: check the loss of precision fro
-         Taudh =  real((1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
-              (kk*G*Rho*Hcan)**2*EXPI)                               ! Transmission function for deep canopy : Diffuse
+         Taudh =  (1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
+              (kk*G*Rho*Hcan)**2*EXPI                              ! Transmission function for deep canopy : Diffuse
 
 !        Finite canopy solution
          Taud   = (Taudh-Beta**2*Taudh) /(1-Beta**2*Taudh**2)         ! Transmission function for finite canopy depth
@@ -520,7 +517,7 @@
         REAL p,LAI,CC,Inmax,ieff,int,dt,Ur 
         REAL Intma 
         REAL param(*),sitev(*)
-        DOUBLE PRECISION Uc
+        Real Uc
 
         Uc    = param(27)                   ! Unloading rate coefficient (Per hour) (Hedstrom and pomeroy, 1998) 
         Cc    = sitev(5)            ! Canopy Coverage
@@ -548,9 +545,7 @@
 
 !       Unloading rate
         
-      ! FIXME: uc is double and ur is passed in and is likely real.
-      ! does uc really need to be double?
-        Ur = real(Uc*(Wc+(int*dt)/2))       ! Melt and Evap. are subtracted 
+        Ur = Uc*(Wc+(int*dt)/2)       ! Melt and Evap. are subtracted 
                                           ! half of the current interception is also considered for unloading
         RETURN  
         END

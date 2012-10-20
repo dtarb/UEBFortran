@@ -133,7 +133,8 @@
     real taveprevday(*)
     integer iTsMethod       !yjs Add model time initialization 09/19/2000
     integer windfl
-    REAL::SWIT,SWISM, SWIR,SWIGM,mm,LAI,Lambda
+    REAL::SWIT,SWISM, SWIR,SWIGM,LAI,Lambda
+    integer mm
       Real OutArr(53)
         common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
@@ -1628,7 +1629,7 @@ SWISM=SWIT-SWIGM-SWIR
 !************************************************************************************************************************** 
       FUNCTION SURFEBsc(Tssk, Us,Ws,Wc,A,dt,P,Ta,V,RH,Fs,Cf,Qli, &
      Qsi,atff,COSZEN,EmC,EmS,param,sitev,iradfl,qnetob,iTsMethod, &
-        Qp, Rkinc,Rkinsc,Vz,Tck,EA, &
+        Qps, Rkinc,Rkinsc,Vz,Tck,EA, &
         FkappaS,RHO,TherC,tave,refDepth)  ! Heat and vapor conductance for neutral
         implicit none
 
@@ -1680,9 +1681,7 @@ SWISM=SWIT-SWIGM-SWIR
         Zs     =  Ws*rhow/rho                   ! Snow Depth  
         Tsavek = Tave + Tk
 
-        ! FIXME: Qps is uninitialized and I have no idea what to set it to
-        ! setting to 0.0 for now
-        Qps=0.0 ! EBo -- define properly
+
       Qp     =  Qps
 
 
@@ -1884,7 +1883,8 @@ SWISM=SWIT-SWIGM-SWIR
                             SURFEBc = QSNc+QLNc+QPc+QHc+QEc
               
                         ELSE
-                            ! FIXME: "surfeb = surfeb + qnetob" probablyu should be surfebc
+                            ! FIXME: "surfeb = surfeb + qnetob" probablyu should be surfebc 
+			    ! DGT agreed with caution.  The code for handling net radiation as an input needs to be checked.  It has not been validated for canopy case
                             surfebc = surfebc + qnetob
                 ENDIF
 

@@ -265,15 +265,15 @@ Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingVa
 use netcdf
 Implicit None
 integer, parameter :: NDIMS = 2
-integer :: wsfillvalues, iii
+integer ::  iii
 integer:: dimlen1, dimlen2,WSVarId
 character (20) :: dimname1,  dimname2
-character (50) :: FILE_NAME
-character (50) :: WatershedVARID
+character (200) :: FILE_NAME
+character (200) :: WatershedVARID
 character (len = *), parameter :: missing_value = "missing_value",fillvalue="_FillValue"
 integer::numAtts, ncidout
 character (len = 50):: AttName
-real::WSMissingValues
+real::WSMissingValues,wsfillvalues
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
 call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
@@ -350,7 +350,8 @@ SUBROUTINE CALDAT (TJD,I,M,K,H)
 !K = DAY OF MONTH (OUT)
 !H = UT HOURS (OUT)
 Implicit None
-DOUBLE PRECISION TJD,H,DJD,DMOD,JD,L,N,I,M,K
+DOUBLE PRECISION TJD,H,DJD,DMOD,JD
+Integer L,N,I,M,K
 DJD = TJD + 0.5D0
 JD = DJD
 H = DMOD (DJD,1.D0)*24 ! 24.D0
@@ -409,68 +410,7 @@ Implicit None
       END
       
 !==================Sorting function end here====================================
-!!==================3-D netcdf file reading starts and reads TIMESTEPS=============================================
-Subroutine NetCDFTimeArray(file_name,time_out,timelength)
-!Task: provides all the values in time diension and the legth of time dimension
-!file_name (in) 2-D netccdf file
-!time_out (out) array that holds all the time dimension values
-!timelength (out) the length of time dimension
-use netcdf
-Implicit None
-integer, parameter :: NDIMS = 3
-integer :: dimlen3
-character (50) :: FILE_NAME, Var_name="time"
-integer :: start(NDIMS), count(NDIMS),VarId
-integer:: i
-character (len = *), parameter :: UNITS = "units"
-integer:: dimlen2,dimlen1  
-integer timelength
-Double precision :: JDS
-Double precision, dimension(:), allocatable :: time_in
-double precision time_out(timelength), ys
 
-!Double precision:: time_in(dimlen3),time_out(dimlen3)
-integer, parameter :: MAX_ATT_LEN = 100
-character*(MAX_ATT_LEN) :: time_units_in
-integer :: att_len, ncidout
-character*50:: CharYear, CharMonth, CharDay, CharHour
-double precision::  shour,as,ms, sday,smonth,syear
-
-count = (/ 1, 1, 1 /)
-start = (/ 1, 1, 1 /)
-
-!Open the file and see hats inside
-call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file  
-CALL nCDF3DArrayInfo (FILE_NAME,dimlen2,dimlen1,dimlen3)               
-call check(nf90_inq_varid(ncidout, Var_name, VarId))                       ! information about variableID for a given VariableName
-call check(nf90_get_att(ncidout, VarId, UNITS, time_units_in))
-call check(nf90_inquire_attribute(ncidout, Varid, UNITS, len = att_len))
-!days since 2010-03-10T00.00
-allocate(time_in(dimlen3))
-!allocate(time_out(dimlen3))
-call check(nf90_get_var(ncidout,VarId,time_in))          ! Read the surface  Elevation Data from the file
-call check(nf90_close(ncidout))                          ! Closing the netcdf file
-
-CharYear=time_units_in(12:15)
-CharMonth=time_units_in(17:18)
-CharDay=time_units_in(20:21)
-Charhour=time_units_in(23:26)
-read (CharYear,*)syear
-read (CharMonth,*)smonth
-read (CharDay,*)sday
-read (CharHour,*)shour
-as=(14.0-Smonth)/12.0
-! FIXME: the following line read "ys=Syear+4800.-a" changing to as
-ys=Syear+4800.-as
-ms=Smonth+12.*as-3.
-JDS=Sday+(153.*ms+2.)/5.+365.*ys+ys/4.-ys/100.+ys/400.-32045.+(Shour-12.)/24.
-
-do i=1,dimlen3
-    time_out(i)=time_in(i)+JDS
-end do
-Deallocate(time_in)
-!Deallocate(time_out)
-end subroutine NetCDFTimeArray
 !!==================3-D netcdf file reading ends  ==================================================================================
 
 ! function to convert string to lowercase obtained from http://www.gbenthien.net/strings/index.html 4/20/12
