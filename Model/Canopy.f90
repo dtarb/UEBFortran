@@ -75,8 +75,8 @@
                  Betab,Betad,Taub,Taud)                     ! Output variables: Transmission and Reflection fractions
 
     
-	REAL sitev(*),param(*),LAI,COSZEN,EXPI,G, kk
-	REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
+        REAL sitev(*),param(*),LAI,COSZEN,EXPI,G, kk
+        REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
         double precision EXPINT
 
 
@@ -110,9 +110,9 @@
        else
            Taubh =  EXP(- kk*G*Rho*Hcan/COSZEN)                 ! Transmission function for deep canopy : Direct
        endif
-	 Taudh =  (1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
-     	      (kk*G*Rho*Hcan)**2*EXPI                     ! Transmission function for deep canopy : Diffuse
-     	 Beta   = (1-kk)/(1+kk)                                ! BetaPrime : reflection coefficient for infinitely deep canopy
+       Taudh =  (1-kk*G*Rho*Hcan)*EXP(-kk*G*Rho*Hcan)+ &
+            (kk*G*Rho*Hcan)**2*EXPI                     ! Transmission function for deep canopy : Diffuse
+       Beta   = (1-kk)/(1+kk)                                ! BetaPrime : reflection coefficient for infinitely deep canopy
 
 !     Finite Canopy Solution
        Taub   = Taubh*(1-Beta**2)/(1-Beta**2*Taubh**2)     ! Direct fraction of radiation transmitted down through the canopy 

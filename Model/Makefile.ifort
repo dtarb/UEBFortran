@@ -1,8 +1,8 @@
 FC=ifort
-FFLAGS= -g3
+FFLAGS= -g3 #-warn all
 LDFLAGS= -g3 -lnetcdf
 
 CXX = g++
-CXXFLAGS = -g3 -Wall
+CXXFLAGS = -g3 #-warn all
 
 include Makefile.common
