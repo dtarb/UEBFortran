@@ -80,8 +80,8 @@
         go to 100
 200     CLOSE(11)
 !  Mapping from parameters read to UEB internal interpretation which follows UEBVeg scheme
-        irad=paramValue(1)
-        ireadalb=paramValue(2)
+        irad=int(paramValue(1))
+        ireadalb=int(paramValue(2))
         Param(1:11)=ParamValue(3:13)
         Param(13:21)=ParamValue(14:22)
         Param(23:32)=ParamValue(23:32)
@@ -193,7 +193,7 @@
         param(12)=StateSiteValue(16)
         !subalb=StateSiteValue(15)
         sitev(10)=StateSiteValue(17)
-        subtype=StateSiteValue(17)
+        subtype=int(StateSiteValue(17))
         param(22)=StateSiteValue(18)
         !gsurf = StateSiteValue(17)
         dtbar(1:12) = StateSiteValue(19:30)
