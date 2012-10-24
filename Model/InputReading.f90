@@ -233,7 +233,7 @@
         go to 1700
 1800    CLOSE(59)
 !  Sort NCfiles into order of start time
-        call ssort(tempstarttime,iy,count,kflag)
+        call ssort(tempstarttime,iy,count)
         do ii=1,count
           NCDFContainer(ii,i)=tempfilelist(iy(count-ii+1))
           NCfileNumtimesteps(ii,i)=tempfilesteps(iy(count-ii+1))
@@ -443,7 +443,7 @@
         
         End Subroutine
         
-        Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
+        Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
         nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
         Implicit None
         ! inputvarname (n) (input) Name of the variables that are provided inside inputcontrol.dat file
