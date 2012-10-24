@@ -84,7 +84,7 @@
       real mtime(4)                                     ! YJS pass to reflect the change of Snow (Year, month, Date, Hour)
       integer:: istep
       REAL:: IDNumber(1)
-      REAL, dimension(:), allocatable :: DimValue1,DimValue2
+      double precision, dimension(:), allocatable :: DimValue1,DimValue2,DimValue1N,DimValue2N
       Double precision, allocatable :: TSV(:,:)
       integer, allocatable::StartEndNCDF(:,:)
       REAL, allocatable :: Allvalues(:,:)
@@ -158,6 +158,7 @@
        Integer:: MYEAR,MMONTH,MDAY
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
        integer::modx,totaldayMOne,totalDay,StepInADay,gg
+       REAL:: DimDiff1,DimDiff2
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
       ! differences and conforms to later Fortran-2003 standards.
@@ -225,8 +226,6 @@
 !     2 is incoming shortwave and longwave radiation read from file (measured)
 !     3 is net radiation read from file (measured)
 
-      
-      !CALL nCDF2DArrayInfo(Watershedfile,dimlen2,dimlen1)
       CALL nCDF2DArrayInfo2(Watershedfile,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
 !     Call function to go through input control file and find the maximum number of netcdf files for any time varying input variable     
       CAll InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
@@ -256,8 +255,19 @@
       CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,ReferenceTime)
       allocate(DimValue1(dimlen1))
       allocate(DimValue2(dimlen2))
+      allocate(DimValue1N(dimlen1))
+      allocate(DimValue2N(dimlen2))
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
-      
+!      DimDiff1=(MaxVAL(DimValue1)-MINVAL(DimValue1))/dimlen1
+!      DimDiff2=(MaxVAL(DimValue2)-MINVAL(DimValue2))/dimlen2
+!      DimValue1N(1)=MINVAL(DimValue1)
+!      Do i = 2,dimlen1
+!        DimValue1N(i)=MINVAL(DimValue1)+DimDiff1*(i-1)
+!      End do
+!      DimValue2N(1)=MINVAL(DimValue2)
+!      Do i = 2,dimlen2
+!        DimValue2N(i)=MINVAL(DimValue2)+DimDiff2*(i-1)
+!      End do
       tresult = ETIME(tarray)
       tlast=tresult
       write(6,*)'Time to check inputs',tresult
@@ -279,9 +289,10 @@
 !  suggest concatenate outputfolder and outSamplefile into one string array
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
-        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,DimName1,DimName2,DimUnit1,&
+      
+        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
-                        &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
+        &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         Allocate(StartEndNCDF(NumofFile,2))                
         CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
         allocate(AllNCDFfile(totalNC))
@@ -314,23 +325,24 @@
             Go to 1056
         End if
         
+       !  Initialize timing results
+       tresult= ETIME(tarray)
+       write(6,*)'Time to create netCDFs ',(tresult-tlast)
+       write(636,*)'Create netCDFs ',(tresult-tlast),' seconds'  
+       
        write(6,*)"Starting loop over grid cells"
-      !  Initialize timing results
-        tresult= ETIME(tarray)
-        write(6,*)'Time to create netCDFs ',(tresult-tlast)
-        write(636,*)'Create netCDFs ',(tresult-tlast),' seconds'
-        tlast=tresult
-        !write(6,*)'Initializing time tracking:',tarray(1),tarray(2),tresult
-        tio=0.
-        tcomp=0.
-        tout=0.
-        tagg=0.
+
+
+       tlast=tresult
+       tio=0.
+       tcomp=0.
+       tout=0.
+       tagg=0.
        totalgrid=dimlen1*dimlen2     
 !      Start loop over space
        numgrid=0
-       DO iycoord=1, dimlen1
-       DO jxcoord=1, dimlen2
-
+       DO iycoord=1,dimlen1
+       DO jxcoord=1,dimlen2
        iunit=119  !  unit for point output
 
        CALL nCDF2DRead(Watershedfile,WatershedVARID,IDNumber(1),jxcoord,iycoord)
@@ -428,10 +440,10 @@
 
 !****************** To compute Ave.Temp (For Previous day temp.)  ******************************
 
-          Us   = statev(1)                  ! Ub in UEB
+      Us   = statev(1)                  ! Ub in UEB
       Ws   = statev(2)                          ! W in UEB
-          Wc   = statev(4)
-          Apr  = sitev(2)                                   ! Atm. Pressure  (PR in UEB)
+      Wc   = statev(4)
+      Apr  = sitev(2)                                   ! Atm. Pressure  (PR in UEB)
       cg   = param(4)                                   ! Ground heat capacity (nominally 2.09 KJ/kg/C)
       rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
       de   = param(11)                              ! Thermally active depth of soil (0.1 m)
@@ -480,9 +492,9 @@
         !  This is the start of the main time loop      
         
 1       istep=istep+1
-        IF(sitev(10).NE. 3)THEN
-        
-        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,Allvalues,arrayx,&
+
+        IF(SUBTYPE .NE. 3)THEN
+        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,&
         ModelStartDate,ModelStartHour,&
         nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
          
@@ -655,7 +667,7 @@
          TIMEINDX =(/timestepinfile/)
          ReferenceHour=DBLE(hour)
          call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
-         FNDJDT(istep)=CTJD-ReferenceTime
+         FNDJDT(istep)=DBLE(CTJD-ReferenceTime)
 
      END IF
         

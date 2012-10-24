@@ -103,7 +103,7 @@ integer:: matched,x,totalNC
         integer:: reason,IsInputFromNC(m),NumNCFiles(m),isVarFromNC(n)  
         integer:: matched,totalNC,NCNumber
         Character*200:: AllNCDFfile(totalNC),NCFile
-        Real, dimension(:), allocatable:: DimValue1,DimValue2,DimValue3,DimValue4
+        double precision, dimension(:), allocatable:: DimValue1,DimValue2,DimValue3,DimValue4
         Character*200:: DimUnit1,DimUnit2,DimUnit3,DimUnit4,DimName1,DimName2,DimName3,DimName4
         
         InputVName= (/ "Ta     ","Prec   ","v      ","RH     ", &
@@ -167,15 +167,11 @@ integer:: matched,x,totalNC
         allocate(DimValue2(dimlen2))
 
         CALL SpatialCoordinate(WatershedFile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
-!        CALL lowercase(inputname,inputname)
-!        CALL lowercase(inputname,inputname)
         II=1
 601     If (II .le. (NCNumber-1))Then
         allocate(DimValue3(dimlen3))
         allocate(DimValue4(dimlen4))
         CALL SpatialCoordinate(AllNCDFfile(II),dimlen1,dimlen2,DimName3,DimName4,DimValue3,DimValue4,DimUnit3,DimUnit4)
-!            CALL lowercase(inputname,inputname)
-!            CALL lowercase(inputname,inputname)
             If (((MAXVAL(DimValue1) - MAXVAL(DimValue3)) .LE. 1E-5) .and. ((MINVAL(DimValue2) - MINVAL(DimValue4)) .LE. 1E-5)&
             &.and. DimUnit1 .eq. DimUnit3 .and. DimUnit2 .eq. DimUnit4)Then
                 II=II+1
