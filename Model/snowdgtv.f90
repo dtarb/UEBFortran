@@ -123,18 +123,18 @@
 !yjs back. 
 
 
-      real input(niv,nt)
-      real sitev(*)
-      real outv(*)
-      real statev(*)
-      real param(*)   ! inherit dimension from calling program
+    real input(niv,nt)
+    real sitev(*)
+    real outv(*)
+    real statev(*)
+    real param(*)   ! inherit dimension from calling program
     real mtime(*)  
     real tsprevday(*)
     real taveprevday(*)
     integer iTsMethod       !yjs Add model time initialization 09/19/2000
     integer windfl
     REAL::SWIT,SWISM, SWIR,SWIGM
-      Real OutArr(53)
+    Real OutArr(53)
 	common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
 !yjs  Constant data set 
@@ -157,25 +157,25 @@
 !yjs  End of constant declaration
     
 !  Parameters
-      tr=param(1)     !  Temperature above which all is rain (3 C)
-      ts=param(2)     !  Temperature below which all is snow (-1 C)
-      Ems=param(3)    !  emmissivity of snow (nominally 0.99)
-      cg =param(4)    !  Ground heat capacity (nominally 2.09 KJ/kg/C)
-      z=param(5)      !  Nominal meas. height for air temp. and humidity (2m)
-      zo=param(6)     !  Surface aerodynamic roughness (m)
-      rho=param(7)    !  Snow Density (Nominally 450 kg/m^3)
-      rhog=param(8)   !  Soil Density (nominally 1700 kg/m^3)
-      lc=param(9)     !  Liquid holding capacity of snow (0.05)
-      ks=param(10)    !  Snow Saturated hydraulic conductivity (20 m/hr)
-      de=param(11)    !  Thermally active depth of soil (0.1 m)
-      abg=param(12)   !  Bare ground albedo  (0.25)
-      avo=param(13)   !  Visual new snow albedo (0.95)
-      anir0=param(14) !  NIR new snow albedo (0.65)
+    tr=param(1)     !  Temperature above which all is rain (3 C)
+    ts=param(2)     !  Temperature below which all is snow (-1 C)
+    Ems=param(3)    !  emmissivity of snow (nominally 0.99)
+    cg =param(4)    !  Ground heat capacity (nominally 2.09 KJ/kg/C)
+    z=param(5)      !  Nominal meas. height for air temp. and humidity (2m)
+    zo=param(6)     !  Surface aerodynamic roughness (m)
+    rho=param(7)    !  Snow Density (Nominally 450 kg/m^3)
+    rhog=param(8)   !  Soil Density (nominally 1700 kg/m^3)
+    lc=param(9)     !  Liquid holding capacity of snow (0.05)
+    ks=param(10)    !  Snow Saturated hydraulic conductivity (20 m/hr)
+    de=param(11)    !  Thermally active depth of soil (0.1 m)
+    abg=param(12)   !  Bare ground albedo  (0.25)
+    avo=param(13)   !  Visual new snow albedo (0.95)
+    anir0=param(14) !  NIR new snow albedo (0.65)
 	lans= param(15) !  the thermal conductivity of fresh (dry) snow (0.0576 kJ/m/k/hr) (Vinod! 0.36 Ref: Snow and Climate :Richard L Armstrong and Eric Brun ) 
 	lang= param(16) !  the thermal conductivity of soil (:9.68 kJ/m/k/hr) (TK of ice or wet soil(2.22~ 3.48W/m/k):Vinod)
 	wlf= param(17)  !  Low frequency fluctuation in deep snow/soil layer (1/4 w1 = 0.0654 radian/hr) 
 	rd1= param(18)  !  Apmlitude correction coefficient of heat conduction (1)
-      fstab=param(19) !  Stability correction control parameter 0 = no corrections, 1 = full corrections
+    fstab=param(19) !  Stability correction control parameter 0 = no corrections, 1 = full corrections
 	Tref=param(20)  !  Reference temperature of soil layer in ground heat calculation input
 	dNewS=param(21) !  The threshold depth of for new snow (0.001 m)
  	gsurf=param(22) !  The fraction of surface melt that runs off (e.g. from a glacier)
@@ -185,7 +185,7 @@
 	alpha    = param(24)			! Scattering coefficient for solar radiation
 	alphaL   = param(25)		    ! Scattering coefficient for long wave radiation
 	G        = param(26)            ! leaf orientation with respect to zenith angle
-    	Uc       = param(27)		    ! Unloading rate coefficient (Per hour) (Hedstrom and pomeroy, 1998) 
+    Uc       = param(27)		    ! Unloading rate coefficient (Per hour) (Hedstrom and pomeroy, 1998) 
 	as       = param(28)			! Fraction of extraterrestaial radiation on cloudy day,Shuttleworth (1993)  
 	bs       = param(29)		  	! (as+bs):Fraction of extraterrestaial radiation on clear day, Shuttleworth (1993) 
 	Lambda   = param(30)		    ! Ratio of direct atm radiation to diffuse,worked out from Dingman (1993)
@@ -193,9 +193,9 @@
 	Wcoeff   = param(32)            ! Wind decay coefficient for the forest
 
 !  State Variables - These serve as initial conditions
-      Us = statev(1)				    	! Snow Energy Content  (KJ/m^2)
-      Ws = statev(2)						! Snow Water Equivalent (m) relative to T = 0 C solid phase
-      Wc = statev(4)                      ! Added for canopy
+    Us = statev(1)				    	! Snow Energy Content  (KJ/m^2)
+    Ws = statev(2)						! Snow Water Equivalent (m) relative to T = 0 C solid phase
+    Wc = statev(4)                      ! Added for canopy
 
 	If(Us.le.0.0) THEN 
 	  refDepth = 0.0
@@ -203,19 +203,19 @@
 	ELSE
 	  refDepth      = statev(5)
 	  totalRefDepth = statev(6)
-      ENDIF
+    ENDIF
 
 !  Save Old Value 07/23/01     
 	Us_old        =  Us
 	refDepth_old  =  refDepth
 
 !  Site Variables
-      df = sitev(1)     !  Drift factor
-      APr= sitev(2)     !  Atmospheric Pressure (Pa)
-      qg = sitev(3)     !  Ground heat flux (KJ/m^2/hr)  This is more logically an
+    df = sitev(1)     !  Drift factor
+    APr= sitev(2)     !  Atmospheric Pressure (Pa)
+    qg = sitev(3)     !  Ground heat flux (KJ/m^2/hr)  This is more logically an
                         !  input variable,but is put here because it is never known at each
                         !  time step. Usually it will be assigned a value 0.
-      Aep= sitev(4)     !  Albedo extinction parameter to smooth
+    Aep= sitev(4)     !  Albedo extinction parameter to smooth
                         !  transition of albedo when snow is shallow. Depends on Veg. height (m)
 ! 7 Site Variables added for canopy
 	Cc    = sitev(5)   ! Canopy Coverage
@@ -228,16 +228,16 @@
                                  ! Ycage=3 for Old pine with logn stems (Paw U and Meyers, 1987) 
 			        		   ! Requires for wind speed transformation		
 !  Control flags
-      iradfl= iflag(1)
-      pflag = iflag(2)
-      ounit = iflag(3)      !iflag(4) albedo caculation
+    iradfl= iflag(1)
+    pflag = iflag(2)
+    ounit = iflag(3)      !iflag(4) albedo caculation
 	                 
 	iTsMethod = iflag(5)  ! the method to approximate the surface temperature
 						  ! 1 normal old snow melt model
 						  ! 2 revised direct gradient method (New method for ke) and qe
 						  ! 3 force restore approach
 						  ! 4 modified force restore approach
-      windfl = iflag(6)
+    windfl = iflag(6)
 
 !  Model time step information
 	yy = mtime(1)
@@ -267,21 +267,21 @@
         P  =input(2,i)			! Precipitation rate input (m/hr)
         V  =input(3,i)			! Wind Speed (m/s)
         RH =input(4,i)			! Relative humidity (fraction 0-1)
-!        IF(iradfl.eq.0)THEN		! input is incoming short and longwave
-          Qsi=input(5,i)			! Incoming shortwave radiation (KJ/m^2/hr)
-          Qli=input(6,i)			! Incoming longwave radiation (KJ/m^2/hr)
-!        ELSE
-          Qnetob = input(7,i) ! Net allwave radiation (KJ/m^2/hr)
-!        ENDIF
-          coszen = input(8,i)   ! Cos(angle between direct sunlight and surface normal)
+!   IF(iradfl.eq.0)THEN		! input is incoming short and longwave
+        Qsi=input(5,i)			! Incoming shortwave radiation (KJ/m^2/hr)
+        Qli=input(6,i)			! Incoming longwave radiation (KJ/m^2/hr)
+!   ELSE
+        Qnetob = input(7,i) ! Net allwave radiation (KJ/m^2/hr)
+!   ENDIF
+        coszen = input(8,i)   ! Cos(angle between direct sunlight and surface normal)
 
 !         Representative value over time step used in albedo calculation.  
 !         We neglect the difference between direct and diffuse albedo.
 !DGT Daily average temperatures handled internally so that multiple time steps will work
 	  Tssk_ave = daily_ave(tsprevday, nstepday, -100.)+tk ! (C)  Surface temperature average over last 24 hours
 	  Tsavek_ave = daily_ave(taveprevday, nstepday, -100.)+tk ! (C)  Depth averaged temperature average over last 24 hours
-        Tssk_old = tsprevday(nstepday)+tk ! (C) Surface temperature from previous time step
-        Tsavek_old = taveprevday(nstepday)+tk ! (C) Average temperature from previous time step
+      Tssk_old = tsprevday(nstepday)+tk ! (C) Surface temperature from previous time step
+      Tsavek_old = taveprevday(nstepday)+tk ! (C) Average temperature from previous time step
 !   If any of these variables are out of range due to any problem set them back to freezing
 	  if(Tssk_old .lt. 0.)then
 	    write(66,*)"Invalid previous time step surface temperature ", &
@@ -359,7 +359,7 @@
 !   we still have Us so large that it results in tave greater than 0, which implies that all the 
 !   snow is liquid.  In these cases - just force the snow to disappear and add the energy involved to Qm.
  
-       Tave = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)
+     Tave = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)
 	 IF(Tave .gt. 0.)THEN   !  all is liquid so snow must disappear
 		mr = mr+Ws/dt
 		qms = qms+Ws/dt*rhow*hf
@@ -379,14 +379,19 @@
        if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
        Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   !  this call 
 !   necessary to keep track of average internal temperature used in some surface energy algorithms.
-! calculations for glacier melting  Done after Tavg evaluation to maintain consistency with energy content
+  
  SWIT=Mr
  If (Ws .GT. 0)THEN 
     SWIR=0
  ELSE
-    SWIR=(Mr-statev(2))/dt
+    If (Mr .GE. statev(2))THEN
+        SWIR=Mr-statev(2)/dt
+    ELSE
+        SWIR=Mr
+    End IF
  End if
-
+  
+ ! calculations for glacier melting  Done after Tavg evaluation to maintain consistency with energy content
  ! seperation 
        IF (Ws .LT. WGT)Then
            WGM=WGT-Ws
@@ -394,8 +399,7 @@
        ELSE
            Ws=Ws-WGT
            WGM=0
-       END IF
-       
+       END IF     
 SWIGM=WGM/dt
 SWISM=SWIT-SWIGM-SWIR
        

@@ -480,21 +480,21 @@ integer, parameter :: MAX_ATT_LEN = 100
 character(100) :: DimUnit1,DimUnit2
 integer:: ncidout,dimlen1,dimlen2,len1,len2
 character (len = *), parameter :: UNITS = "units",missing_value = "missing_value"
-double precision:: DimValue1(dimlen1), DimValue2(dimlen2)
+Double precision:: DimValue1(dimlen1), DimValue2(dimlen2)
 integer :: varid,xtype
 
 !Open the file and see whats inside
-call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file    
+call check(nf90_open(File_name, nf90_nowrite, ncidout))           ! open the netcdf file    
                  
 call check(nf90_inquire_dimension(ncidout,1,dimname1,len1))       ! Information about dimensionID 1
 call check(nf90_inquire_dimension(ncidout,2,dimname2,len2))       ! information about dimensionID 2
 call NF_INQ_VARTYPE (ncidout,1,xtype)
 call NF_INQ_VARTYPE (ncidout,1,xtype)
-Varid=1  !  We require that time is the 1st dimension
+Varid=1                                                           ! We require that time is the 1st dimension
 call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit1)) 
 call check(nf90_get_var(ncidout,Varid,DimValue1)) 
 
-Varid=2  !  We require that time is the 2nd dimension
+Varid=2                                                           ! We require that time is the 2nd dimension
 call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit2)) 
 call check(nf90_get_var(ncidout,Varid,DimValue2) )
 

@@ -103,7 +103,7 @@ integer:: matched,x,totalNC
         integer:: reason,IsInputFromNC(m),NumNCFiles(m),isVarFromNC(n)  
         integer:: matched,totalNC,NCNumber
         Character*200:: AllNCDFfile(totalNC),NCFile
-        double precision, dimension(:), allocatable:: DimValue1,DimValue2,DimValue3,DimValue4
+        Double precision, dimension(:), allocatable:: DimValue1,DimValue2,DimValue3,DimValue4
         Character*200:: DimUnit1,DimUnit2,DimUnit3,DimUnit4,DimName1,DimName2,DimName3,DimName4
         
         InputVName= (/ "Ta     ","Prec   ","v      ","RH     ", &
