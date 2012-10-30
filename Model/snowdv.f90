@@ -84,7 +84,7 @@
       real mtime(4)                                     ! YJS pass to reflect the change of Snow (Year, month, Date, Hour)
       integer:: istep
       REAL:: IDNumber(1)
-      double precision, dimension(:), allocatable :: DimValue1,DimValue2,DimValue1N,DimValue2N
+      Double precision, dimension(:), allocatable :: DimValue1,DimValue2
       Double precision, allocatable :: TSV(:,:)
       integer, allocatable::StartEndNCDF(:,:)
       REAL, allocatable :: Allvalues(:,:)
@@ -93,13 +93,15 @@
       real:: cumGM
 !      REAL, dimension(:,:),Allocatable:: inputstorage
 !      Double precision, dimension(:,:),Allocatable:: inputstorageJDT
-      !CHANGES TO ACCOMODATE GLACIER
+!      CHANGES TO ACCOMODATE GLACIER
       real:: WGT ! WGT=WATER EQUIVALENT GLACIER THICKNESS
+      
+      
 ! Arrays to keep records of surface temperature and snowpace average 
 ! temperature. This is for the fourth model (Modified force restore approach) 
-
       real, allocatable :: tsprevday(:)
       real, allocatable :: taveprevday(:)
+      
       Integer, dimension(:), allocatable :: NumTimeStepPerFile
       Character*200, dimension(:,:), allocatable :: OutputNCContainer
       Character*200, dimension(:,:), allocatable :: NCOutfileArr
@@ -255,19 +257,7 @@
       CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,ReferenceTime)
       allocate(DimValue1(dimlen1))
       allocate(DimValue2(dimlen2))
-      allocate(DimValue1N(dimlen1))
-      allocate(DimValue2N(dimlen2))
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
-!      DimDiff1=(MaxVAL(DimValue1)-MINVAL(DimValue1))/dimlen1
-!      DimDiff2=(MaxVAL(DimValue2)-MINVAL(DimValue2))/dimlen2
-!      DimValue1N(1)=MINVAL(DimValue1)
-!      Do i = 2,dimlen1
-!        DimValue1N(i)=MINVAL(DimValue1)+DimDiff1*(i-1)
-!      End do
-!      DimValue2N(1)=MINVAL(DimValue2)
-!      Do i = 2,dimlen2
-!        DimValue2N(i)=MINVAL(DimValue2)+DimDiff2*(i-1)
-!      End do
       tresult = ETIME(tarray)
       tlast=tresult
       write(6,*)'Time to check inputs',tresult
@@ -493,7 +483,7 @@
         
 1       istep=istep+1
 
-        IF(SUBTYPE .NE. 3)THEN
+        IF(sitev(10).NE. 3)THEN
         CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,&
         ModelStartDate,ModelStartHour,&
         nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
@@ -723,15 +713,14 @@
     
        END DO  !  These are the end of the space loop
      END DO
-    
     do ioutv=1,outcount
        do incfile = 1,NumofFile
-        CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
-        CALL check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
+        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
+        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
         CALL OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
         CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))
-      enddo
+       enddo
     enddo
     Write (6,FMT="(/A31/)") " now aggregation will be started" 
      do istep=1,NumTimestep
