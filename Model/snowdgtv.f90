@@ -53,7 +53,7 @@
 !	data pi/3.141592654/ !define PI forangle conversion
 
 ! Definitions
-!  dt  Time step in hours
+!  dt  time step in hours
 !  nt number of time steps
 ! input  -- input forcing
 !	  input(1,*) air temperature (C)
@@ -284,24 +284,32 @@
       Tsavek_old = taveprevday(nstepday)+tk ! (C) Average temperature from previous time step
 !   If any of these variables are out of range due to any problem set them back to freezing
 	  if(Tssk_old .lt. 0.)then
-	    write(66,*)"Invalid previous time step surface temperature ", &
-          	Tssk_old," set to 273 K"
-	    Tssk_old =tk   
+	    If (snowdgtvariteflag .EQ. 1)then
+	        write(66,*)"Invalid previous time step surface temperature ", &
+          	    Tssk_old," set to 273 K"
+        end if
+	        Tssk_old =tk  
 	  endif
 	  if(Tsavek_old .lt. 0.)then
-	    write(66,*)"Invalid previous time step average temperature ", &
-              Tsavek_old," set to 273 K"
+	    If (snowdgtvariteflag .EQ. 1)then
+	        write(66,*)"Invalid previous time step average temperature ", &
+                  Tsavek_old," set to 273 K"
+        end if
 	    Tsavek_old=tk
 	  endif
 	  if(Tssk_ave .lt. 0.)then
-	    write(66,*)"Invalid last 24 hr average surface temperature ", &
-          	Tssk_ave," set to 273 K"
+	    If (snowdgtvariteflag .EQ. 1)then
+	        write(66,*)"Invalid last 24 hr average surface temperature ", &
+          	    Tssk_ave," set to 273 K"
+	    end if
 	    Tssk_ave=tk
 	  endif
 	  if(Tsavek_ave .lt. 0.)then
-	    write(66,*)"Invalid last 24 hr average temperature ", &
-          	Tsavek_ave," set to 273 K"
-	    Tsavek_ave=tk
+	    If (snowdgtvariteflag .EQ. 1)then
+	        write(66,*)"Invalid last 24 hr average temperature ", &
+          	    Tsavek_ave," set to 273 K"
+	    end if
+	    Tsavek_ave=tk   
 	  endif
 
 !  Separate rain and snow      
@@ -1363,25 +1371,29 @@ SWISM=SWIT-SWIGM-SWIR
 	 ibtowrite=1
 
           if(Flb*fub .gt. 0.)then   ! these are of the same sign so no bisection solution
-			write(66,*)  &
-      'Bisection surface temperature solution failed with large range'
-			write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
-			write(66,*)'Time: ',mtime(4)
-			write(66,*)'Model element: ',mtime(5)
-			write(66,*) &
-      'A surface temperature of 273 K assumed'
-	        Tssk=tk
-			go to 10 
+              If (snowdgtvariteflag .EQ. 1)then
+			        write(66,*)  &
+              'Bisection surface temperature solution failed with large range'
+			        write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
+			        write(66,*)'time: ',mtime(4)
+			        write(66,*)'Model element: ',mtime(5)
+			        write(66,*) &
+              'A surface temperature of 273 K assumed'
+	          end if
+              Tssk=tk
+	          go to 10 
 	    else
-			write(66,*) &
-         'Bisection surface temperature solution with large range'
-			write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
-			write(66,*)'Time: ',mtime(4)
-			write(66,*)'Model element: ',mtime(5)
-			write(66,*) &
-     	'This is not a critical problem unless it happens frequently'
-	         write(66,*) &
-          'and solution below appears incorrect'
+	        If (snowdgtvariteflag .EQ. 1)then
+		        write(66,*) &
+             'Bisection surface temperature solution with large range'
+		        write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
+		        write(66,*)'time: ',mtime(4)
+		        write(66,*)'Model element: ',mtime(5)
+		        write(66,*) &
+ 	        'This is not a critical problem unless it happens frequently'
+                 write(66,*) &
+              'and solution below appears incorrect'
+            end if
 	     endif
         else
         endif
@@ -1403,9 +1415,11 @@ SWISM=SWIT-SWIGM-SWIR
 	     endif
        enddo
 	if(ibtowrite .eq. 1)then
-		write(66,*)'Surface temperature: ',Tssk,' K'
-		write(66,*)'Energy closure: ',f1
-		write(66,*)'Iterations: ',niter
+	    If (snowdgtvariteflag .EQ. 1)then
+		    write(66,*)'Surface temperature: ',Tssk,' K'
+		    write(66,*)'Energy closure: ',f1
+		    write(66,*)'Iterations: ',niter
+	    end if
 	endif
 
 
@@ -1579,25 +1593,29 @@ SWISM=SWIT-SWIGM-SWIR
 	 ibtowrite=1
 
           if(Flb*fub .gt. 0.)then   ! these are of the same sign so no bisection solution
-			write(66,*) &
-      'Bisection canopy temperature solution failed with large range'
-			write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
-			write(66,*)'Time: ',mtime(4)
-			write(66,*)'Model element: ',mtime(5)
-			write(66,*) &
-      'A canopy temperature of 273 K assumed'
-	        Tck=tk
-			go to 10 
-	    else
-			write(66,*) &
-         'Bisection canopy temperature solution with large range'
-			write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
-			write(66,*)'Time: ',mtime(4)
-			write(66,*)'Model element: ',mtime(5)
-			write(66,*) &
-     	'This is not a critical problem unless it happens frequently'
-	         write(66,*) &
-          'and solution below appears incorrect'
+              If (snowdgtvariteflag .EQ. 1)then
+			        write(66,*) &
+              'Bisection canopy temperature solution failed with large range'
+			        write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
+			        write(66,*)'time: ',mtime(4)
+			        write(66,*)'Model element: ',mtime(5)
+			        write(66,*) &
+              'A canopy temperature of 273 K assumed'
+              end if
+              Tck=tk
+		      go to 10 
+	     else
+	        If (snowdgtvariteflag .EQ. 1)then
+			        write(66,*) &
+                 'Bisection canopy temperature solution with large range'
+			        write(66,*)'Date: ',mtime(1),mtime(2),mtime(3)
+			        write(66,*)'time: ',mtime(4)
+			        write(66,*)'Model element: ',mtime(5)
+			        write(66,*) &
+     	        'This is not a critical problem unless it happens frequently'
+	                 write(66,*) &
+                  'and solution below appears incorrect'
+            END IF 
 	     endif
         else
         endif
@@ -1619,9 +1637,11 @@ SWISM=SWIT-SWIGM-SWIR
 	     endif
        enddo
 	if(ibtowrite .eq. 1)then
-		write(66,*)'Surface temperature: ',Tck,' K'
-		write(66,*)'Energy closure: ',f1
-		write(66,*)'Iterations: ',niter
+	    If (snowdgtvariteflag .EQ. 1)then
+		    write(66,*)'Surface temperature: ',Tck,' K'
+		    write(66,*)'Energy closure: ',f1
+		    write(66,*)'Iterations: ',niter
+	    END IF
 	endif
 
 

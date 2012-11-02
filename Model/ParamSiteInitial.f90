@@ -42,9 +42,9 @@
         Character (100) ParamHeading
         CHARACTER*15 filecode, ParamName
         integer::n
-        parameter(n = 34)
+        parameter(n = 32)
         CHARACTER(10), DIMENSION(n) :: ParamSymbol
-        Real ParamValue(n), param(*), bca, bcc
+        Real ParamValue(n), param(32), bca, bcc
         integer:: irad, ireadalb
         CHARACTER*200 vfile
         ! define loop parameter
@@ -54,7 +54,7 @@
               "ems     ","cg      ","z       ","zo      ","rho     ", &
               "rhog    ","lc      ","ks      ","de      ","avo     ", &
               "anir0   ","lans    ","lang    ","wlf     ","rd1     ", &
-              "fstab   ","tref    ","dnews   ","emc     ","alpha   ", &
+              "dnews   ","emc     ","alpha   ", &
               "alphal  ","g       ","uc      ","as      ","Bs      ", &
               "lambda  ","rimax   ","wcoeff  ","a       ","c       " /)
         OPEN(11,FILE=vfile,STATUS='OLD', ACTION='READ')
@@ -83,10 +83,13 @@
         irad=int(paramValue(1))
         ireadalb=int(paramValue(2))
         Param(1:11)=ParamValue(3:13)
-        Param(13:21)=ParamValue(14:22)
-        Param(23:32)=ParamValue(23:32)
-        bca = ParamValue(33)
-        bcc = ParamValue(34)           
+        Param(13:18)=ParamValue(14:19)
+        Param(19)=-9999
+        Param(20)=-9999
+        Param(21)=ParamValue(20)
+        Param(23:32)=ParamValue(21:30)
+        bca = ParamValue(31)
+        bcc = ParamValue(32)           
         return
         end subroutine readvals
 !===End of reading the values from parameter file ==

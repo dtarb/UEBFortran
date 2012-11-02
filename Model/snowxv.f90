@@ -87,10 +87,10 @@
 !      RETURN
 !      END
 
-!************************** UPDATETIME () ***************************
-!                 Update Time for each time step
+!************************** UPDATEtime () ***************************
+!                 Update time for each time step
 
-      SUBROUTINE UPDATETIME(YEAR,MONTH,DAY,HOUR,DT)
+      SUBROUTINE UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
  
       INTEGER*4 YEAR,DAY,DMON(12),DM, MONTH,I       ! 30/03/2004 ITB 
       INTEGER*4 LYEAR  ! 30/03/2004 ITB  
@@ -167,7 +167,7 @@
       PI=3.141592653589793238462643383279502884197169399375105820974944592308
       CRAD=PI/180.0
 !  crad = degree to radian conversion factor
-!    CONVERT TIMES TO RADIANS FROM NOON
+!    CONVERT timeS TO RADIANS FROM NOON
       T=(HOUR-12.0)*PI/12.0
       DELT1=DT*PI/12.0
 !    CONVERT angles TO RADIANS

@@ -129,24 +129,24 @@ end subroutine nCDF2DRead
 !!==================2-D netcdf file reading ends  ==================================================================================
 
 
-!!==================3-D netcdf file reading starts and reads TIMESTEPS=============================================
-Subroutine nCDF3DTimeRead(file_name,time_pos,time_val,numTimeStep,syear,smonth,sday)
+!!==================3-D netcdf file reading starts and reads timeSTEPS=============================================
+Subroutine nCDF3DtimeRead(file_name,time_pos,time_val,numtimeStep,syear,smonth,sday)
 !!  file_name  (in)  Netcdf file to read from
 !!  time_pos  (in)  NetCDF time position to read value from
-!!  time_val  (out)  Time value read from netcdf file
-!!  numTimeStep  (out)  Number of time steps in netcdf file
+!!  time_val  (out)  time value read from netcdf file
+!!  numtimeStep  (out)  Number of time steps in netcdf file
 !!  syear   (out)  year from the "days since YYYY..." netcdf time units attribute
 !!  smonth  (out)  month from the "days since YYYY-MM..."  time units attribute
 !!  sday    (out)  day from the "days since YYYY-MM-DD..." time units attribute
 
-!!  Note - the first call of this should have time_pos as 1 to determine numTimeStep. 
-!!  Thereafter it is responsibility of calling program to not input a time_pos greater than numTimeStep
+!!  Note - the first call of this should have time_pos as 1 to determine numtimeStep. 
+!!  Thereafter it is responsibility of calling program to not input a time_pos greater than numtimeStep
 
 use netcdf
 Implicit None
 
 ! integer, parameter :: NDIMS = 3 
-integer:: numTimeStep
+integer:: numtimeStep
 character (50) :: FILE_NAME, Rec_name="time"
 ! integer :: start(NDIMS), count(NDIMS)
 integer :: VarId, isep1, isep2, isep3, ncidout
@@ -169,15 +169,15 @@ call check(nf90_inquire_attribute(ncidout, Varid, UNITS, len = att_len))
 !call check(nf90_inq_dimid(ncidout, REC_NAME, time_dimid))
 ! TODO  fix up so that the rec_name comes from output of an appropriate function
 !  we are following the logic that the 3rd dimension no matter what its name is is the time dimension
-call check(nf90_inquire_dimension(ncidout, Varid, Rec_name, numTimeStep))       ! information about dimensionID 3
+call check(nf90_inquire_dimension(ncidout, Varid, Rec_name, numtimeStep))       ! information about dimensionID 3
 !days since 2010-03-10T00:00
 !allocate(time_in(dimlen3))
 
 count1(1) = 1
 start1(1) = time_pos
-if(time_pos .gt. numTimeStep)then  !  here asked for a time step not in ncdf file
-  write(6,*)"Warning - in nCDF3DTimeRead a time value was requested greater than contents of file"
-  start1(1) = numTimeStep
+if(time_pos .gt. numtimeStep)then  !  here asked for a time step not in ncdf file
+  write(6,*)"Warning - in nCDF3DtimeRead a time value was requested greater than contents of file"
+  start1(1) = numtimeStep
 endif
 
 call check(nf90_get_var(ncidout,VarId,time_val,start1,count1))          ! Read the first time value from the file
@@ -204,10 +204,10 @@ if(isep1+1 .ge. isep2 .or. isep2+1 .ge. isep3)then
   write(6,*)"Malformed year month date in netcdf file time unit in ", File_name
 endif
 if ((daysstring .eq. 'hours') .or. (daysstring .eq. 'hour'))then
-    time_val=Time_val/24
+    time_val=time_val/24
 endif
 if ((daysstring .eq. 'days') .or. (daysstring .eq. 'day'))then
-    time_val=Time_val
+    time_val=time_val
 endif
 read(datestring(1:(isep1-1)),*)syear
 read(datestring((isep1+1):(isep2-1)),*)smonth
@@ -222,7 +222,7 @@ read(datestring((isep2+1):(isep3-1)),*)sday
 !call lowercase(sincestring,instring)
 !if(instring .ne. "since")write(6,*)"NetCDF units have to be 'days since'.  The file has them as ",time_units_in
 
-end subroutine nCDF3DTimeRead
+end subroutine nCDF3DtimeRead
 !!==================3-D netcdf file reading ends  ==================================================================================
 
 !==================2-D netcdf file reading starts and reads its diemension,variables etc.===========================================
@@ -316,8 +316,8 @@ end subroutine check
 !================================================================
 SUBROUTINE JULDAT (I,M,K,H,TJD)
 !THIS SUBROUTINE COMPUTES JULIAN DATE, GIVEN CALENDAR DATE AND
-!TIME.  INPUT CALENDAR DATE MUST BE GREGORIAN.  INPUT TIME VALUE
-!CAN BE IN ANY UT-LIKE TIME SCALE (UTC, UT1, TT, ETC.) - OUTPUT
+!time.  INPUT CALENDAR DATE MUST BE GREGORIAN.  INPUT time VALUE
+!CAN BE IN ANY UT-LIKE time SCALE (UTC, UT1, TT, ETC.) - OUTPUT
 !JULIAN DATE WILL HAVE SAME BASIS.  ALGORITHM BY FLIEGEL AND
 !VAN FLANDERN.
 !SOURCE: http://aa.usno.navy.mil/software/novas/novas_f/novasf_intro.php
@@ -337,9 +337,9 @@ END
 !================================================================
 !================================================================
 SUBROUTINE CALDAT (TJD,I,M,K,H)
-!THIS SUBROUTINE COMPUTES CALENDAR DATE AND TIME, GIVEN JULIAN
-!DATE.  INPUT JULIAN DATE CAN BE BASED ON ANY UT-LIKE TIME SCALE
-!(UTC, UT1, TT, ETC.) - OUTPUT TIME VALUE WILL HAVE SAME BASIS.
+!THIS SUBROUTINE COMPUTES CALENDAR DATE AND time, GIVEN JULIAN
+!DATE.  INPUT JULIAN DATE CAN BE BASED ON ANY UT-LIKE time SCALE
+!(UTC, UT1, TT, ETC.) - OUTPUT time VALUE WILL HAVE SAME BASIS.
 !OUTPUT CALENDAR DATE WILL BE GREGORIAN.  ALGORITHM BY FLIEGEL AND
 !VAN FLANDERN.
 !SOURCE: http://aa.usno.navy.mil/software/novas/novas_f/novasf_intro.php
@@ -460,7 +460,7 @@ FUNCTION is_numeric(string)
   is_numeric = e == 0
 END FUNCTION is_numeric
 
-!!!==================3-D netcdf file reading starts and reads TIMESTEPS=============================================
+!!!==================3-D netcdf file reading starts and reads timeSTEPS=============================================
 Subroutine SpatialCoordinate(File_name,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
 ! this will give us spatial coornate names, their unit and value
 ! file_name  (in)  Netcdf file to read from
@@ -496,7 +496,7 @@ call check(nf90_get_var(ncidout,Varid,DimValue1))
 
 Varid=2                                                           ! We require that time is the 2nd dimension
 call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit2)) 
-call check(nf90_get_var(ncidout,Varid,DimValue2) )
+call check(nf90_get_var(ncidout,Varid,DimValue2))
 
 call check(nf90_close(ncidout)) 
 
@@ -521,6 +521,3 @@ call check(nf90_get_var(ncidout,VarId, AllVal, start, count))           ! Read t
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 
 End SubRoutine NCDFReadAllTS
-
-
-

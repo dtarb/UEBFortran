@@ -35,7 +35,7 @@
  subroutine InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
    implicit none
  
-   integer :: n, i, xx, MaxNumofFile, count
+        integer :: n, i, xx, MaxNumofFile, count
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! inputvarname (output) Name of the variables that are provided inside inputcontrol.dat file
@@ -99,8 +99,7 @@
 1600        CLOSE(49)
             InumOfFile(i)=count
         end if
-        end do
-            
+        end do   
         MaxNumofFile = MAXVAL(InumOfFile)
         end subroutine InputMaxNCFiles
 !================================================================================================================================
@@ -129,7 +128,7 @@
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
         Use netCDF
         Implicit None
-        integer :: n, i, ii, iii, xx, k, kflag, ncidout, NumTimeStepEachNC, MaxNumofFile, InputVarId
+        integer :: n, i, ii, iii, xx, k, kflag, ncidout, NumtimeStepEachNC, MaxNumofFile, InputVarId
         parameter(n=11)                                         !n is  loop variable
         integer:: IsInputFromNC(n), reason, NumNCFiles(n),nrefyr,nrefmo,nrefday,count
         integer::syear,smonth,sday,first
@@ -216,7 +215,7 @@
         tempfilelist(count)=NCfileContain 
         NumNCFiles(i)=count
         iy(count)=count
-        CALL nCDF3DTimeRead (NCfileContain,1,tempstarttime(count),tempfilesteps(count),syear,smonth,sday)
+        CALL nCDF3DtimeRead (NCfileContain,1,tempstarttime(count),tempfilesteps(count),syear,smonth,sday)
         if (first .eq. 1)then
            first=0
            nrefyr=syear
@@ -251,7 +250,7 @@
                 Do k=1,NumNCFiles(i)
                     File_name=NCDFContainer(k,i)
                     call check(nf90_open(File_name, nf90_nowrite, ncidout))                         ! open the netcdf file
-                    call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumTimeStepEachNC))  ! information about dimensionID 3
+                    call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC))  ! information about dimensionID 3
                     Call check(nf90_inq_varid(ncidout,varnameinncdf(i),InputVarId))
                     CALL check(nf90_inquire_variable(ncidout,InputVarId,natts = numAtts))
                     DO iii=1,numAtts
@@ -267,7 +266,7 @@
                             VarfILLValues(k,i)=-9999
                         end IF
                     END DO
-                    NOofTS(i)=NOofTS(i)+NumTimeStepEachNC
+                    NOofTS(i)=NOofTS(i)+NumtimeStepEachNC
                 end do
             end if
         end do
@@ -287,7 +286,7 @@
         arrayx=MAXVAL(NOofTS)
         End subroutine
         
-        subroutine TimeSeriesAndTimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
+        subroutine timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
         arrayx,NOofTS,TSV,Allvalues)
         
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -306,12 +305,12 @@
         ! varnameinncdf(n) (input)  variable name in control file specifying the netcdf variable to use for reading from NC
         ! arrayx  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! NoofTS(n) (input).  The number of combined NC time steps for each variable
-        ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. Time from TS files are stored as
-        !                          julian and Time from NC files are stored as day/hour from the reference date (time unit in NC).
+        ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
+        !                          julian and time from NC files are stored as day/hour from the reference date (time unit in NC).
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         use netcdf
         Implicit None
-        integer :: n, i, k, FileCount, NumTimeStepEachNC
+        integer :: n, i, k, FileCount, NumtimeStepEachNC
         Parameter(n=11)
         integer:: arrayx
         integer:: VarID,ncidout
@@ -329,7 +328,7 @@
         Double precision:: FileNextDateJDT
         REAL:: AllValues(arrayx,11)
         Double precision:: TSV(arrayx,11)
-        Double precision,allocatable ::AllTimeSteps(:)
+        Double precision,allocatable ::AlltimeSteps(:)
         character*200:: CurrentInputVariable(n)
         integer::StartY,StartM,StartD
         Double precision:: NCRfeferenceJDT
@@ -367,15 +366,15 @@
                     File_nameM=NCDFContainer(k,i)
                     FileCount=FileCount+1
                     call check(nf90_open(File_nameM, nf90_nowrite, ncidout))                         ! open the netcdf file
-                    call check(nf90_inquire_dimension(ncidout,Varid,Rec_name,NumTimeStepEachNC))  ! information about dimensionID 3  
-                    CALL nCDF3DTimeRead(file_nameM,1,TVal,TotalTS,StartY,StartM,StartD)
+                    call check(nf90_inquire_dimension(ncidout,Varid,Rec_name,NumtimeStepEachNC))  ! information about dimensionID 3  
+                    CALL nCDF3DtimeRead(file_nameM,1,TVal,TotalTS,StartY,StartM,StartD)
                     CALL JULDAT(StartY,StartM,StartD,RefHour,NCRfeferenceJDT)
-                    Allocate(AllTimeSteps(numTimeStepEachNC))                                    
-                    call check(nf90_get_var(ncidout,VarId,AllTimeSteps))                            ! Read the first time value from the file
+                    Allocate(AlltimeSteps(numtimeStepEachNC))                                    
+                    call check(nf90_get_var(ncidout,VarId,AlltimeSteps))                            ! Read the first time value from the file
                     ArrayStart=ArrayEnd+1                           
-                    ArrayEnd=NumTimeStepEachNC+ArrayStart-1
-                    TSV(ArrayStart:ArrayEnd,i)=AllTimeSteps
-                    deallocate(AllTimeSteps)
+                    ArrayEnd=NumtimeStepEachNC+ArrayStart-1
+                    TSV(ArrayStart:ArrayEnd,i)=AlltimeSteps
+                    deallocate(AlltimeSteps)
                 end do
             End if
         End do
@@ -397,8 +396,8 @@
         ! NCfileNumtimesteps(MaxNF,n) (input) array giving the number of time steps in each NC file
         ! arrayx  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! NoofTS(n) (oinput).  The number of combined NC time steps for each variable
-        ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. Time from TS files are stored as
-        !                          julian and Time from NC files are stored as day/hour from the reference date (time unit in NC).
+        ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
+        !                          julian and time from NC files are stored as day/hour from the reference date (time unit in NC).
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
@@ -449,8 +448,8 @@
         ! inputvarname (n) (input) Name of the variables that are provided inside inputcontrol.dat file
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)   
         ! NoofTS(n) (input).  The number of combined NC time steps for each variable
-        ! TSV (arrayx,11) (input) holds all the timsteps bot from NC and time series (TS) text files. Time from TS files are stored as
-        !                         julian and Time from NC files are stored as day/hour from the reference date (time unit in NC).
+        ! TSV (arrayx,11) (input) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
+        !                         julian and time from NC files are stored as day/hour from the reference date (time unit in NC).
         ! Allvalues (arrayx,11) (input) holds values of enite timeseries for each variable for a particular grid  point
         ! arrayx  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! ModelEndDate(3) (input)  Array giving end year, month, day
