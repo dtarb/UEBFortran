@@ -37,10 +37,10 @@
 !   arrays can be allocated
         subroutine NumOutFiles(OutControlFILE, ModelStartDate, &
         ModelStartHour,ModelEndDate,ModelEndHour,Modeldt, &
-        dimlen2,dimlen1,NumTimeStep,NumofFile,NumOutPoint,OutCount)
+        dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)
 
             
-        ! NumTimeStep is the total number of time steps output
+        ! NumtimeStep is the total number of time steps output
         ! NumofFile is the number of output files per variable output to netCDF
         parameter (n=66)
         integer:: dimlen2,dimlen1,i
@@ -49,7 +49,7 @@
         Double precision:: JMSD,JMED,MStartHour,MEndHour,tol
         integer:: ntsperfile
         real xx
-        integer:: NumTimeStep, NumofFile,NumOutPoint,reason,OutCount
+        integer:: NumtimeStep, NumofFile,NumOutPoint,reason,OutCount
         character*200 trimcode,filecode,xxs,OutControlFILE
         CHARACTER(200), DIMENSION(n) :: outSymbol
         integer:: netCDFDataValPerfile 
@@ -82,9 +82,9 @@
         netCDFDataValPerfile=int(1.5*1000*1000*1000/5.5) !  Determined experimentally
         !netCDFDataValPerfile=1.5*1000*50/5.5   !   Small for debugging
         tol=5./(60.*24.)     !  5 min tolerance
-        NumTimeStep=int(((JMED+tol-JMSD)/(Modeldt/24)) + 1)
+        NumtimeStep=int(((JMED+tol-JMSD)/(Modeldt/24)) + 1)
         ntsperfile=max(netCDFDataValPerfile/(dimlen1*dimlen2),1)
-        NumofFile=NumTimeStep/ntsperfile+1  ! The +1 is to round up integer calculation
+        NumofFile=NumtimeStep/ntsperfile+1  ! The +1 is to round up integer calculation
         NumOutPoint=0
         OutCount=0
         OPEN(109,FILE=OutControlFile,STATUS='OLD', ACTION='READ')
@@ -120,8 +120,8 @@
 !  The file name to each variable that is outpus
 !  An array indicating whether each variable is output or not 
 
-        subroutine OutputFiles(OutControlFILE,NumTimeStep,Dimlen2, &
-       dimlen1,NumofFile,outSampleFile,NumTimeStepPerFile, &
+        subroutine OutputFiles(OutControlFILE,NumtimeStep,Dimlen2, &
+       dimlen1,NumofFile,outSampleFile,NumtimeStepPerFile, &
        OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
         ! OutNCfiles output a array that contains all the putput NC files
         ! outputvarfile input a file that lists all the variables that a user wants as outputs
@@ -138,8 +138,8 @@
         ! unused: CHARACTER(200) ::string
         Integer:: reason
         integer NumOutPoint
-        integer::NumTimeStep
-        Integer:: NumTimeStepPerFile(NumofFile)
+        integer::NumtimeStep
+        Integer:: NumtimeStepPerFile(NumofFile)
         integer OutPoint(NumOutpoint,2),numOutPtRead
         logical matched
         integer:: OutNum
@@ -170,13 +170,13 @@
             netCDFDataValPerfile=int(1.5*1000*1000*1000/5.5) !  Determined experimentally
             !netCDFDataValPerfile=1.5*1000*50/5.5   !   Small for debugging
             ntsperfile=max(netCDFDataValPerfile/(dimlen1*dimlen2),1)
-            lastfilents=NumTimeStep-(NumofFile-1)*ntsperfile
+            lastfilents=NumtimeStep-(NumofFile-1)*ntsperfile
             if(lastfilents .le. 0) &
              write(6,*)'Logic error in computing time steps per file'
-            NumTimeStepPerFile(1:(NumofFile-1))=ntsperfile
-            NumTimeStepPerFile(NumofFile)=lastfilents
+            NumtimeStepPerFile(1:(NumofFile-1))=ntsperfile
+            NumtimeStepPerFile(NumofFile)=lastfilents
         else
-            NumTimeStepPerFile(1)=NumTimeStep
+            NumtimeStepPerFile(1)=NumtimeStep
         endif
         numOutPtRead=0
         OPEN(109,FILE=OutControlFile,STATUS='OLD', ACTION='READ')
@@ -222,7 +222,7 @@
 
  Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
-        &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
+        &NumtimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         use netCDF
         implicit none
         integer n,i,j,LengthOutFile
@@ -248,7 +248,7 @@
         Integer:: dimlen1,dimlen2
         ! unused: character(len=500):: netCDFfileName(NumofFile,outcount)
         ! unused: character(len=500):: NCOutfileArr(NumofFile,outcount)
-        Integer:: NumTimeStepPerFile(NumofFile)
+        Integer:: NumtimeStepPerFile(NumofFile)
         character (20) :: DimName1,DimName2
         character (100) :: DimUnit1,DimUnit2
         character (200) :: time_unit,NCOutfileName
@@ -340,7 +340,7 @@
                !               x_dimid=1
                !               y_dimid=2
                !               time_dimid=3
-               call check(nf90_def_dim(ncid,'Time',NumTimeStepPerFile(j),time_dimid))
+               call check(nf90_def_dim(ncid,'time',NumtimeStepPerFile(j),time_dimid))
                call check(nf90_def_dim(ncid,DimName2,dimlen2,x_dimid))
                call check(nf90_def_dim(ncid,DimName1,dimlen1,y_dimid))
                
@@ -386,18 +386,18 @@
         end do
         end Subroutine DirectoryCreate
         
-    Subroutine OutputnetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumTimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
+    Subroutine OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
     use NETCDF
     
     integer, parameter :: NDIMS = 3
-    integer::incfile,ioutv,outcount,NumTimeStep
+    integer::incfile,ioutv,outcount,NumtimeStep
     integer :: start(NDIMS), count(NDIMS)
     integer:: iycoord,jxcoord, timerec
-    integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
+    integer::NumtimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
     integer::NCIDARRAY(NumofFile,outcount),OutVar(outcount)
-    REAL:: OutVarValue(NumTimeStep,64)
+    REAL:: OutVarValue(NumtimeStep,64)
     
-    timerec=NumTimeStepPerFile(incfile)
+    timerec=NumtimeStepPerFile(incfile)
 !    count = (/ 1, 1, timerec /)
 !    start = (/ 1, 1, 1 /)
     count = (/ timerec, 1, 1 /)
@@ -408,17 +408,17 @@
     End Subroutine 
    
 
-    Subroutine OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
+    Subroutine OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
         use NETCDF
         implicit none
         integer, parameter :: NDIMS = 3
-        integer::outcount,NumTimeStep,NumofFile
+        integer::outcount,NumtimeStep,NumofFile
         integer::incfile,ioutv,OutVar(outcount)
         character (50) :: FILE_NAME
         integer :: start(NDIMS), count(NDIMS),VarId,recid
         integer:: iycoord,jxcoord, timerec,NCIDARRAY(NumofFile,outcount)
-        integer::NumTimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
-        Double precision::FNDJDT(NumTimeStep)
-        timerec=NumTimeStepPerFile(incfile)
-        call nf_put_var_double(NCIDARRAY(incfile,ioutv),1,FNDJDT(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2)))
+        integer::NumtimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
+        Double precision::FNDJDT(NumtimeStep)
+        timerec=NumtimeStepPerFile(incfile)
+        call Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),1,FNDJDT(StartEndNCDF(incfile,1):StartEndNCDF(incfile,2))))
     End Subroutine 

@@ -48,9 +48,10 @@
       ! for netCDF declaration
       use netcdf
       Implicit None
+      integer:: snowdgtvariteflag
       integer::nsv,npar,nxv,niv,nov
-      real::to,tk,sbc,hf,hneu,cw,cs,cp,rag,k,hff,rhoi,rhow,pi,narg,UTCOFFSET,ETIME,g,w1day,dt
-      integer::NUMTIMESTEP,NREFYR,NREFMO,NREFDAY,NumOP
+      real::to,tk,sbc,hf,hneu,cw,cs,cp,rag,k,hff,rhoi,rhow,pi,narg,UTCOFFSET,Etime,g,w1day,dt
+      integer::NUMtimeSTEP,NREFYR,NREFMO,NREFDAY,NumOP
       REAL::us,ws,wc,apr,cg,rhog,de,tave,ws1,wc1,cump,cumes,cumec,cummr,ta,p,v,rh,tmin,tmax,TRANGE,QSIOBS,QG,QLI
       real::tavg,qnetob,snowalb,coszen,atff,cf,hri,atfimplied,ema,eacl,dstorage,ERRMBAL,HRI0
       integer:: juniqueid,ivar,iradfl
@@ -84,7 +85,7 @@
       real mtime(4)                                     ! YJS pass to reflect the change of Snow (Year, month, Date, Hour)
       integer:: istep
       REAL:: IDNumber(1)
-      Double precision, dimension(:), allocatable :: DimValue1,DimValue2
+      DOUBLE PRECISION, dimension(:), allocatable :: DimValue1,DimValue2
       Double precision, allocatable :: TSV(:,:)
       integer, allocatable::StartEndNCDF(:,:)
       REAL, allocatable :: Allvalues(:,:)
@@ -102,7 +103,7 @@
       real, allocatable :: tsprevday(:)
       real, allocatable :: taveprevday(:)
       
-      Integer, dimension(:), allocatable :: NumTimeStepPerFile
+      Integer, dimension(:), allocatable :: NumtimeStepPerFile
       Character*200, dimension(:,:), allocatable :: OutputNCContainer
       Character*200, dimension(:,:), allocatable :: NCOutfileArr
       integer, dimension(:,:), allocatable :: NCIDARRAY
@@ -125,18 +126,18 @@
       real,allocatable :: OutVarValue(:,:)
       REal:: OutArr(53),IniOutVals(16)
       integer:: timestepinfile,incfile
-      INTEGER::  VARINDX(3),TIMEINDX(1)
+      INTEGER::  VARINDX(3),timeINDX(1)
       CHARACTER(200), DIMENSION(66) :: outSymbol
       logical towrite
-      Double precision:: ReferenceHour,ReferenceTime,CTJD
+      Double precision:: ReferenceHour,Referencetime,CTJD
       ! The start and count arrays will tell the netCDF library where to
       ! write our data.
       Double precision, allocatable:: FNDJDT(:)
-      Double precision, allocatable:: TimeMaxPerFile(:,:)
-      Double precision, allocatable:: TimeMinPerFile(:,:)
+      Double precision, allocatable:: timeMaxPerFile(:,:)
+      Double precision, allocatable:: timeMinPerFile(:,:)
       REAL, allocatable::VarMissingValues(:,:),VarfILLValues(:,:)
       Double precision:: CurrentModelDT 
-      ! FOR PROGRAM EXECUTION TIME 
+      ! FOR PROGRAM EXECUTION time 
       real, dimension(2) :: tarray
       real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc
       REAL:: Hour
@@ -149,7 +150,7 @@
        REAL:: AggValues
        Real,dimension(:,:,:),Allocatable:: AggdWSVarVal ! Aggregated WaterShed variable Value
        integer, Allocatable:: yymmddarray(:,:)
-       Real,dimension(:),Allocatable:: Timearray
+       Real,dimension(:),Allocatable:: timearray
        Character*200, dimension(:), allocatable :: AllNCDFfile
        integer:: totalNC
        !declares for check
@@ -161,6 +162,12 @@
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
        integer::modx,totaldayMOne,totalDay,StepInADay,gg
        REAL:: DimDiff1,DimDiff2
+       
+       ! snowdgtvariteflag=1 means write all the warning messages
+       ! snowdgtvariteflag=0 means do not write all the warning messages
+       
+       snowdgtvariteflag=0
+       
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
       ! differences and conforms to later Fortran-2003 standards.
@@ -246,26 +253,38 @@
        CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
         &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
         &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
-       Allocate(TimeMaxPerFile(MaxNumofFile,11))
-       Allocate(TimeMinPerFile(MaxNumofFile,11))
+       Allocate(timeMaxPerFile(MaxNumofFile,11))
+       Allocate(timeMinPerFile(MaxNumofFile,11))
        allocate(TSV(arrayx,11))
        allocate(AllValues(arrayx,11))
-       CALL TimeSeriesAndTimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
+       CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
         arrayx,NOofTS,TSV,Allvalues)
         
-      ReferenceHour=0.00
-      CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,ReferenceTime)
+       ReferenceHour=0.00
+      IF (MaxNumofFile .eq. 0)then
+            nrefyr=ModelStartDate(1)
+            nrefmo=ModelStartDate(2)
+            nrefday=ModelStartDate(3)
+      END IF
+      CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,Referencetime)
       allocate(DimValue1(dimlen1))
       allocate(DimValue2(dimlen2))
+
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
-      tresult = ETIME(tarray)
+!      OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
+!      Do I = 1,dimlen1
+!            Write(665,37) DimValue1(i)
+!      end do
+!37    format(f17.10,1x)
+!      close(665)
+      tresult = Etime(tarray)
       tlast=tresult
-      write(6,*)'Time to check inputs',tresult
+      write(6,*)'time to check inputs',tresult
       write(636,*)'Check Inputs',tresult, ' seconds'
 ! Output file creation
         CALL NumOutFiles(OutControlFILE,ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
-                         &dimlen2,dimlen1,NumTimeStep,NumofFile,NumOutPoint,OutCount)                  
-        Allocate(NumTimeStepPerFile(NumofFile)) ! This array will contains the number of time steps in the sequence of netcdf files
+                         &dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)                  
+        Allocate(NumtimeStepPerFile(NumofFile)) ! This array will contains the number of time steps in the sequence of netcdf files
         Allocate(OutputNCContainer(NumofFile,OutCount))  !  This array will contain the file names for each output netcdf variable
         Allocate(NCOutfileArr(NumofFile,OutCount))  
         Allocate(OutPoint(NumOutPoint,2))
@@ -273,16 +292,15 @@
         Allocate(outSampleFile(outcount))
         Allocate(OutVar(outcount))
         Allocate(outputfolder(outcount))
-        Allocate(OutVarValue(NumTimeStep,66))
-        CALL OutputFiles(OutControlFILE,NumTimeStep,Dimlen2,dimlen1,NumofFile,outSampleFile,NumTimeStepPerFile,OutVar,&
+        Allocate(OutVarValue(NumtimeStep,66))
+        CALL OutputFiles(OutControlFILE,NumtimeStep,Dimlen2,dimlen1,NumofFile,outSampleFile,NumtimeStepPerFile,OutVar,&
         &OutPoint,OutPointFiles,NumOutPoint,OutCount)
 !  suggest concatenate outputfolder and outSamplefile into one string array
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
-      
         CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
-        &NumTimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
+        &NumtimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
         Allocate(StartEndNCDF(NumofFile,2))                
         CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
         allocate(AllNCDFfile(totalNC))
@@ -295,10 +313,10 @@
        &dimlen1,uniqueIDNumber,AggOutVarnum)
        Allocate(UniqueIDArray(uniqueIDNumber))   
        CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray)
-       Allocate(AggdWSVarVal(NumTimeStep,uniqueIDNumber,AggOutNum))
-       Allocate(yymmddarray(3,NumTimeStep))
-       Allocate(Timearray(NumTimeStep))
-       Allocate(FNDJDT(NumTimeStep))
+       Allocate(AggdWSVarVal(NumtimeStep,uniqueIDNumber,AggOutNum))
+       Allocate(yymmddarray(3,NumtimeStep))
+       Allocate(timearray(NumtimeStep))
+       Allocate(FNDJDT(NumtimeStep))
        AggdWSVarVal=0
 !  Suggest only use NCOutFileArr not OutputNCContainer                         
        AggUnit=887
@@ -309,15 +327,15 @@
         ii=1
 1056    If (ii .LE. NumofFile)THEN
             StartEndNCDF(ii,1)=ST+1
-            StartEndNCDF(ii,2)=StartEndNCDF(ii,1)+NumTimeStepPerFile(ii)-1
+            StartEndNCDF(ii,2)=StartEndNCDF(ii,1)+NumtimeStepPerFile(ii)-1
             ST=StartEndNCDF(ii,2)
             ii=ii+1
             Go to 1056
         End if
         
        !  Initialize timing results
-       tresult= ETIME(tarray)
-       write(6,*)'Time to create netCDFs ',(tresult-tlast)
+       tresult= Etime(tarray)
+       write(6,*)'time to create netCDFs ',(tresult-tlast)
        write(636,*)'Create netCDFs ',(tresult-tlast),' seconds'  
        
        write(6,*)"Starting loop over grid cells"
@@ -344,7 +362,7 @@
             &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
 
        ! FIXME: what if the result is fractional
-       !  Time steps must divide exactly in to a day because we use logic that requires the values from the same time
+       !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
        !  step on the previous day.  Consider in future making the specification of time step as number of time
        !  steps in a day, not modeldt to ensure this       
        StepInADay=int(24/modeldt+0.5)  ! closest rounding
@@ -377,10 +395,10 @@
                 totaldayMOne=(arrayx-modx)/StepInADay
                 totalDDay=totalDayMOne+1
                 Do gg=1,totaldayMOne
-                    Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,6)=MINVAL(Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,1))
+                    Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,6)=MAXVAL(Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,1))
                 END DO
                     Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),6)=&
-                    &MINVAL(Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),1))
+                    &MAXVAL(Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),1))
             Else
                 totaldayMOne=(arrayx)/StepInADay
                 totalDay=totalDayMOne
@@ -491,7 +509,7 @@
 !        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
 !            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
 
-        tresult= ETIME(tarray)
+        tresult= Etime(tarray)
         tio=tio+tresult-tlast
         tlast=tresult
         
@@ -622,7 +640,7 @@
         CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
          &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
      
-        tresult= ETIME(tarray)
+        tresult= Etime(tarray)
         tcomp=tcomp+tresult-tlast
         tlast=tresult
 
@@ -651,13 +669,13 @@
         ! timestep to write.)
     
         !  Here we rely on the even spread of time steps until the last file
-         incfile=(istep-1)/NumTimeStepPerFile(1)+1  !  the netcdf file position
-         timestepinfile=istep-(incfile-1)*NumTimeStepPerFile(1)  ! the time step in the file
+         incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
+         timestepinfile=istep-(incfile-1)*NumtimeStepPerFile(1)  ! the time step in the file
          VARINDX = (/iycoord,jxcoord,timestepinfile/)
-         TIMEINDX =(/timestepinfile/)
+         timeINDX =(/timestepinfile/)
          ReferenceHour=DBLE(hour)
          call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
-         FNDJDT(istep)=DBLE(CTJD-ReferenceTime)
+         FNDJDT(istep)=DBLE(CTJD-Referencetime)
 
      END IF
         
@@ -675,13 +693,13 @@
     yymmddarray(1,istep)=year
     yymmddarray(2,istep)=month
     yymmddarray(3,istep)=day
-    Timearray(istep)=hour
+    timearray(istep)=hour
 
-    tresult= ETIME(tarray)
+    tresult= Etime(tarray)
     tout=tout+tresult-tlast
     tlast=tresult
 
-    CALL UPDATETIME(YEAR,MONTH,DAY,HOUR,DT)
+    CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
 !  End of time loop                     
 !*************************************************************************************************   
         ModHour=DBLE(Hour)
@@ -699,13 +717,13 @@
 
          do ioutv=1,outcount
            do incfile = 1,NumofFile
-                CALL OutputnetCDF(NCIDARRAY,outvar,NumTimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumTimeStepPerFile,NumofFile,&
+                CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
                 &StartEndNCDF,OutVarValue)  
                 CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
-          enddo
+           enddo
         enddo
     endif  !  this is the end of if we are in a watershed    
-    tresult= ETIME(tarray)
+    tresult= Etime(tarray)
     toutnc=toutnc+tresult-tlast
     tlast=tresult
     numgrid=numgrid+1
@@ -713,20 +731,21 @@
     
        END DO  !  These are the end of the space loop
      END DO
+     !Open the file and see whats inside
     do ioutv=1,outcount
        do incfile = 1,NumofFile
         CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
         CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
-        CALL OutputTimenetCDF(NCIDARRAY,NumTimeStep,outcount,incfile,ioutv,NumTimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
+        CALL OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
         CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))
        enddo
     enddo
     Write (6,FMT="(/A31/)") " now aggregation will be started" 
-     do istep=1,NumTimestep
+     do istep=1,Numtimestep
         do ivar=1,AggOutNum
             Do jUniqueID=1,uniqueIDNumber
-                WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),Timearray(istep),outSymbol(AggOutVarnum(ivar)),&
+                WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
                 &UniqueIDArray(jUniqueID),AggdWSVarVal(istep,jUniqueID,ivar)
 47             format(1x,i5,i3,i3,f8.3,1x,a11,i7,1x,g13.6)
             end do
@@ -734,7 +753,7 @@
     end do
     Close(AggUnit)
     
-    tresult= ETIME(tarray)
+    tresult= Etime(tarray)
     tagg=tagg+tresult-tlast
     tlast=tresult
 

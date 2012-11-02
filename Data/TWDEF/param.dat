@@ -36,11 +36,7 @@ lang: the thermal conductivity of soil
 wlf:  Low frequency fluctuation in deep snow/soil layer 
 0.0654      
 rd1: Amplitude correction coefficient of heat conduction (1)
-1 
-fstab:  Stability correction control parameter 0 = no corrections
-1.0  
-tref:  Reference temperature of soil layer in ground heat calculation input
--0.45 
+1  
 dnews:  The threshold depth of for new snow (0.001 m)
 0.001  
 emc:   Emissivity of canopy
