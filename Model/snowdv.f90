@@ -139,7 +139,7 @@
       Double precision:: CurrentModelDT 
       ! FOR PROGRAM EXECUTION time 
       real, dimension(2) :: tarray
-      real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc
+      real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc,taggre
       REAL:: Hour
       Double precision:: SHOUR
       !aggregated output declaration
@@ -167,7 +167,8 @@
        ! snowdgtvariteflag=0 means do not write all the warning messages
        
        snowdgtvariteflag=0
-       
+       taggre=0.0
+       toutnc=0.0
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
       ! differences and conforms to later Fortran-2003 standards.
@@ -463,17 +464,17 @@
         WGT=1.0
     END IF
     
-          Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
-      Taveprevday(nstepday) = Tave
+    Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
+    Taveprevday(nstepday) = Tave
       
 !   initialize variables for mass balance
-      Ws1   = statev(2)
-          Wc1   = statev(4)     
-      cumP = 0.
-      cumEs = 0.
-      cumEc = 0.
-      cumMr = 0.
-      cumGM = 0.
+    Ws1   = statev(2)
+    Wc1   = statev(4)     
+    cumP = 0.
+    cumEs = 0.
+    cumEc = 0.
+    cumMr = 0.
+    cumGM = 0.
 !************************************************************************************************      
 
 !  find out if this is an output point and if so open the point output file
@@ -505,7 +506,7 @@
         CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,&
         ModelStartDate,ModelStartHour,&
         nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
-         
+               
 !        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
 !            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
 
@@ -521,6 +522,9 @@
         Tmin=INPVals(5)
         Tmax=INPVals(6)
         trange=Tmax-Tmin
+        if (trange .LE. 0)THEN
+            trange=8.0
+        End if
         QSIOBS=INPVals(7)
         qg=INPVals(8)
         qli=INPVals(9)
@@ -648,8 +652,7 @@
            OutArr=0
         END IF
         
-        if(towrite)WRITE(iunit,*)OutArr
-        
+        if(towrite)WRITE(iunit,*)OutArr       
         DStorage=statev(2)-Ws1+statev(4)-Wc1
         errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
          
@@ -670,16 +673,19 @@
     
         !  Here we rely on the even spread of time steps until the last file
          incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
-         timestepinfile=istep-(incfile-1)*NumtimeStepPerFile(1)  ! the time step in the file
-         VARINDX = (/iycoord,jxcoord,timestepinfile/)
-         timeINDX =(/timestepinfile/)
+!         timestepinfile=istep-(incfile-1)*NumtimeStepPerFile(1)  ! the time step in the file
+!         VARINDX = (/iycoord,jxcoord,timestepinfile/)
+!         timeINDX =(/timestepinfile/)
          ReferenceHour=DBLE(hour)
          call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
          FNDJDT(istep)=DBLE(CTJD-Referencetime)
 
      END IF
         
-
+    tresult= Etime(tarray)
+    tout=tout+tresult-tlast
+    tlast=tresult
+    
     IDNum=Int(IDNumber(1))
     do ioutvar=1,AggOutNum
         Do jUniqueID=1,uniqueIDNumber
@@ -695,10 +701,6 @@
     yymmddarray(3,istep)=day
     timearray(istep)=hour
 
-    tresult= Etime(tarray)
-    tout=tout+tresult-tlast
-    tlast=tresult
-
     CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
 !  End of time loop                     
 !*************************************************************************************************   
@@ -711,10 +713,11 @@
         deallocate(Tsprevday)
         deallocate(Taveprevday)
         Close(iunit)
-        
-!        close(667)
-        
 
+    tresult= Etime(tarray)
+    taggre=taggre+tresult-tlast
+    tlast=tresult
+    
          do ioutv=1,outcount
            do incfile = 1,NumofFile
                 CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
@@ -723,6 +726,7 @@
            enddo
         enddo
     endif  !  this is the end of if we are in a watershed    
+    
     tresult= Etime(tarray)
     toutnc=toutnc+tresult-tlast
     tlast=tresult
@@ -731,6 +735,9 @@
     
        END DO  !  These are the end of the space loop
      END DO
+     
+     close(667)
+     
      !Open the file and see whats inside
     do ioutv=1,outcount
        do incfile = 1,NumofFile
@@ -763,6 +770,7 @@
     write(636,*) "Compute time:",tcomp," Seconds"
     write(636,*) "Out time:",tout," Seconds"
     write(636,*) "Out timeinNC:",toutnc," Seconds"
+    write(636,*) "Aggregated StorageArray:",taggre," Seconds"
     write(636,*) "Aggregation time:",tagg," Seconds"
     write(636,*) "Complete runtime:",tarray(1)," Seconds"
     Close(636)
@@ -771,6 +779,7 @@
     write(6,*) "Compute time:",tcomp," Seconds"
     write(6,*) "Out time:",tout," Seconds"
     write(6,*) "Out timeinNC:",toutnc," Seconds"
+    write(6,*) "Aggregated StorageArray:",taggre," Seconds"
     write(6,*) "Aggregation time:",tagg," Seconds"
     write(6,*) "Complete runtime:",tarray(1)," Seconds"
     Write(6,*) "Your task is successfully performed! Plesae view the results in 'outputs' folder!"
