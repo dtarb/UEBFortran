@@ -383,8 +383,8 @@
         
 
         
-        Subroutine Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-            &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
+        Subroutine Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
+        &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray)
             
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)    
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -401,11 +401,16 @@
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
+        ! ReGriddedArray(arrayx,n) (out) stored all regridded values
+        ! NumtimeStep (in)
+        ! CurrentArrayPosRegrid(NumtimeStep,n) (in)
+        
         Implicit None
-        integer :: n, i, jj, k
+        integer :: n,i,j,jj,k
         Parameter(n=11)
-        integer:: MaxNumofFile,NOofTS(n),NUMNCFILES(n)
-        Character*200:: NCDFContainer(MaxNumofFile,n)
+        integer:: MaxNumofFile,NOofTS(n),NUMNCFILES(n),NumtimeStep,StepInADay
+        integer:: CurrentArrayPosRegrid(NumtimeStep,n)
+        Character*200:: NCDFContainer(MaxNumofFile,n),inputvarname(n)
         Character*50:: varnameinncdf(n)
         integer::iycoord,jxcoord,NCfileNumtimesteps(MaxNumofFile,n)
         character*50:: var_name
@@ -413,8 +418,10 @@
         integer:: arrayx
         integer:: ArrayStart,ArrayEnd,IsInputFromNC(n),rec
         Real:: Allvalues(arrayx,n)
+        REAL:: ReGriddedArray(NumtimeStep,n)
         Real, allocatable :: AllVal(:)
         REAL:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
+        Integer:: Modx,TOTALDAYMONE,TOTALDAY,GG
         Do i = 1,n 
             ArrayEnd=0
             if (IsInputFromNC(i) .eq. 1)then
@@ -440,11 +447,58 @@
             End if
         End do
         
+        Do i = 1,n 
+            if (IsInputFromNC(i) .LT. 2)then
+                Do j = 1,NumtimeStep
+                    ReGriddedArray(j,i)=Allvalues(CurrentArrayPosRegrid(j,i),i)
+                end do
+            END IF
+        end do
+
+        If (inputvarname(5) .NE. 'tmin')THEN
+            CurrentArrayPosRegrid(1:NumtimeStep,5)=CurrentArrayPosRegrid(1:NumtimeStep,1)
+            modx=MOD(NumtimeStep,StepInADay)
+            if (modx .GT. 0)THEN
+                totalDayMOne=(NumtimeStep-modx)/StepInADay
+                totalDay=totalDayMOne+1
+                Do gg=1,totaldayMOne
+                    ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,5)=MINVAL(ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,1))
+                END DO
+                    ReGriddedArray((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),5)&
+                    &=MINVAL(ReGriddedArray((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),1))
+            Else
+                totaldayMOne=(NumtimeStep)/StepInADay
+                totalDay=totalDayMOne
+                Do gg=1,totalDay
+                    ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,5)=MINVAL(ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,1))
+                END DO
+            End if
+        END IF
+       
+        If (inputvarname(6) .NE. 'tmax')THEN
+            modx=MOD(NumtimeStep,StepInADay)
+            if (modx .GT. 0)THEN
+                totaldayMOne=(NumtimeStep-modx)/StepInADay
+                totalDay=totalDayMOne+1
+                Do gg=1,totaldayMOne
+                    ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,6)=MAXVAL(ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,1))
+                END DO
+                    ReGriddedArray((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),6)=&
+                    &MAXVAL(ReGriddedArray((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),1))
+            Else
+                totaldayMOne=(NumtimeStep)/StepInADay
+                totalDay=totalDayMOne
+                Do gg=1,totalDay
+                    ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,6)=MAXVAL(ReGriddedArray(((gg-1)*StepInADay+1):gg*StepInADay,1))
+                END DO
+            End if
+        END IF
         End Subroutine
         
         Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
-        nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
+        ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
         Implicit None
+        
         ! inputvarname (n) (input) Name of the variables that are provided inside inputcontrol.dat file
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)   
         ! NoofTS(n) (input).  The number of combined NC time steps for each variable
@@ -460,33 +514,42 @@
         !                                Our convention is that our start hour must be 0
         ! Year,Month,Day,Hour (input) year, month, day and hour after updating model time at each time step
         ! ModelDt (input) model timestep/resolution
-        ! InpVals(n) (output).  Variable to hold the current value of each input variable. 
-        ! CurrentArrayPos (n) (outnput) current postion in the array of TSV and Allvalues array
+        ! CurrentArrayPosRegrid (n) (outnput) Indexing array postions by comparing with current model time of TSV and Allvalues array
         ! CurrentModelDT (input) current model timestep in julian
         ! istep (input) Current model time position
 
-        integer :: n, i
+        integer :: n,i
         Parameter(n=11)
+        integer:: NumtimeStep
+        integer:: CurrentArrayPosRegrid(NumtimeStep,n)
         Character*200:: INPUTVARNAME(n)
-        integer::arrayx,ModelStartDate(3),istep
-        REAL:: Allvalues(Arrayx,n),ModelStartHour,InpVals(n)
+        integer::arrayx,ModelStartDate(3),istep,ModelEndDate(3)
+        REAL:: Allvalues(Arrayx,n),ModelStartHour,ModelEndHour
         Double precision:: TSV(Arrayx,n)
         Double precision:: CurrentModelDT,RefJD
         Double precision:: FileCurrentDT(n),FileNextDT(n),SJD,RefHour,SHOUR
         Integer:: CurrentArrayPos(n),NextArrayPos(n),IsInputFromNC(n),nrefyr,nrefmo,nrefday
+        Integer:: YEAR,MONTH,DAY
+        REAL:: HOUR,MODELDT,DT
         integer:: NOOFTS(n)
-        Double precision:: Tol
+        Double precision:: Tol,dhour,DBLEHOUR,EJD,modelTimeJDT(NumtimeStep)
         RefHour=0.00
         SHOUR=dble(ModelStartHour)
         TOl=1./(60.*24.) ! 1 minute tolerance
         call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),SHour,SJD)
+        call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),SHour,CurrentModelDT)
         call JULDAT(nrefyr,nrefmo,nrefday,RefHour,RefJD)
-        If (inputvarname(5) .NE. 'tmin')Then
-            IsInputFromNC(5)=1
-        End if
-        If (inputvarname(6) .NE. 'Tmax')Then
-            IsInputFromNC(6)=1
-        End if
+        dhour=dble(ModelEndHour)
+        call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
+        istep=0
+        dt=Modeldt
+        YEAR=ModelStartDate(1)
+        MONTH=ModelStartDate(2)
+        DAY=ModelStartDate(3)
+        Hour=0.00
+        
+8887   istep=istep+1 
+       modelTimeJDT(istep)=CurrentModelDT
         Do i=1,n
             if(istep==1)Then
                 CurrentArrayPos(i)=1
@@ -494,9 +557,11 @@
             Else
                 If(CurrentArrayPos(i) .LT. NoofTS(i))Then
                     CurrentArrayPos(i)=CurrentArrayPos(i)
+                    CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                     NextArrayPos(i)=CurrentArrayPos(i)+1
                 Else
                     CurrentArrayPos(i)=NoofTS(i)-1
+                    CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                     NextArrayPos(i)=CurrentArrayPos(i)+1
                 End If
             End if
@@ -513,12 +578,12 @@
         Do i=1,n
             IF(IsInputFromNC(i) .LT. 2)then
                 If((FileCurrentDT(i) .GT. CurrentModelDT) .AND. (CurrentArrayPos(i)==1))THEN
-                    InpVals(i)=Allvalues(1,i)
                     CurrentArrayPos(i)=1
                 End IF
                 
 1234            If((FileCurrentDT(i)+Tol) .LT. CurrentModelDT)THEN 
                     FileCurrentDT(i)=FileNextDT(i)
+                    CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                     CurrentArrayPos(i)=NextArrayPos(i)
                     If(CurrentArrayPos(i) .LT. NoofTS(i))Then
                         NextArrayPos(i)=NextArrayPos(i)+1
@@ -531,29 +596,29 @@
                         Go to 1234
                     Else
                         CurrentArrayPos(i)=NoofTS(i)
-                        InpVals(i)=Allvalues(CurrentArrayPos(i),i)   
+                        CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                     End if
                     
                 Else if(((FileCurrentDT(i)-Tol) .LT. CurrentModelDT) .AND. ((FileCurrentDT(i)+Tol) .GT. CurrentModelDT))THEN
                     If(CurrentArrayPos(i) .LT. NoofTS(i))Then
-                        InpVals(i)=Allvalues(CurrentArrayPos(i),i)
+                        CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                         CurrentArrayPos(i)=CurrentArrayPos(i)+1
+                        If (CurrentArrayPos(i)== NoofTS(i))THEN
+                            CurrentArrayPos(i)=CurrentArrayPos(i)
+                        END IF
                     Else
                         CurrentArrayPos(i)=NoofTS(i)
-                        InpVals(i)=Allvalues(CurrentArrayPos(i),i)
+                        CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                     End If
-                    
-                Else If (((FileCurrentDT(i)-Tol) .GT. CurrentModelDT) .AND. (CurrentArrayPos(i) .NE. 1))THEN
-                    InpVals(i)=Allvalues(CurrentArrayPos(i),i)
                 End If   
-                
             End If
         End Do
         
-        If (inputvarname(5) .NE. 'tmin')Then
-            IsInputFromNC(5)=3
+        CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
+        DBLEHOUR=DBLE(hour)
+        call JULDAT(YEAR,MONTH,DAY,DBLEHOUR,CurrentModelDT)
+        If (EJD .GE. CurrentModelDT)Then      
+            Go to 8887 
         End if
-        If (inputvarname(6) .NE. 'Tmax')Then
-            IsInputFromNC(6)=3
-        End if
+
         End subroutine

@@ -39,9 +39,19 @@
         ModelStartHour,ModelEndDate,ModelEndHour,Modeldt, &
         dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)
 
-            
-        ! NumtimeStep is the total number of time steps output
-        ! NumofFile is the number of output files per variable output to netCDF
+        ! OutControlFILE (in) input control file
+        ! ModelStartDate(3) (input) Array giving start year, month, day
+        ! ModelEndDate(3) (input)  Array giving end year, month, day
+        ! ModelStartHour (input) Start hour
+        ! ModelEndHour (input)  end hour
+        ! Modeldt (input) model time resolution
+        ! Dimlen2 (out) length of y-coordinate
+        ! dimlen1 (out) length of x-coordinate
+        ! NumtimeStep (out) the total number of time steps output
+        ! NumofFile (out) the number of output files per variable output to netCDF
+        ! NumOutPoint (out) Number of points for point detail output
+        ! OutCount (out) Number of variables for utputting in NC files
+        
         parameter (n=66)
         integer:: dimlen2,dimlen1,i
         Integer:: ModelStartDate(3),ModelEndDate(3)
@@ -121,10 +131,22 @@
 !  An array indicating whether each variable is output or not 
 
         subroutine OutputFiles(OutControlFILE,NumtimeStep,Dimlen2, &
-       dimlen1,NumofFile,outSampleFile,NumtimeStepPerFile, &
-       OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
-        ! OutNCfiles output a array that contains all the putput NC files
-        ! outputvarfile input a file that lists all the variables that a user wants as outputs
+        dimlen1,NumofFile,outSampleFile,NumtimeStepPerFile, &
+        OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
+        
+        ! OutControlFILE
+        ! NumtimeStep
+        ! Dimlen2
+        ! dimlen1
+        ! NumofFile
+        ! outSampleFile
+        ! NumtimeStepPerFile
+        ! OutVar
+        ! OutPoint
+        ! OutPointFiles
+        ! NumOutPoint
+        ! OutCount
+
         implicit none
         integer n,i,netCDFDataValPerfile,ntsperfile,lastfilents
         parameter(n = 66)
@@ -220,9 +242,27 @@
         end subroutine OutputFiles
         !===End of reading the values from outconrol.dat file ==
 
- Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
+        Subroutine DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
         &NumtimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
+        
+        ! nrefyr
+        ! nrefmo
+        ! nrefday
+        ! dimlen1
+        ! dimlen2
+        ! DimName1
+        ! DimName2
+        ! DimUnit1
+        ! DimUnit2
+        ! NumofFile
+        ! outcount
+        ! Outvar
+        ! NumtimeStepPerFile
+        ! outSampleFile
+        ! OutputNCContainer
+        ! NCIDARRAY
+        
         use netCDF
         implicit none
         integer n,i,j,LengthOutFile
@@ -386,8 +426,22 @@
         end do
         end Subroutine DirectoryCreate
         
-    Subroutine OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
+    Subroutine OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,&
+    NumtimeStepPerFile,NumofFile,StartEndNCDF,OutVarValue)
     use NETCDF
+    
+    ! NCIDARRAY
+    ! outvar
+    ! NumtimeStep
+    ! outcount
+    ! incfile
+    ! ioutv
+    ! jxcoord
+    ! iycoord
+    ! NumtimeStepPerFile
+    ! NumofFile
+    ! StartEndNCDF
+    ! OutVarValue
     
     integer, parameter :: NDIMS = 3
     integer::incfile,ioutv,outcount,NumtimeStep
@@ -409,6 +463,17 @@
    
 
     Subroutine OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
+    
+    ! NCIDARRAY
+    ! NumtimeStep
+    ! outcount
+    ! incfile 
+    ! ioutv
+    ! NumtimeStepPerFile
+    ! NumofFile
+    ! StartEndNCDF
+    ! FNDJDT
+    
         use NETCDF
         implicit none
         integer, parameter :: NDIMS = 3

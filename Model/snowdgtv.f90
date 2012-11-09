@@ -374,7 +374,7 @@
 		q  = q-Ws/dt*rhow*hf
 		Us = Us-Ws/dt*rhow*hf
 		Ws = 0.
-       ENDIF
+     ENDIF
 
 !DGT 7/25/05   To guard against unreasonable Us when there is no snow do not allow bulk temperature to go above 10 C
        if(Tave .gt. 10.)then
@@ -387,36 +387,36 @@
        if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
        Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   !  this call 
 !   necessary to keep track of average internal temperature used in some surface energy algorithms.
-  
- SWIT=Mr
  If (Ws .GT. 0)THEN 
     SWIR=0
  ELSE
-    If (Mr .GE. statev(2))THEN
-        SWIR=Mr-statev(2)/dt
-    ELSE
-        SWIR=Mr
-    End IF
+    SWIR=Mr-statev(2)/dt
  End if
   
  ! calculations for glacier melting  Done after Tavg evaluation to maintain consistency with energy content
  ! seperation 
-       IF (Ws .LT. WGT)Then
-           WGM=WGT-Ws
-           Ws=0
-       ELSE
-           Ws=Ws-WGT
-           WGM=0
-       END IF     
-SWIGM=WGM/dt
-SWISM=SWIT-SWIGM-SWIR
-       
+   IF (Ws .LT. WGT)Then
+       WGM=WGT-Ws
+       Ws=0
+   ELSE
+       Ws=Ws-WGT
+       WGM=0
+   END IF   
+ 
+    SWIGM=WGM/dt
+    SWIT=Mr+SWIGM
+    SWISM=SWIT-SWIGM-SWIR
+    
+!    if (SWIR .LT. 0)THEN
+!            SWIR=SWIR+0.00000001
+!    END IF
 !    accumulate for mass balance
-       cump  = cump+(Ps+Pr)*dt
-       cumes  = cumes+Es*dt                  
-       cumEc = cumEc+Ec*dt                ! Evaporation from canopy
-       cumMr = cumMr+Mr*dt                ! canopy melt not added
-       cumGM = cumGM+WGM       !  Cumulative glacier melt
+
+   cump  = cump+(Ps+Pr)*dt
+   cumes  = cumes+Es*dt                  
+   cumEc = cumEc+Ec*dt                ! Evaporation from canopy
+   cumMr = cumMr+Mr*dt                ! canopy melt not added
+   cumGM = cumGM+WGM                  !  Cumulative glacier melt
        
 
 
@@ -472,7 +472,7 @@ SWISM=SWIT-SWIGM-SWIR
       OutArr(7)=qhs
       OutArr(8)=qes
       OutArr(9)=es
-      OutArr(10)=mr
+      OutArr(10)=SWIT
       OutArr(11)=qms
       OutArr(12)=q
       OutArr(13)=fm
