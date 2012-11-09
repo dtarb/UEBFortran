@@ -92,17 +92,20 @@
       integer:: arrayx,NoofTS(11)
       integer::CURRENTARRAYPOS(11)
       real:: cumGM
+      
 !      REAL, dimension(:,:),Allocatable:: inputstorage
 !      Double precision, dimension(:,:),Allocatable:: inputstorageJDT
 !      CHANGES TO ACCOMODATE GLACIER
       real:: WGT ! WGT=WATER EQUIVALENT GLACIER THICKNESS
-      
+     Double precision:: DBHour
       
 ! Arrays to keep records of surface temperature and snowpace average 
 ! temperature. This is for the fourth model (Modified force restore approach) 
       real, allocatable :: tsprevday(:)
       real, allocatable :: taveprevday(:)
-      
+      Double precision, allocatable:: modelTimeJDT(:)
+      integer, allocatable :: CurrentArrayPosRegrid(:,:)
+      REAL, allocatable:: ReGriddedArray(:,:)
       Integer, dimension(:), allocatable :: NumtimeStepPerFile
       Character*200, dimension(:,:), allocatable :: OutputNCContainer
       Character*200, dimension(:,:), allocatable :: NCOutfileArr
@@ -165,10 +168,8 @@
        
        ! snowdgtvariteflag=1 means write all the warning messages
        ! snowdgtvariteflag=0 means do not write all the warning messages
-       
        snowdgtvariteflag=0
-       taggre=0.0
-       toutnc=0.0
+       
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
       ! differences and conforms to later Fortran-2003 standards.
@@ -217,7 +218,6 @@
         READ(5,'(A200)') afile
       ENDIF
 
-
 ! Writing the Long file that includes all warnings
       OPEN(66,FILE='UEBWarning.log',STATUS='UNKNOWN')
       OPEN(636,FILE='UEBTiming.log',STATUS='UNKNOWN')
@@ -227,22 +227,27 @@
       READ(1,*)pfile,svfile,inputcon,OutControlFILE,Watershedfile,WatershedVARID,AggOutControl,AggdOutput
       CLOSE(1)
 
-!  Read parameters
-      CALL readvals(param,irad,ireadalb,bca,bcc,pfile)                 ! Parameter file
+      !  Read parameters
+      CALL readvals(param,irad,ireadalb,bca,bcc,pfile)                 ! pfile = Parameter file 
 
-!     Flag to control radiation
+!     Flag to control radiation (irad)
 !     0 is no measurements - radiation estimated from diurnal temperature range
 !     1 is incoming shortwave radiation read from file (measured), incoming longwave estimated
 !     2 is incoming shortwave and longwave radiation read from file (measured)
 !     3 is net radiation read from file (measured)
 
+!     Flag to control albedo (ireadalb)
+!     0 is no measurements - albedo estimated internally
+!     1 is net radiation read from file (provided: measured or obrained from another model)
+
       CALL nCDF2DArrayInfo2(Watershedfile,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
-!     Call function to go through input control file and find the maximum number of netcdf files for any time varying input variable     
       CAll InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
+      
       Allocate(NCDFContainer(MaxNumofFile,11))
       Allocate(NCfileNumtimesteps(MaxNumofFile,11))
       Allocate(VarMissingValues(MaxNumofFile,11))
       Allocate(VarfILLValues(MaxNumofFile,11))
+      
 !       Call function to read input files and determine the format of variable input (netcdf or text)
 !       Outputs are 
 !       IsInputFromNC is 0 for text and 1 for netcdf for corresponding variable
@@ -252,40 +257,46 @@
 !       Columns correspond to each input variable.  Columns are only filled if var is netCDF
 
        CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
-        &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
+       &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
+       &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
+       
        Allocate(timeMaxPerFile(MaxNumofFile,11))
        Allocate(timeMinPerFile(MaxNumofFile,11))
        allocate(TSV(arrayx,11))
        allocate(AllValues(arrayx,11))
        CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        arrayx,NOofTS,TSV,Allvalues)
-        
-       ReferenceHour=0.00
+       arrayx,NOofTS,TSV,Allvalues)
+
+      ReferenceHour=0.00
       IF (MaxNumofFile .eq. 0)then
-            nrefyr=ModelStartDate(1)
-            nrefmo=ModelStartDate(2)
-            nrefday=ModelStartDate(3)
+        nrefyr=ModelStartDate(1)
+        nrefmo=ModelStartDate(2)
+        nrefday=ModelStartDate(3)
       END IF
       CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,Referencetime)
       allocate(DimValue1(dimlen1))
       allocate(DimValue2(dimlen2))
-
+      
+      ! Dimvalue1 and dimvalue2 are used to put the dimension values in output netCDFs
+      ! this value have precisio problem and therefore, ArcGIS canot read output netCDFs
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
+      
 !      OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
 !      Do I = 1,dimlen1
 !            Write(665,37) DimValue1(i)
 !      end do
 !37    format(f17.10,1x)
 !      close(665)
+
       tresult = Etime(tarray)
       tlast=tresult
       write(6,*)'time to check inputs',tresult
       write(636,*)'Check Inputs',tresult, ' seconds'
-! Output file creation
+      
+! Output file creation starts here
         CALL NumOutFiles(OutControlFILE,ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
                          &dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)                  
-        Allocate(NumtimeStepPerFile(NumofFile)) ! This array will contains the number of time steps in the sequence of netcdf files
+        Allocate(NumtimeStepPerFile(NumofFile))          ! This array will contains the number of time steps in the sequence of netcdf files
         Allocate(OutputNCContainer(NumofFile,OutCount))  !  This array will contain the file names for each output netcdf variable
         Allocate(NCOutfileArr(NumofFile,OutCount))  
         Allocate(OutPoint(NumOutPoint,2))
@@ -294,19 +305,35 @@
         Allocate(OutVar(outcount))
         Allocate(outputfolder(outcount))
         Allocate(OutVarValue(NumtimeStep,66))
+        Allocate(CurrentArrayPosRegrid(NumtimeStep,11))
+        Allocate(ReGriddedArray(NumtimeStep,11))
+        Allocate(modelTimeJDT(NumtimeStep))
         CALL OutputFiles(OutControlFILE,NumtimeStep,Dimlen2,dimlen1,NumofFile,outSampleFile,NumtimeStepPerFile,OutVar,&
         &OutPoint,OutPointFiles,NumOutPoint,OutCount)
-!  suggest concatenate outputfolder and outSamplefile into one string array
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
         CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
         &DimUnit2,NumofFile,outcount,Outvar,&
         &NumtimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
-        Allocate(StartEndNCDF(NumofFile,2))                
+! Output file creation ends here
+        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
+        ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
+!        OPEN(668,FILE='CurrentArrayPosRegrid.DAT',STATUS='UNKNOWN')
+!        Do I = 1,NumtimeStep
+!            Write(668,39) CurrentArrayPosRegrid(i,1),CurrentArrayPosRegrid(i,2),CurrentArrayPosRegrid(i,3),CurrentArrayPosRegrid(i,4),ModelStartHour(i)
+!39          format(I5,1x,I5,1x,I5,1x,I5,1x,f17.5)
+!        END DO
+!        Close(668)
+        Allocate(StartEndNCDF(NumofFile,2))
+            
+! Checking netCDFs starts here                    
         CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
         allocate(AllNCDFfile(totalNC))
+        ! checking if all the netCDF files are provided in a desired format
         CALL  NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile)
-!   Work with aggregated outputs    
+! Checking netCDFs starts here 
+
+! Work with aggregated outputs    
        CALL AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
        Allocate(AggOutVar(AggOutNum))
        Allocate(AggOutVarnum(AggOutNum))
@@ -318,144 +345,109 @@
        Allocate(yymmddarray(3,NumtimeStep))
        Allocate(timearray(NumtimeStep))
        Allocate(FNDJDT(NumtimeStep))
-       AggdWSVarVal=0
-!  Suggest only use NCOutFileArr not OutputNCContainer                         
+       AggdWSVarVal=0                        
        AggUnit=887
        OPEN(AggUnit,FILE=AggdOutput,STATUS='unknown')
        write(Aggunit,*)'Year month day hour variable watershed value' ! write header
      
-        St=0 
-        ii=1
-1056    If (ii .LE. NumofFile)THEN
+       St=0 
+       ii=1
+1056   If (ii .LE. NumofFile)THEN
             StartEndNCDF(ii,1)=ST+1
             StartEndNCDF(ii,2)=StartEndNCDF(ii,1)+NumtimeStepPerFile(ii)-1
             ST=StartEndNCDF(ii,2)
             ii=ii+1
             Go to 1056
-        End if
-        
+       End if
+       
+       ! required to calculate percent grid completed
+       totalgrid=dimlen1*dimlen2     
+       numgrid=0
+       
+       !  FIXME: what if the result is fractional
+       !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
+       !  step on the previous day.  Consider in future making the specification of time step as number of time
+       !  steps in a day, not modeldt to ensure this 
+       !  modeldt is recalculated based on the integer timesteps in a day
+       !  assumption: number of model timesteps in a day must be an integer  
+           
+       StepInADay=int(24.0/modeldt+0.5)  ! closest rounding
+       Modeldt=24.0/StepInADay
+       
+       ! calculating model end date-time in julian date
+       dhour=dble(ModelEndHour)
+       call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
+       
        !  Initialize timing results
        tresult= Etime(tarray)
        write(6,*)'time to create netCDFs ',(tresult-tlast)
        write(636,*)'Create netCDFs ',(tresult-tlast),' seconds'  
-       
        write(6,*)"Starting loop over grid cells"
-
-
+       
+       ! time tracking variables are inititated as 0.0
        tlast=tresult
-       tio=0.
-       tcomp=0.
-       tout=0.
-       tagg=0.
-       totalgrid=dimlen1*dimlen2     
-!      Start loop over space
-       numgrid=0
+       tio=0.0
+       tcomp=0.0
+       tout=0.0
+       tagg=0.0
+       taggre=0.0
+       toutnc=0.0 
+       
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       ! Space loop starts here
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       
        DO iycoord=1,dimlen1
        DO jxcoord=1,dimlen2
        iunit=119  !  unit for point output
 
        CALL nCDF2DRead(Watershedfile,WatershedVARID,IDNumber(1),jxcoord,iycoord)
-        !  read site variables and initial conditions of state variables
-       if((IDNumber(1) .ne. 0).or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  !  Omit calculations if not in the watershed
-         !  TODO change the above to also exclude netcdf no data values
+       if((IDNumber(1) .ne. 0) .or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  ! Omit calculations if not in the watershed
+       
+       !  read site variables and initial conditions of state variables
+       !  TODO change the above to also exclude netcdf no data values
        CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude)
-       CALL Values4VareachGrid(IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-            &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues)
-
-       ! FIXME: what if the result is fractional
-       !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
-       !  step on the previous day.  Consider in future making the specification of time step as number of time
-       !  steps in a day, not modeldt to ensure this       
-       StepInADay=int(24/modeldt+0.5)  ! closest rounding
-       If (inputvarname(5) .NE. 'tmin')THEN
-            NoofTS(5)=NoofTS(1)
-            TSV(1:arrayx,5)=TSV(1:arrayx,1)
-            modx=MOD(arrayx,StepInADay)
-            if (modx .GT. 0)THEN
-                totaldayMOne=(arrayx-modx)/StepInADay
-                totalDDay=totalDayMOne+1
-                Do gg=1,totaldayMOne
-                    Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,5)=MINVAL(Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,1))
-                END DO
-                    Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),5)&
-                    &=MINVAL(Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),1))
-            Else
-                totaldayMOne=(arrayx)/StepInADay
-                totalDay=totalDayMOne
-                Do gg=1,totalDay
-                    Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,5)=MINVAL(Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,1))
-                END DO
-            End if
-        END IF
-        
-        If (inputvarname(6) .NE. 'tmax')THEN
-            NoofTS(6)=NoofTS(1)
-            TSV(1:arrayx,6)=TSV(1:arrayx,1)
-            modx=MOD(arrayx,StepInADay)
-            if (modx .GT. 0)THEN
-                totaldayMOne=(arrayx-modx)/StepInADay
-                totalDDay=totalDayMOne+1
-                Do gg=1,totaldayMOne
-                    Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,6)=MAXVAL(Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,1))
-                END DO
-                    Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),6)=&
-                    &MAXVAL(Allvalues((totalDayMOne*StepInADay+1):((totalDayMOne*StepInADay)+modx),1))
-            Else
-                totaldayMOne=(arrayx)/StepInADay
-                totalDay=totalDayMOne
-                Do gg=1,totalDay
-                    Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,6)=MAXVAL(Allvalues(((gg-1)*StepInADay+1):gg*StepInADay,1))
-                END DO
-            End if
-        END IF
-        
-
-                                        
+       
+       CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
+       &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray)
+                      
 !       OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
-!       OPEN(666,FILE='Data.DAT',STATUS='UNKNOWN') 
-!       OPEN(667,FILE='DataWrite.DAT',STATUS='UNKNOWN')
-!       Do I = 1,arrayx
-!            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
-!            &TSV(i,7),TSV(i,8),TSV(i,9),TSV(i,10),TSV(i,11)
-!            Write(666,37) Allvalues(i,1),Allvalues(i,2),Allvalues(i,3),Allvalues(i,4),Allvalues(i,5),Allvalues(i,6),&
-!            &Allvalues(i,7),Allvalues(i,8),Allvalues(i,9),Allvalues(i,10),Allvalues(i,11)
-!37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
-!38          format(i4,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
+!       Do I = 1,NumtimeStep
+!            Write(665,37) ReGriddedArray(i,1),ReGriddedArray(i,2),ReGriddedArray(i,3),ReGriddedArray(i,4),ReGriddedArray(i,5),ReGriddedArray(i,6)
+!37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
 !       End do
-!       Close(666)
 !       Close(665)
 
-!  Block of code to replicate variables from UEBVeg before time loop
+       !  Block of code to replicate variables from UEBVeg before time loop
        dt=Modeldt
 
        ! FIXME: what if the result is fractional
        !  should not be fractional (except numerically)
-       nstepday=int(24/dt+0.5)  ! closest rounding
+       nstepday=StepInADay  ! number of time steps/day
 
-      ALLOCATE(Tsprevday(nstepday))
-      ALLOCATE(Taveprevday(nstepday))
+       ALLOCATE(Tsprevday(nstepday))
+       ALLOCATE(Taveprevday(nstepday))
 !  Initialize Tsbackup and TaveBackup
-      DO 3 i = 1,nstepday
-                Tsprevday(i)=-9999.
-                Taveprevday(i)=-9999.0
- 3    CONTINUE
+       DO 3 i = 1,nstepday
+            Tsprevday(i)=-9999.
+            Taveprevday(i)=-9999.0
+ 3     CONTINUE
 
-      IF(ts_last .le. -9999.)THEN    
-        Tsprevday(nstepday)=0  
-      ELSE
-        Tsprevday(nstepday)=ts_last                      !has measurements
-
-      END IF 
+       IF(ts_last .le. -9999.)THEN    
+         Tsprevday(nstepday)=0  
+       ELSE
+         Tsprevday(nstepday)=ts_last                      !has measurements
+       END IF 
 
 !****************** To compute Ave.Temp (For Previous day temp.)  ******************************
 
-      Us   = statev(1)                  ! Ub in UEB
-      Ws   = statev(2)                          ! W in UEB
-      Wc   = statev(4)
+      Us   = statev(1)                                  ! Ub in UEB
+      Ws   = statev(2)                                  ! W in UEB
+      Wc   = statev(4)                                  !
       Apr  = sitev(2)                                   ! Atm. Pressure  (PR in UEB)
       cg   = param(4)                                   ! Ground heat capacity (nominally 2.09 KJ/kg/C)
       rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
-      de   = param(11)                              ! Thermally active depth of soil (0.1 m)
+      de   = param(11)                                  ! Thermally active depth of soil (0.1 m)
       
       !  Glacier adjustment of ws
     IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
@@ -467,7 +459,7 @@
     Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
     Taveprevday(nstepday) = Tave
       
-!   initialize variables for mass balance
+!  initialize variables for mass balance
     Ws1   = statev(2)
     Wc1   = statev(4)     
     cumP = 0.
@@ -487,33 +479,37 @@
         endif 
       enddo                     
 
-!  Variables to keep track of which time step we are in and which netcdf output file we are in
-        istep=0  ! time step
-! map on to old UEB names
+        ! Variables to keep track of which time step we are in and which netcdf output file we are in
+        istep=0  ! time step initiated as 0
+        
+        ! map on to old UEB names
         YEAR=ModelStartDate(1)
         MONTH=ModelStartDate(2)
         DAY=ModelStartDate(3)
         Hour=ModelStartHour
         SHOUR=DBLE(ModelStartHour)
         call JULDAT(YEAR,MONTH,DAY,SHOUR,CurrentModelDT)
-        dhour=dble(ModelEndHour)
-        call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
-        !  This is the start of the main time loop      
         
-1       istep=istep+1
 
-        IF(sitev(10).NE. 3)THEN
-        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,&
-        ModelStartDate,ModelStartHour,&
-        nrefyr,nrefmo,nrefday,InpVals,CurrentArrayPos,CurrentModelDT,istep)
+        
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       ! This is the start of the main time loop 
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                
-!        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
-!            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
+1       istep=istep+1
 
         tresult= Etime(tarray)
         tio=tio+tresult-tlast
         tlast=tresult
         
+        IF(sitev(10).NE. 3)THEN
+        Do i= 1,11
+            InpVals(i)=ReGriddedArray(istep,i)
+        End do
+               
+!        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
+!            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
+
  !      Map from wrapper input variables to UEB variables     
         TA=INPVals(1)
         P=INPVals(2)
@@ -523,6 +519,11 @@
         Tmax=INPVals(6)
         trange=Tmax-Tmin
         if (trange .LE. 0)THEN
+            If (snowdgtvariteflag .EQ. 1)then
+                write(6,*) "Diernal temperature range is given as 0 which is unrealistic "
+                write(6,*) "Diernal temperature range is assumed as zero "
+                write(66,*)"on ",year,month,day
+            End  if
             trange=8.0
         End if
         QSIOBS=INPVals(7)
@@ -540,12 +541,15 @@
         INPT(7,1)= QNETOB
         
 !UTC to local time conversion
-      UTCHour=Hour-UTCOffset
-      NHour=UTCHour+longitude/15.0
-      OHour=DBLE(NHour)
-      CALL JulDat(YEAR,MONTH,DAY,OHour,UTCJulDat)
-      CALL CALDat(UTCJulDat,MYEAR,MMONTH,MDAY,MHOUR)
-      NHOUR=REAL(MHOUR)
+        CALL CALDAT(modelTimeJDT(istep),YEAR,MONTH,DAY,DBHour)
+        Hour=REAL(DBHour)
+        UTCHour=Hour-UTCOffset
+        NHour=UTCHour+longitude/15.0
+        OHour=DBLE(NHour)
+        CALL JulDat(YEAR,MONTH,DAY,OHour,UTCJulDat)
+        CALL CALDat(UTCJulDat,MYEAR,MMONTH,MDAY,MHOUR)
+        NHOUR=REAL(MHOUR)
+        
 !******************     Radiation Input Parameterization  ***************************************
        !CALL hyri(YEAR,MONTH,DAY,HOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
        CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
@@ -557,43 +561,42 @@
                           CALL cloud(param,atff,cf)   ! For cloudiness fraction
             ELSE 
                If(QSIOBS .lt. 0) then
+                    If (snowdgtvariteflag .EQ. 1)then
                          write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
                          write(66,*)"at date",year,month,day,hour
                          write(66,*)"was set to zero."
-                 QSIOBS=0       
+                    end if
+                    QSIOBS=0       
                Endif
 !      Need to call HYRI for horizontal surface to perform horizontal
 !      measurement adjustment
-               !CALL hyri(YEAR,MONTH,DAY,HOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
                CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,0.0,AZI,LAT,HRI0,COSZEN)
 !      If HRI0 is 0 the sun should have set so QSIOBS should be 0.  If it is
 !      not it indicates a potential measurement problem. i.e. moonshine
-                 if(HRI0 .GT. 0.0) then
+               if(HRI0 .GT. 0.0) then
                     atfimplied=min(qsiobs/(HRI0*IO),0.9) ! To avoid unreasonably large radiation when HRI0 is small
                     INPT(5,1)=atfimplied * HRI * IO
-                 else
+               else
                    INPT(5,1)=QSIOBS
                      if(qsiobs .ne. 0.)then
-                        write(66,*)"Warning ! you have nonzero nightime"
-                        write(66,*)"incident radiation of",qsiobs
-                        write(66,*)"at date",year,month,day,hour
+                        If (snowdgtvariteflag .EQ. 1)then
+                            write(66,*)"Warning ! you have nonzero nightime"
+                            write(66,*)"incident radiation of",qsiobs
+                            write(66,*)"at date",year,month,day,hour
+                        End if
                      endif
                  endif
-               CALL cloud(param,atff,cf)   ! For cloudiness fraction  This is more theoretically correct
-               !cf = 1.-atff/bca          ! Cf based on solar radiation measurement
-            ENDIF
-             
-                  IF(irad .lt. 2)THEN    
-                CALL qlif(TA,RH,TK,SBC,Ema,Eacl,cf,inpt(6,1) )
-                  Else
-                                inpt(6,1)=qli
+                 CALL cloud(param,atff,cf)   ! For cloudiness fraction  This is more theoretically correct
+             ENDIF        
+          IF(irad .lt. 2)THEN    
+            CALL qlif(TA,RH,TK,SBC,Ema,Eacl,cf,inpt(6,1) )
+          Else
+            inpt(6,1)=qli
           ENDIF 
-
           IRADFL=0                        ! Long wave or shortwave either measured and calculated
-
        ELSE 
-              IRADFL=1                    ! This case is when given IRAD =3 (From Net Radiation)  
-              INPT(7,1) = QNETOB          
+          IRADFL=1                    ! This case is when given IRAD =3 (From Net Radiation)  
+          INPT(7,1) = QNETOB          
        ENDIF
        
 !************************************************************************************************
@@ -655,10 +658,7 @@
         if(towrite)WRITE(iunit,*)OutArr       
         DStorage=statev(2)-Ws1+statev(4)-Wc1
         errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
-         
-        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
-            ERRMBAL=0
-        END IF
+
         if(towrite)WRITE(iunit,*)ERRMBAL
         
         !mapping to OutVarValue
@@ -670,85 +670,95 @@
         ! These settings tell netcdf to write one timestep of data. (The
         ! setting of start(4) inside the loop below tells netCDF which
         ! timestep to write.)
+  
+        ELSE
+           OutArr=0.0
+           ERRMBAL=0.0
+           if(towrite)WRITE(iunit,*)OutArr 
+           if(towrite)WRITE(iunit,*)ERRMBAL 
+           OutVarValue(istep,1:66)=0.00
+        END IF
+        
+        tresult= Etime(tarray)
+        tout=tout+tresult-tlast
+        tlast=tresult
     
         !  Here we rely on the even spread of time steps until the last file
-         incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
-!         timestepinfile=istep-(incfile-1)*NumtimeStepPerFile(1)  ! the time step in the file
-!         VARINDX = (/iycoord,jxcoord,timestepinfile/)
-!         timeINDX =(/timestepinfile/)
-         ReferenceHour=DBLE(hour)
-         call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
-         FNDJDT(istep)=DBLE(CTJD-Referencetime)
-
-     END IF
+        incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
+        ReferenceHour=DBLE(hour)
+        call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
+        FNDJDT(istep)=DBLE(CTJD-Referencetime)
+             
+        IDNum=Int(IDNumber(1))
         
-    tresult= Etime(tarray)
-    tout=tout+tresult-tlast
-    tlast=tresult
-    
-    IDNum=Int(IDNumber(1))
-    do ioutvar=1,AggOutNum
         Do jUniqueID=1,uniqueIDNumber
             If(UniqueIDArray(jUniqueID) .eq. IDNum)then
-                AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
-                AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
+                do ioutvar=1,AggOutNum
+                    AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
+                    AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
+                END DO
+                Exit
             End if
         end do
-    enddo
 
-    yymmddarray(1,istep)=year
-    yymmddarray(2,istep)=month
-    yymmddarray(3,istep)=day
-    timearray(istep)=hour
+        yymmddarray(1,istep)=year
+        yymmddarray(2,istep)=month
+        yymmddarray(3,istep)=day
+        timearray(istep)=hour
 
-    CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
-!  End of time loop                     
+        CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
+        ! End of time loop                     
 !*************************************************************************************************   
         ModHour=DBLE(Hour)
         call JULDAT(YEAR,MONTH,DAY,ModHour,CurrentModelDT)
         
+        tresult= Etime(tarray)
+        taggre=taggre+tresult-tlast
+        tlast=tresult
+    
         If (EJD .GE. CurrentModelDT)Then      
             Go to 1
         End if
         deallocate(Tsprevday)
         deallocate(Taveprevday)
         Close(iunit)
-
-    tresult= Etime(tarray)
-    taggre=taggre+tresult-tlast
-    tlast=tresult
-    
+        
          do ioutv=1,outcount
            do incfile = 1,NumofFile
                 CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
                 &StartEndNCDF,OutVarValue)  
                 CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
            enddo
-        enddo
-    endif  !  this is the end of if we are in a watershed    
+         enddo
+     
+        endif  !  this is the end of if we are in a watershed    
+        
+        tresult= Etime(tarray)
+        toutnc=toutnc+tresult-tlast
+        tlast=tresult
     
-    tresult= Etime(tarray)
-    toutnc=toutnc+tresult-tlast
-    tlast=tresult
-    numgrid=numgrid+1
-    write(6,FMT="(A1,A,t30,F6.2,A$)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
+        ! grid count progress bar is calculated and written here
+        numgrid=numgrid+1
+        write(6,FMT="(A1,A,t30,F6.2,A$)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
     
        END DO  !  These are the end of the space loop
      END DO
      
-     close(667)
+!    close(667)
      
-     !Open the file and see whats inside
+   ! Putting all the dimension values inside the netcdf files
     do ioutv=1,outcount
        do incfile = 1,NumofFile
-        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2))
-        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1))
-        CALL OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT)
-        CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
-        CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))
+        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2)) ! longtude/x is dimension 2
+        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1)) ! latitude/y is dimension 3
+        CALL OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT) ! time is dimension 1
+        CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))     !syncing the netcdf
+        CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))    !closing the netcdf
        enddo
     enddo
-    Write (6,FMT="(/A31/)") " now aggregation will be started" 
+    Write (6,FMT="(/A31/)") " Now aggregation will be started"
+    
+    ! Writing the aggregated outputs inside the aggregatedOutputs.dat file 
      do istep=1,Numtimestep
         do ivar=1,AggOutNum
             Do jUniqueID=1,uniqueIDNumber
@@ -764,7 +774,7 @@
     tagg=tagg+tresult-tlast
     tlast=tresult
 
-    tarray(1)=tarray(1)  !/60. convert seconds to minutes
+    tarray(1)=tarray(1)
     
     write(636,*) "Input time:",tio," Seconds"
     write(636,*) "Compute time:",tcomp," Seconds"
@@ -774,7 +784,8 @@
     write(636,*) "Aggregation time:",tagg," Seconds"
     write(636,*) "Complete runtime:",tarray(1)," Seconds"
     Close(636)
-    Close(66)
+    Close(636)
+    
     write(6,*) "Input time:",tio," Seconds"
     write(6,*) "Compute time:",tcomp," Seconds"
     write(6,*) "Out time:",tout," Seconds"
@@ -783,4 +794,5 @@
     write(6,*) "Aggregation time:",tagg," Seconds"
     write(6,*) "Complete runtime:",tarray(1)," Seconds"
     Write(6,*) "Your task is successfully performed! Plesae view the results in 'outputs' folder!"
+    
 end program
