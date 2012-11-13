@@ -288,7 +288,7 @@
       allocate(DimValue2(dimlen2))
       
       ! Dimvalue1 and dimvalue2 are used to put the dimension values in output netCDFs
-      ! this value have precisio problem and therefore, ArcGIS canot read output netCDFs
+      ! this value have precision problem and therefore, ArcGIS canot read output netCDFs
       CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
       
 !      OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
