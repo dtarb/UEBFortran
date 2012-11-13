@@ -92,7 +92,7 @@
         netCDFDataValPerfile=int(1.5*1000*1000*1000/5.5) !  Determined experimentally
         !netCDFDataValPerfile=1.5*1000*50/5.5   !   Small for debugging
         tol=5./(60.*24.)     !  5 min tolerance
-        NumtimeStep=int(((JMED+tol-JMSD)/(Modeldt/24)) + 1)
+        NumtimeStep=int(((JMED+tol-JMSD)/(Modeldt/24.0)) + 1)
         ntsperfile=max(netCDFDataValPerfile/(dimlen1*dimlen2),1)
         NumofFile=NumtimeStep/ntsperfile+1  ! The +1 is to round up integer calculation
         NumOutPoint=0
@@ -349,24 +349,26 @@
             CALL lowercase(outSymbol(i),outSymbol(i))
             CALL lowercase(OutUnits(i),OutUnits(i))
             OutputNCContainer(1,i)=outSampleFile(i)
-            do j=2,NumofFile
-            !assumption=given netCDF file names cannot ave a "." withn filename.
-            !           for eaxmple: it cannot be Qsi.0001.nc
-            !                        it can be Qsi_001.nc or Qsi_0001
-            
-                LengthOutFile = SCAN(outSampleFile(i),'.nc',BACK=.TRUE.)
-                If (LengthOutFile .ge. 0)then
-                    NextFileName=outSampleFile(i)(1: &
-                   (SCAN(outSampleFile(i),'.',BACK=.TRUE.)-1))
-                    write(IntToChar,'(i4.4)')j
-                    NextFileName=NextFileName
-                    outputfile=trim(NextFileName)//trim(IntToChar)//'.nc'
-                    OutputNCContainer(j,i)=outputfile
-                else
-                    outputfile=trim(NextFileName)//trim(IntToChar)
-                    OutputNCContainer(j,i)=outputfile
-                end if
-            end do
+            If(NumofFile .GE. 2)then
+                do j=2,NumofFile
+                !assumption=given netCDF file names cannot ave a "." withn filename.
+                !           for eaxmple: it cannot be Qsi.0001.nc
+                !                        it can be Qsi_001.nc or Qsi_0001
+                
+                    LengthOutFile = SCAN(outSampleFile(i),'.nc',BACK=.TRUE.)
+                    If (LengthOutFile .ge. 0)then
+                        NextFileName=outSampleFile(i)(1: &
+                       (SCAN(outSampleFile(i),'.',BACK=.TRUE.)-1))
+                        write(IntToChar,'(i4.4)')j
+                        NextFileName=NextFileName
+                        outputfile=trim(NextFileName)//trim(IntToChar)//'.nc'
+                        OutputNCContainer(j,i)=outputfile
+                    else
+                        outputfile=trim(NextFileName)//trim(IntToChar)
+                        OutputNCContainer(j,i)=outputfile
+                    end if
+                end do
+            End If
             
             do j=1,NumofFile
                 NCOutfileName=trim(OutputNCContainer(j,i))

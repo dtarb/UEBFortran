@@ -63,7 +63,8 @@
         
         
         
-        Subroutine AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum)
+        Subroutine AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,&
+        &dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues)
         use netCDF
         Implicit None
         
@@ -72,10 +73,12 @@
         integer::AggOutNum,OutNum,Reason,dimlen2,dimlen1,AOutNum
         Logical:: matched,found
         Character*200:: AggOutVar(AggOutNum)
-        integer:: AggOutVarnum(AggOutNum), i, j
+        integer:: AggOutVarnum(AggOutNum),i,j
         integer:: IDVALUEDim,uniqueIDNumber,ncidout,WSVarId
         integer,dimension(:,:),allocatable:: IDVALUE
         integer,dimension(:),allocatable:: IDVALUEAllocate
+        REAL:: WsMissingValues,WsFillValues
+        integer:: IDnumber
         IDVALUEDim=dimlen2*dimlen1
         allocate(IDVALUEAllocate(IDVALUEDim))
         allocate(IDVALUE(dimlen1,dimlen2))
@@ -129,7 +132,7 @@
                     exit
                 end if
             End do
-            if(found .and. IDVALUEAllocate(i) .ne. 0)then
+            if(found .and. ((IDVALUEAllocate(i) .ne. 0) .or. (IDVALUEAllocate(i) .ne. WsMissingValues) .or. (IDVALUEAllocate(i) .ne. WsFillValues)))then
                 uniqueIDNumber=uniqueIDNumber+1
             end if
         end do
@@ -137,7 +140,7 @@
         deallocate(IDVALUEAllocate)
         End Subroutine AggOutWSUniqueID
          
-        Subroutine WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray)
+        Subroutine WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues)
         use netcdf
         Implicit None
         
@@ -149,6 +152,7 @@
         integer:: UniqueIDArray(uniqueIDNumber), i, j
         integer,dimension(:,:),allocatable:: IDVALUE
         integer,dimension(:),allocatable:: IDVALUEAllocate
+        REAL:: WsMissingValues,WsFillValues
         IDVALUEDim=dimlen2*dimlen1
         allocate(IDVALUEAllocate(IDVALUEDim))
         allocate(IDVALUE(dimlen1,dimlen2))
@@ -173,7 +177,7 @@
                     exit
                 end if
             End do
-            if(found .and. IDVALUEAllocate(i) .ne. 0)then
+            if(found .and. ((IDVALUEAllocate(i) .ne. 0) .or. (IDVALUEAllocate(i) .ne. WsMissingValues) .or. (IDVALUEAllocate(i) .ne. WsFillValues)))then
                 uniqueIDNumber=uniqueIDNumber+1
                 UniqueIDArray(uniqueIDNumber)=IDVALUEAllocate(i)
             end if
