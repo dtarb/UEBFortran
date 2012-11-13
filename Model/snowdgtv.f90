@@ -286,28 +286,28 @@
 	  if(Tssk_old .lt. 0.)then
 	    If (snowdgtvariteflag .EQ. 1)then
 	        write(66,*)"Invalid previous time step surface temperature ", &
-          	    Tssk_old," set to 273 K"
+          	Tssk_old," set to 273 K"
         end if
 	        Tssk_old =tk  
 	  endif
 	  if(Tsavek_old .lt. 0.)then
 	    If (snowdgtvariteflag .EQ. 1)then
 	        write(66,*)"Invalid previous time step average temperature ", &
-                  Tsavek_old," set to 273 K"
+            Tsavek_old," set to 273 K"
         end if
 	    Tsavek_old=tk
 	  endif
 	  if(Tssk_ave .lt. 0.)then
 	    If (snowdgtvariteflag .EQ. 1)then
 	        write(66,*)"Invalid last 24 hr average surface temperature ", &
-          	    Tssk_ave," set to 273 K"
+          	Tssk_ave," set to 273 K"
 	    end if
 	    Tssk_ave=tk
 	  endif
 	  if(Tsavek_ave .lt. 0.)then
 	    If (snowdgtvariteflag .EQ. 1)then
 	        write(66,*)"Invalid last 24 hr average temperature ", &
-          	    Tsavek_ave," set to 273 K"
+          	Tsavek_ave," set to 273 K"
 	    end if
 	    Tsavek_ave=tk   
 	  endif
@@ -377,21 +377,21 @@
      ENDIF
 
 !DGT 7/25/05   To guard against unreasonable Us when there is no snow do not allow bulk temperature to go above 10 C
-       if(Tave .gt. 10.)then
+    if(Tave .gt. 10.)then
          Us=rhog*de*cg*10.
-	 endif
+	endif
 
 !dgt 5/4/04 surface melt change
         
 !   Update snow surface age based on snowfall in time step
-       if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
-       Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   !  this call 
+    if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
+    Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   !  this call 
 !   necessary to keep track of average internal temperature used in some surface energy algorithms.
- If (Ws .GT. 0)THEN 
-    SWIR=0
- ELSE
+    If (Ws .GT. 0)THEN 
+        SWIR=0
+    ELSE
     SWIR=Mr-statev(2)/dt
- End if
+ `End if
   
  ! calculations for glacier melting  Done after Tavg evaluation to maintain consistency with energy content
  ! seperation 
@@ -405,21 +405,29 @@
  
     SWIGM=WGM/dt
     SWIT=Mr+SWIGM
-    SWISM=SWIT-SWIGM-SWIR
     
-!    if (SWIR .LT. 0)THEN
-!            SWIR=SWIR+0.00000001
-!    END IF
-!    accumulate for mass balance
-
+    if (SWIR .GT. 0)THEN
+        SWISM=SWIT-SWIGM-SWIR
+    ELSE
+        SWIR=0
+        SWISM=SWIT-SWIGM-SWIR
+    END IF    
+    
+    ! Why SWIR is negative?????????
+    ! Some possible reasons:
+    !   a. Evaporation after melting
+    !   b. Sublimation (from snow to vapor without converting in the liquid phase)
+    !   c. Infiltration. Since there is no snow left on the ground.
+    !      water may penetrate into the ground
+    !   d. interception. Accumulate on the ground or in the vegetations
+    !   e. Error!!!!!!!!!!!! (investigation needeed)
+    
+    !   accumulate for mass balance
    cump  = cump+(Ps+Pr)*dt
    cumes  = cumes+Es*dt                  
    cumEc = cumEc+Ec*dt                ! Evaporation from canopy
    cumMr = cumMr+Mr*dt                ! canopy melt not added
    cumGM = cumGM+WGM                  !  Cumulative glacier melt
-       
-
-
 
 !yjs update the total depth of the refreezing depth in the snow pack according the 
 !yjs the refreezing depth at time step and the positive energy input. 07/22/01
