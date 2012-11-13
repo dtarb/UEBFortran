@@ -260,13 +260,23 @@
        &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
        
+       !  FIXME: what if the result is fractional
+       !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
+       !  step on the previous day.  Consider in future making the specification of time step as number of time
+       !  steps in a day, not modeldt to ensure this 
+       !  modeldt is recalculated based on the integer timesteps in a day
+       !  assumption: number of model timesteps in a day must be an integer  
+           
+       StepInADay=int(24.0/modeldt+0.5)  ! closest rounding
+       Modeldt=24.0/StepInADay
+       
        Allocate(timeMaxPerFile(MaxNumofFile,11))
        Allocate(timeMinPerFile(MaxNumofFile,11))
        allocate(TSV(arrayx,11))
        allocate(AllValues(arrayx,11))
        CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
        arrayx,NOofTS,TSV,Allvalues)
-
+       
       ReferenceHour=0.00
       IF (MaxNumofFile .eq. 0)then
         nrefyr=ModelStartDate(1)
@@ -318,12 +328,21 @@
 ! Output file creation ends here
         CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
         ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
+!        OPEN(665,FILE='Date.DAT',STATUS='UNKNOWN')
+!        Do I = 1,arrayx
+!            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
+!            &TSV(i,7),TSV(i,8),TSV(i,9),TSV(i,10),TSV(i,11)
+!37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
+!        End do
+!        Close(665)
 !        OPEN(668,FILE='CurrentArrayPosRegrid.DAT',STATUS='UNKNOWN')
 !        Do I = 1,NumtimeStep
-!            Write(668,39) CurrentArrayPosRegrid(i,1),CurrentArrayPosRegrid(i,2),CurrentArrayPosRegrid(i,3),CurrentArrayPosRegrid(i,4),ModelStartHour(i)
-!39          format(I5,1x,I5,1x,I5,1x,I5,1x,f17.5)
+!            Write(668,39) CurrentArrayPosRegrid(i,1),CurrentArrayPosRegrid(i,2),CurrentArrayPosRegrid(i,3),CurrentArrayPosRegrid(i,4),&
+!            CurrentArrayPosRegrid(i,5),CurrentArrayPosRegrid(i,6),CurrentArrayPosRegrid(i,7),CurrentArrayPosRegrid(i,8),&
+!            CurrentArrayPosRegrid(i,9),CurrentArrayPosRegrid(i,10),CurrentArrayPosRegrid(i,11)
+!39          format(I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5)
 !        END DO
-!        Close(668)
+        Close(668)
         Allocate(StartEndNCDF(NumofFile,2))
             
 ! Checking netCDFs starts here                    
@@ -337,10 +356,10 @@
        CALL AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
        Allocate(AggOutVar(AggOutNum))
        Allocate(AggOutVarnum(AggOutNum))
-       CALL  AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,dimlen2,&
-       &dimlen1,uniqueIDNumber,AggOutVarnum)
+       CALL  AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,&
+       &dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues)
        Allocate(UniqueIDArray(uniqueIDNumber))   
-       CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray)
+       CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues)
        Allocate(AggdWSVarVal(NumtimeStep,uniqueIDNumber,AggOutNum))
        Allocate(yymmddarray(3,NumtimeStep))
        Allocate(timearray(NumtimeStep))
@@ -363,17 +382,7 @@
        ! required to calculate percent grid completed
        totalgrid=dimlen1*dimlen2     
        numgrid=0
-       
-       !  FIXME: what if the result is fractional
-       !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
-       !  step on the previous day.  Consider in future making the specification of time step as number of time
-       !  steps in a day, not modeldt to ensure this 
-       !  modeldt is recalculated based on the integer timesteps in a day
-       !  assumption: number of model timesteps in a day must be an integer  
-           
-       StepInADay=int(24.0/modeldt+0.5)  ! closest rounding
-       Modeldt=24.0/StepInADay
-       
+
        ! calculating model end date-time in julian date
        dhour=dble(ModelEndHour)
        call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
@@ -706,9 +715,7 @@
         yymmddarray(3,istep)=day
         timearray(istep)=hour
 
-        CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
-        ! End of time loop                     
-!*************************************************************************************************   
+        CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)   
         ModHour=DBLE(Hour)
         call JULDAT(YEAR,MONTH,DAY,ModHour,CurrentModelDT)
         
@@ -719,6 +726,11 @@
         If (EJD .GE. CurrentModelDT)Then      
             Go to 1
         End if
+        
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       ! This is the start of the main time loop 
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       
         deallocate(Tsprevday)
         deallocate(Taveprevday)
         Close(iunit)
@@ -744,8 +756,10 @@
        END DO  !  These are the end of the space loop
      END DO
      
-!    close(667)
-     
+   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   ! Space loop ends here
+   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
+
    ! Putting all the dimension values inside the netcdf files
     do ioutv=1,outcount
        do incfile = 1,NumofFile
@@ -783,7 +797,6 @@
     write(636,*) "Aggregated StorageArray:",taggre," Seconds"
     write(636,*) "Aggregation time:",tagg," Seconds"
     write(636,*) "Complete runtime:",tarray(1)," Seconds"
-    Close(636)
     Close(636)
     
     write(6,*) "Input time:",tio," Seconds"

@@ -517,7 +517,7 @@
         ! CurrentArrayPosRegrid (n) (outnput) Indexing array postions by comparing with current model time of TSV and Allvalues array
         ! CurrentModelDT (input) current model timestep in julian
         ! istep (input) Current model time position
-
+        
         integer :: n,i
         Parameter(n=11)
         integer:: NumtimeStep
@@ -530,26 +530,26 @@
         Double precision:: FileCurrentDT(n),FileNextDT(n),SJD,RefHour,SHOUR
         Integer:: CurrentArrayPos(n),NextArrayPos(n),IsInputFromNC(n),nrefyr,nrefmo,nrefday
         Integer:: YEAR,MONTH,DAY
-        REAL:: HOUR,MODELDT,DT
+        REAL:: HOUR,MODELDT,DT,tol
         integer:: NOOFTS(n)
-        Double precision:: Tol,dhour,DBLEHOUR,EJD,modelTimeJDT(NumtimeStep)
+        Double precision:: dhour,DBLEHOUR,EJD,modelTimeJDT(NumtimeStep)
         RefHour=0.00
         SHOUR=dble(ModelStartHour)
-        TOl=1./(60.*24.) ! 1 minute tolerance
+        TOl=5./(60.*24.) ! 1 minute tolerance
         call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),SHour,SJD)
         call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),SHour,CurrentModelDT)
         call JULDAT(nrefyr,nrefmo,nrefday,RefHour,RefJD)
         dhour=dble(ModelEndHour)
         call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
-        istep=0
+        tol=5.0/(24*60)
         dt=Modeldt
         YEAR=ModelStartDate(1)
         MONTH=ModelStartDate(2)
         DAY=ModelStartDate(3)
-        Hour=0.00
+        Hour=REAL(SHour)
+        istep=0
         
 8887   istep=istep+1 
-       modelTimeJDT(istep)=CurrentModelDT
         Do i=1,n
             if(istep==1)Then
                 CurrentArrayPos(i)=1
@@ -579,6 +579,7 @@
             IF(IsInputFromNC(i) .LT. 2)then
                 If((FileCurrentDT(i) .GT. CurrentModelDT) .AND. (CurrentArrayPos(i)==1))THEN
                     CurrentArrayPos(i)=1
+                    CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
                 End IF
                 
 1234            If((FileCurrentDT(i)+Tol) .LT. CurrentModelDT)THEN 
@@ -617,7 +618,8 @@
         CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
         DBLEHOUR=DBLE(hour)
         call JULDAT(YEAR,MONTH,DAY,DBLEHOUR,CurrentModelDT)
-        If (EJD .GE. CurrentModelDT)Then      
+        If (EJD .GE. CurrentModelDT)Then  
+            modelTimeJDT(istep)=CurrentModelDT    
             Go to 8887 
         End if
 
