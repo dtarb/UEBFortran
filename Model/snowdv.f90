@@ -770,8 +770,8 @@
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))    !closing the netcdf
        enddo
     enddo
-    Write (6,FMT="(/A31/)") " Now aggregation will be started"
-    
+    Write (6,FMT="(/A32)") " Now aggregation will be started"
+    Write (6,FMT="(A35/)")  " Time taken for various operations:"
     ! Writing the aggregated outputs inside the aggregatedOutputs.dat file 
      do istep=1,Numtimestep
         do ivar=1,AggOutNum

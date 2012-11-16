@@ -401,20 +401,20 @@
                     y_varid))
 
 
-!                ! Assign units attributes to coordinate variables.
+               ! Assign units attributes to coordinate variables.
                call check(nf90_put_att(ncid,y_varid,UNITS,DimUnit1))
                call check(nf90_put_att(ncid,x_varid,UNITS,DimUnit2))
                call check(nf90_put_att(ncid,time_varid,UNITS,time_unit))
-                ! The dimids array is used to pass the dimids of the dimensions of
-                ! the netCDF variables. Both of the netCDF variables we are creating
-                ! share the same four dimensions. In Fortran, the unlimited
-                ! dimension must come last on the list of dimids.
+               ! The dimids array is used to pass the dimids of the dimensions of
+               ! the netCDF variables. Both of the netCDF variables we are creating
+               ! share the same four dimensions. In Fortran, the unlimited
+               ! dimension must come last on the list of dimids.
                dimids = (/time_dimid,x_dimid,y_dimid/)               
                ! Define the netCDF variables for the pressure and temperature data.
                call check( nf90_def_var(ncid,trim(OutSymbol(outvar(i))), &
                     NF90_REAL, &
                     dimids,Varid4))
-                ! Assign units attributes to the netCDF variables.
+               ! Assign units attributes to the netCDF variables.
                call check( nf90_put_att(ncid,Varid4,UNITS, &
                     trim(OutUnits(outvar(i)))))
                call check(nf90_put_att(ncid,Varid4,missing_value, &
