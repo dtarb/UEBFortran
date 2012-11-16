@@ -46,7 +46,7 @@
 !	For canopy variables
 	REAL int,ieff,Inmax,Mc
 	DOUBLE PRECISION Uc
-
+    REAL AvaiableWater
       !CHANGES TO ACCOMODATE GLACIER
       real:: WGT ! WGT=WATER EQUIVALENT GLACIER THICKNESS
       real:: WGM ! WGT=WATER EQUIVALENT GLACIER MELTED
@@ -367,7 +367,8 @@
 !   we still have Us so large that it results in tave greater than 0, which implies that all the 
 !   snow is liquid.  In these cases - just force the snow to disappear and add the energy involved to Qm.
  
-     Tave = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)
+     Tave = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf) !  this call 
+!   necessary to keep track of average internal temperature used in some surface energy algorithms.
 	 IF(Tave .gt. 0.)THEN   !  all is liquid so snow must disappear
 		mr = mr+Ws/dt
 		qms = qms+Ws/dt*rhow*hf
@@ -375,24 +376,41 @@
 		Us = Us-Ws/dt*rhow*hf
 		Ws = 0.
      ENDIF
+!  since Us, Ws was changed need to re-evaluate Tave
+    Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   
 
 !DGT 7/25/05   To guard against unreasonable Us when there is no snow do not allow bulk temperature to go above 10 C
     if(Tave .gt. 10.)then
-         Us=rhog*de*cg*10.
+         Us=rhog*de*cg*10.0
+         Tave = 10.0
 	endif
-
-!dgt 5/4/04 surface melt change
         
 !   Update snow surface age based on snowfall in time step
     if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
-    Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   !  this call 
-!   necessary to keep track of average internal temperature used in some surface energy algorithms.
+
+! Compute surface water input that is rain
+! DGT on 11/13/12
+!    If (Ws .GT. 0)THEN 
+!        SWIR=0
+!    ELSE
+!        SWIR=Mr+Es-statev(2)/dt
+!    Endif
+
+! ASG on 11/13/12
     If (Ws .GT. 0)THEN 
         SWIR=0
+        SWISM=Mr
     ELSE
-    SWIR=Mr-statev(2)/dt
- `End if
-  
+        AvaiableWater=statev(2)/dt+P-Es
+        If(AvaiableWater .GT. (Ps+statev(2)/dt))THEN
+            SWISM=AvaiableWater-(Ps+statev(2)/dt)
+            SWIR=Mr-SWISM
+        ELSE
+            SWISM=0
+            SWIR=Mr-SWISM
+        END IF
+    Endif
+    
  ! calculations for glacier melting  Done after Tavg evaluation to maintain consistency with energy content
  ! seperation 
    IF (Ws .LT. WGT)Then
@@ -402,25 +420,19 @@
        Ws=Ws-WGT
        WGM=0
    END IF   
- 
-    SWIGM=WGM/dt
-    SWIT=Mr+SWIGM
+   SWIGM=WGM/dt 
+   
+! DGT on 11/13/12
+!    SWIT=Mr
+!    SWISM=SWIT-SWIR-SWIGM
+
+   SWIT=Mr+SWIGM
     
-    if (SWIR .GT. 0)THEN
-        SWISM=SWIT-SWIGM-SWIR
-    ELSE
-        SWIR=0
-        SWISM=SWIT-SWIGM-SWIR
-    END IF    
-    
-    ! Why SWIR is negative?????????
-    ! Some possible reasons:
-    !   a. Evaporation after melting
-    !   b. Sublimation (from snow to vapor without converting in the liquid phase)
-    !   c. Infiltration. Since there is no snow left on the ground.
-    !      water may penetrate into the ground
-    !   d. interception. Accumulate on the ground or in the vegetations
-    !   e. Error!!!!!!!!!!!! (investigation needeed)
+! Why SWIR is negative?????????
+! Some possible reasons:
+!   a. Sublimation (from snow to vapor without converting in the liquid phase)
+!   b. interception. Accumulate or in the vegetations
+!   c. Error!!!!!!!!!!!! (investigation needeed)
     
     !   accumulate for mass balance
    cump  = cump+(Ps+Pr)*dt

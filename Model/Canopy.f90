@@ -421,34 +421,34 @@
       zo    =   param(6)      !  Surface aerodynamic roughness (m)
       fstab =   param(19)     !  Stability correction control parameter 0 = no corrections, 1 = full corrections
 
-      APr   =   sitev(2)     !  Atmospheric Pressure (Pa)
+      APr   =   sitev(2)      !  Atmospheric Pressure (Pa)
       Cc    =   sitev(5)      ! Canopy Coverage
-	LAI   =   sitev(7)       ! Leaf Area Index 
+	  LAI   =   sitev(7)      ! Leaf Area Index 
 
-	data Rag /287.0/     !  Ideal Gas constant for dry air (287 J/kg/K) (name changed)
-      data k  /0.4/        !  Von Karmans constant (0.4)
-      data hff /3600.0/    !  Factor to convert /s into /hr (3600)
-      data rhow /1000.0/   !  Density of Water (1000 kg/m^3)
-      data g    /9.81/     !  Gravitational acceleration (9.81 m/s^2)
-      data cp /1.005/      !  Air Heat Capacity (1.005 KJ/kg/K)
-      data hf /333.5/      !  Heat of fusion (333.5 KJ/kg)
-      data hneu /2834.0/   !  Heat of Vaporization (Ice to Vapor, 2834 KJ/kg)
+	  data Rag /287.0/        !  Ideal Gas constant for dry air (287 J/kg/K) (name changed)
+      data k  /0.4/           !  Von Karmans constant (0.4)
+      data hff /3600.0/       !  Factor to convert /s into /hr (3600)
+      data rhow /1000.0/      !  Density of Water (1000 kg/m^3)
+      data g    /9.81/        !  Gravitational acceleration (9.81 m/s^2)
+      data cp /1.005/         !  Air Heat Capacity (1.005 KJ/kg/K)
+      data hf /333.5/         !  Heat of fusion (333.5 KJ/kg)
+      data hneu /2834.0/      !  Heat of Vaporization (Ice to Vapor, 2834 KJ/kg)
 
       data tol,nitermax/0.001,20/   
  
-    	Tak   = Ta+Tk
+      Tak   = Ta+Tk
       Tck   = Tc+Tk
 
-	RHOA   = APr/(RAg*(TAK))	  ! RHOA in kg/m3,  APr: Atm Press
-	Ea     = SVPW(Ta)*RH          ! Actual vapor pressure sorrounding canopy
+	  RHOA   = APr/(RAg*(TAK))	  ! RHOA in kg/m3,  APr: Atm Press
+	  Ea     = SVPW(Ta)*RH          ! Actual vapor pressure sorrounding canopy
 
 !     Wind less coefficient:
-       EHoA  = 0.0       ! for sensibleheat flux
+     EHoA  = 0.0       ! for sensibleheat flux
 	 EHoC  = 0.0
 	 EHoS  = 0.0
 	 EEoA  = 0.0       ! for latent heat flux
-       EEoC  = 0.0
-       EEoS  = 0.0
+     EEoC  = 0.0
+     EEoS  = 0.0
 
  	CALL AeroRes(p,Wc,V,Ta,Tss,Tc,Fs,param,sitev,Tk, &
                d,Z0c,Vz,Rc,Ra,Rbc,Rl,RKINc,RKINa,Rkinbc,Rkinl)         ! Output variables
