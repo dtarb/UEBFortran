@@ -55,6 +55,7 @@ start = (/ 1, 1, 1 /)
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
 call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute  
 call check(nf90_inq_varid(ncidout, Var_name, VarId))                       ! information about variableID for a given VariableName
+CALL check(nf90_sync(ncidout))
 !call check(nf90_inquire_variable(ncidout, 3, varname1))                ! information about variableID 3
 
 start(1) = j
@@ -90,6 +91,7 @@ call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! return
 call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
 call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! information about dimensionID 2
 call check(nf90_inquire_dimension(ncidout, 3, dimname3, dimlen3))       ! information about dimensionID 3  
+CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF3DArrayInfo
 !==================3-D netcdf file reading ends  ==================================================================================
@@ -124,6 +126,7 @@ call check(nf90_inq_varid(ncidout, varname, VarID))
 start(1) = j
 start(2) = i
 call check(nf90_get_var(ncidout,VarID, SingleArray, start, count))      ! Read the surface  Elevation Data from the file
+CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF2DRead
 !!==================2-D netcdf file reading ends  ==================================================================================
@@ -172,7 +175,7 @@ call check(nf90_inquire_attribute(ncidout, Varid, UNITS, len = att_len))
 call check(nf90_inquire_dimension(ncidout, Varid, Rec_name, numtimeStep))       ! information about dimensionID 3
 !days since 2010-03-10T00:00
 !allocate(time_in(dimlen3))
-
+CALL check(nf90_sync(ncidout))
 count1(1) = 1
 start1(1) = time_pos
 if(time_pos .gt. numtimeStep)then  !  here asked for a time step not in ncdf file
@@ -249,7 +252,7 @@ call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! inform
 !call check(nf90_inquire_dimension(ncidout, y_dimid, y_NAME, dimlen1))       ! information about dimensionID 3
 !call check(nf90_inq_dimid(ncidout, LON_NAME, x_dimid))
 !call check(nf90_inquire_dimension(ncidout, x_dimid, x_NAME, dimlen2))       ! information about dimensionID
-
+CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF2DArrayInfo
 !==================2-D netcdf file reading ends  ==================================================================================
@@ -294,7 +297,7 @@ CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
         WsFillValues=0
     end IF
 END DO
-
+CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF2DArrayInfo2
 !==================2-D netcdf file reading ends  ==================================================================================
@@ -498,6 +501,7 @@ Varid=2                                                           ! We require t
 call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit2)) 
 call check(nf90_get_var(ncidout,Varid,DimValue2))
 
+CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout)) 
 End Subroutine SpatialCoordinate
 
@@ -517,6 +521,7 @@ call check(nf90_inq_varid(ncidout, Var_name, VarId))                    ! inform
 start(1) = iycoord
 start(2) = jxcoord
 call check(nf90_get_var(ncidout,VarId, AllVal, start, count))           ! Read the surface  Elevation Data from the file
+CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 
 End SubRoutine NCDFReadAllTS

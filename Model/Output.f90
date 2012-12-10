@@ -38,7 +38,7 @@
         subroutine NumOutFiles(OutControlFILE, ModelStartDate, &
         ModelStartHour,ModelEndDate,ModelEndHour,Modeldt, &
         dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)
-
+        
         ! OutControlFILE (in) input control file
         ! ModelStartDate(3) (input) Array giving start year, month, day
         ! ModelEndDate(3) (input)  Array giving end year, month, day
@@ -62,7 +62,7 @@
         integer:: NumtimeStep, NumofFile,NumOutPoint,reason,OutCount
         character*200 trimcode,filecode,xxs,OutControlFILE
         CHARACTER(200), DIMENSION(n) :: outSymbol
-        integer:: netCDFDataValPerfile 
+        integer:: netCDFDataValPerfile, LineNumberCount
         
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
@@ -97,9 +97,18 @@
         NumofFile=NumtimeStep/ntsperfile+1  ! The +1 is to round up integer calculation
         NumOutPoint=0
         OutCount=0
+        LineNumberCount=0
+        
+        OPEN(109,FILE=OutControlFile,STATUS='OLD', ACTION='READ')
+3316    Read(109,*,iostat=reason, end=3315)filecode
+        LineNumberCount=LineNumberCount+1
+        go to 3316
+3315    close(109)  
+        
         OPEN(109,FILE=OutControlFile,STATUS='OLD', ACTION='READ')
         READ(109,*) xxs
         ! Read until end of file
+        If (LineNumberCount .GT. 1)THEN
 3200      Read(109,*,iostat=reason, end=3300)filecode
             If(reason .eq. 0) then
                 trimcode=ADJUSTL(filecode(1:(SCAN(filecode, ':')-1)))
@@ -120,6 +129,7 @@
                 endif
                 go to 3200
             endif
+        END IF
  3300     close(109)       
         return
         end subroutine NumOutFiles
@@ -164,7 +174,7 @@
         Integer:: NumtimeStepPerFile(NumofFile)
         integer OutPoint(NumOutpoint,2),numOutPtRead
         logical matched
-        integer:: OutNum
+        integer:: OutNum,LINENUMBERCOUNT
         character*200 OutPointFiles(NumOutPoint)
 
         ! FIXME: this is duplicated in several places and can simply
@@ -201,9 +211,17 @@
             NumtimeStepPerFile(1)=NumtimeStep
         endif
         numOutPtRead=0
+        LineNumberCount=0
+        OPEN(109,FILE=OutControlFile,STATUS='OLD', ACTION='READ')
+3316    Read(109,*,iostat=reason, end=3315)filecode
+        LineNumberCount=LineNumberCount+1
+        go to 3316
+3315    close(109) 
+
         OPEN(109,FILE=OutControlFile,STATUS='OLD', ACTION='READ')
         READ(109,*) outHeading
         OutNum=0
+        If (LineNumberCount .GT. 1)THEN
         ! Read until end of file
 4500      Read(109,*,iostat=reason, end=4600)filecode
             If(reason .eq. 0) then
@@ -235,8 +253,8 @@
             if(.not. matched) &
              write(6,*)'Output code not matched:  ',OUTname
         end if
-        
         go to 4500
+        End if
 4600    CLOSE(109)
         return
         end subroutine OutputFiles
