@@ -142,7 +142,7 @@
       Double precision:: CurrentModelDT 
       ! FOR PROGRAM EXECUTION time 
       real, dimension(2) :: tarray
-      real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc,taggre
+      real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc,taggre, tsitev
       REAL:: Hour
       Double precision:: SHOUR
       !aggregated output declaration
@@ -300,9 +300,16 @@
 
       tresult = Etime(tarray)
       tlast=tresult
-      write(6,*)'time to check inputs',tresult
-      write(636,*)'Check Inputs',tresult, ' seconds'
+      write(6,*)'time to check inputs: ',tresult
+      write(636,*)'Check Inputs: ',tresult, ' seconds'
       
+      ! Checking netCDFs starts here                    
+        CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
+        allocate(AllNCDFfile(totalNC))
+        ! checking if all the netCDF files are provided in a desired format
+        CALL  NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile)
+! Checking netCDFs starts here 
+
 ! Output file creation starts here
         CALL NumOutFiles(OutControlFILE,ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
                          &dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)                  
@@ -328,6 +335,7 @@
 ! Output file creation ends here
         CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
         ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
+        
 !        OPEN(665,FILE='Date.DAT',STATUS='UNKNOWN')
 !        Do I = 1,arrayx
 !            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
@@ -342,15 +350,10 @@
 !            CurrentArrayPosRegrid(i,9),CurrentArrayPosRegrid(i,10),CurrentArrayPosRegrid(i,11)
 !39          format(I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5)
 !        END DO
+
         Close(668)
         Allocate(StartEndNCDF(NumofFile,2))
-            
-! Checking netCDFs starts here                    
-        CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
-        allocate(AllNCDFfile(totalNC))
-        ! checking if all the netCDF files are provided in a desired format
-        CALL  NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile)
-! Checking netCDFs starts here 
+
 
 ! Work with aggregated outputs    
        CALL AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
@@ -371,6 +374,7 @@
      
        St=0 
        ii=1
+       
 1056   If (ii .LE. NumofFile)THEN
             StartEndNCDF(ii,1)=ST+1
             StartEndNCDF(ii,2)=StartEndNCDF(ii,1)+NumtimeStepPerFile(ii)-1
@@ -389,8 +393,8 @@
        
        !  Initialize timing results
        tresult= Etime(tarray)
-       write(6,*)'time to create netCDFs ',(tresult-tlast)
-       write(636,*)'Create netCDFs ',(tresult-tlast),' seconds'  
+       write(6,*)'time to create netCDFs: ',(tresult-tlast)
+       write(636,*)'Create netCDFs: ',(tresult-tlast),' seconds'  
        write(6,*)"Starting loop over grid cells"
        
        ! time tracking variables are inititated as 0.0
@@ -401,6 +405,8 @@
        tagg=0.0
        taggre=0.0
        toutnc=0.0 
+       tsitev=0.0
+       dt=Modeldt
        
        !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
        ! Space loop starts here
@@ -416,10 +422,24 @@
        !  read site variables and initial conditions of state variables
        !  TODO change the above to also exclude netcdf no data values
        CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude)
+             !  Glacier adjustment of ws
+        IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
+            WGT=0.0
+        ELSE
+            WGT=1.0
+        END IF
+    
+       tresult= Etime(tarray)
+       tsitev=tsitev+tresult-tlast
+       tlast=tresult
        
+       ALLOCATE(Tsprevday(nstepday))
+       ALLOCATE(Taveprevday(nstepday))
+       
+       if(sitev(10) .ne. 3) then   !  Only do this work for non accumulation cells where model is run 
        CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
        &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray)
-                      
+                     
 !       OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
 !       Do I = 1,NumtimeStep
 !            Write(665,37) ReGriddedArray(i,1),ReGriddedArray(i,2),ReGriddedArray(i,3),ReGriddedArray(i,4),ReGriddedArray(i,5),ReGriddedArray(i,6)
@@ -427,15 +447,12 @@
 !       End do
 !       Close(665)
 
-       !  Block of code to replicate variables from UEBVeg before time loop
-       dt=Modeldt
 
        ! FIXME: what if the result is fractional
        !  should not be fractional (except numerically)
        nstepday=StepInADay  ! number of time steps/day
 
-       ALLOCATE(Tsprevday(nstepday))
-       ALLOCATE(Taveprevday(nstepday))
+
 !  Initialize Tsbackup and TaveBackup
        DO 3 i = 1,nstepday
             Tsprevday(i)=-9999.
@@ -457,14 +474,7 @@
       cg   = param(4)                                   ! Ground heat capacity (nominally 2.09 KJ/kg/C)
       rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
       de   = param(11)                                  ! Thermally active depth of soil (0.1 m)
-      
-      !  Glacier adjustment of ws
-    IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
-        WGT=0.0
-    ELSE
-        WGT=1.0
-    END IF
-    
+ 
     Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
     Taveprevday(nstepday) = Tave
       
@@ -487,7 +497,8 @@
             exit
         endif 
       enddo                     
-
+     endif  !  end the skip block done only for accumulation cells
+     
         ! Variables to keep track of which time step we are in and which netcdf output file we are in
         istep=0  ! time step initiated as 0
         
@@ -499,23 +510,21 @@
         SHOUR=DBLE(ModelStartHour)
         call JULDAT(YEAR,MONTH,DAY,SHOUR,CurrentModelDT)
         
-
-        
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-       ! This is the start of the main time loop 
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-               
-1       istep=istep+1
-
         tresult= Etime(tarray)
         tio=tio+tresult-tlast
         tlast=tresult
-        
+
+
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       ! This is the start of the main time loop 
+       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++              
+1       istep=istep+1
+       
         IF(sitev(10).NE. 3)THEN
         Do i= 1,11
             InpVals(i)=ReGriddedArray(istep,i)
         End do
-               
+                     
 !        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
 !            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
 
@@ -660,9 +669,9 @@
         tcomp=tcomp+tresult-tlast
         tlast=tresult
 
-        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
-           OutArr=0
-        END IF
+!        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
+!           OutArr=0
+!        END IF
         
         if(towrite)WRITE(iunit,*)OutArr       
         DStorage=statev(2)-Ws1+statev(4)-Wc1
@@ -680,7 +689,7 @@
         ! setting of start(4) inside the loop below tells netCDF which
         ! timestep to write.)
   
-        ELSE
+        ELSE  ! this block entered only if sitev(10)= 3
            OutArr=0.0
            ERRMBAL=0.0
            if(towrite)WRITE(iunit,*)OutArr 
@@ -728,7 +737,7 @@
         End if
         
        !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-       ! This is the start of the main time loop 
+       ! This is the End of the main time loop 
        !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
        
         deallocate(Tsprevday)
@@ -789,16 +798,17 @@
     tlast=tresult
 
     tarray(1)=tarray(1)
-    
-    write(636,*) "Input time:",tio," Seconds"
-    write(636,*) "Compute time:",tcomp," Seconds"
-    write(636,*) "Out time:",tout," Seconds"
-    write(636,*) "Out timeinNC:",toutnc," Seconds"
-    write(636,*) "Aggregated StorageArray:",taggre," Seconds"
-    write(636,*) "Aggregation time:",tagg," Seconds"
-    write(636,*) "Complete runtime:",tarray(1)," Seconds"
+    write(636,*) "Reading SiteVariable: ",tsitev," Seconds"
+    write(636,*) "Input time: ",tio," Seconds"
+    write(636,*) "Compute time: ",tcomp," Seconds"
+    write(636,*) "Out time: ",tout," Seconds"
+    write(636,*) "Out timeinNC: ",toutnc," Seconds"
+    write(636,*) "Aggregated StorageArray: ",taggre," Seconds"
+    write(636,*) "Aggregation time: ",tagg," Seconds"
+    write(636,*) "Complete runtime: ",tarray(1)," Seconds"
     Close(636)
     
+    write(6,*) "Reading SiteVariable: ",tsitev," Seconds"
     write(6,*) "Input time:",tio," Seconds"
     write(6,*) "Compute time:",tcomp," Seconds"
     write(6,*) "Out time:",tout," Seconds"

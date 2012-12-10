@@ -128,7 +128,7 @@
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
         Use netCDF
         Implicit None
-        integer :: n, i, ii, iii, xx, k, kflag, ncidout, NumtimeStepEachNC, MaxNumofFile, InputVarId
+        integer :: n, i, ii, iii, xx, k, ncidout, NumtimeStepEachNC, MaxNumofFile, InputVarId
         parameter(n=11)                                         !n is  loop variable
         integer:: IsInputFromNC(n), reason, NumNCFiles(n),nrefyr,nrefmo,nrefday,count
         integer::syear,smonth,sday,first
@@ -266,6 +266,7 @@
                             VarfILLValues(k,i)=-9999
                         end IF
                     END DO
+                    CALL check(nf90_sync(ncidout))
                     NOofTS(i)=NOofTS(i)+NumtimeStepEachNC
                 end do
             end if
@@ -367,10 +368,12 @@
                     FileCount=FileCount+1
                     call check(nf90_open(File_nameM, nf90_nowrite, ncidout))                         ! open the netcdf file
                     call check(nf90_inquire_dimension(ncidout,Varid,Rec_name,NumtimeStepEachNC))  ! information about dimensionID 3  
+                    CALL check(nf90_sync(ncidout))
                     CALL nCDF3DtimeRead(file_nameM,1,TVal,TotalTS,StartY,StartM,StartD)
                     CALL JULDAT(StartY,StartM,StartD,RefHour,NCRfeferenceJDT)
                     Allocate(AlltimeSteps(numtimeStepEachNC))                                    
                     call check(nf90_get_var(ncidout,VarId,AlltimeSteps))                            ! Read the first time value from the file
+                    CALL check(nf90_sync(ncidout))
                     ArrayStart=ArrayEnd+1                           
                     ArrayEnd=NumtimeStepEachNC+ArrayStart-1
                     TSV(ArrayStart:ArrayEnd,i)=AlltimeSteps
