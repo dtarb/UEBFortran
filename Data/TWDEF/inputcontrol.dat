@@ -18,4 +18,7 @@ RH: Relative Humidity   (always required)
 RH.dat                  
 Qg: Ground heat flux   (kJ/m2/hr)        
 2               
-0	  	
+0
+Qsi: incoming solar radiation	 (kJ/m2/hr)   	
+0
+Qsi.Dat
