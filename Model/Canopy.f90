@@ -260,7 +260,7 @@
                Rs      = 0.
                Rbc     = 0.
                Rl      = 0.
-        		 RKINc   = 0.                       
+        	   RKINc   = 0.                       
                RKINa   = 0.  
 			 RKINbc  = 0.                       
                RKINl   = 0. 
@@ -344,7 +344,7 @@
 
 !     Turbulent (heat and vapor) transfer coefficient (Conductance) ! 
                RKINa   = 1.0/Rastar              ! Above canopy
-	 		 RKINc   = 1.0/Rcstar              ! Below canpy                  
+	 		   RKINc   = 1.0/Rcstar              ! Below canpy                  
                RKINbc  = 1.0/Rbcstar             ! Bulk
 !	         RKINl   = 1.0/Rlstar              ! leaf boundary layer
    
