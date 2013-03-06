@@ -21,17 +21,14 @@ Aep: Albedo extinction coefficient
 0                
 0.1  
 cc: Canopy coverage fraction         
-1  
-ccgridfile.nc 
-cc
+1 
+ccgridfile.nc;D:cc
 hcan: Canopy height           
 1     
-hcanfile.nc
-hcan
+hcanfile.nc;X:xcoord;Y:ycoord;D:hcan
 lai: Leaf area index
 1        
-laifile.nc  
-lai
+laifile.nc;D:lai
 Sbar: Maximum snow load held per unit branch area        
 0               
 6.6
@@ -40,22 +37,19 @@ ycage: Forest age flag for wind speed profile parameterization
 1.00  
 slope: A 2-D grid that contains the slope at each grid point     
 1          
-slope.nc
-slope
+slope.nc;X:xcoord;Y:ycoord;D:slope
 aspect: A 2-D grid that contains the aspect at each grid point   
 1        
-aspect.nc
-aspect
+aspect.nc;X:xcoord;Y:ycoord;D:aspect
 latitude: A 2-D grid that contains the latitude at each grid point    
-0             
-41.52
+1
+lat.nc;D:latitude
 subalb: Albedo (fraction 0-1) of the substrate beneath the snow (ground, or glacier)
 0
 0.25
 subtype: Type of beneath snow substrate encoded as (0 = Ground/Non Glacier, 1=Clean Ice/glacier, 2= Debris covered ice/glacier, 3= Glacier snow accumulation zone)
 1        
-SubType.nc
-SubsurfaceType
+SubType.nc;X:xcoord;Y:ycoord;D:SubsurfaceType
 gsurf: The fraction of surface melt that runs off (e.g. from a glacier)
 0
 0
@@ -100,5 +94,4 @@ ts_last:  degree celsius
 -9999
 longitude: A 2-D grid that contains the latitude at each grid 
 1
-longitude.nc
-longitude
+longitude.nc;X:xcoord;Y:ycoord;D:longitude

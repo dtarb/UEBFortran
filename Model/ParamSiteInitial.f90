@@ -96,7 +96,7 @@
 
 ! =================== for one point within the grid that the model is looping over 
       subroutine readsv(param,statev,sitev,svfile,slope,azi,lat,subtype, &
-      ilat,jlon,dtbar,ts_last,longitude)
+      ilat,jlon,dtbar,ts_last,longitude,Sitexcoordinates,Siteycoordinates)
     ! param (input and output) an array that holds all the paramter values
     ! statev (output) is state variable array that returns the initial conditions read from input files
     ! sitev (output)is site variables array that returns the site variables read from input files
@@ -108,6 +108,7 @@
     ! dimlen1 (input) - latitude dimension (number of rows) in netcdf grid covering the model domain
     ! ilat (input) - latitude (row) index of the site where data is to be read and returned (from outside loop over space)
     ! jlat (input) - longitude (col) index of the site where data is to be read and returned (from outside loop over space)
+      use netCDF 
       Implicit None
       integer:: n,i
       PARAMETER(n=32)
@@ -119,9 +120,25 @@
       !REAL, DIMENSION(16):: vardefaults
       CHARACTER*50 SiteHeading, SVcode, SVname, StateSiteVName(n)
       CHARACTER*50 SiteVarNameinNCDF(n)
+      Character*50 Sitexcoordinate, Siteycoordinate
+      Character*50 Sitexcoordinates(n), Siteycoordinates(n)
       ! File names are allowed to be up to 512 characters
       character*50 svfile, StateSiteFiles(n), file_name, varname
-
+      Character*200,dimension(:),allocatable :: args  !  Variable to hold the index position of each output variable
+      integer:: nargs1
+      CHARACTER(200) :: str 
+      CHARACTER(1) :: delimit1,delimit2,delimit3
+      integer:: nargs,nargs2,nargs3,nargs4,nargs5
+      character(200),Allocatable:: words(:)
+      Character(200):: StateSiteFilesR, SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
+      Character(200):: VarNameinNCDFR
+      Character(200),Allocatable:: words1(:),words2(:),words3(:),words4(:),words5(:)
+      integer:: DefaultDimValues(3),SiteDefDimval(n,3),ncidout
+      REAL:: RangeMin,RangeMax
+      character(200),allocatable::Words7element(:)
+      delimit1=';'
+      delimit2=':'
+      delimit3=','
       StateSiteVName= (/ "USic     ","WSis     ","Tic      ","WCic     ", &
              "df       ","apr      ","Aep      ","cc       ","hcan     ", &
              "lai      ","Sbar     ","ycage    ","slope    ","aspect   ", &
@@ -135,7 +152,8 @@
            4.350000, 6.890322, 8.660001, 8.938710, 10.010000, 9.541936, &
            9.038710, 7.160001, 8.106450, 5.923332, 5.058064, -9999.0, 111.00 /)
       do i=1,n  
-        isVarFromNC(i)= -1  ! use the coding 0 to indicate SCTC from file, 
+      SiteDefDimval=-9999
+      isVarFromNC(i)= -1  ! use the coding 0 to indicate SCTC from file, 
                             ! 1 to indicate from raster, -1 not yet read
       enddo
       OPEN(8,FILE=svfile,STATUS='OLD')
@@ -156,8 +174,25 @@
                 if(isVarFromNC(i).eq. 0) then
                     read(8,*)StateSiteValue(i)
                 else
-                    read(8,*)StateSiteFiles(i)
-                    read(8,*)SiteVarNameinNCDF(i)
+                    read(8,*)str
+                    CALL StringSep(str,delimit1,nargs)
+                    Allocate(words(nargs))
+                    Allocate(Words7element(7))
+                    CALL StringSepWord(str,delimit1,nargs,words)
+                    Words7element(1:nargs)=words(1:nargs)
+                    CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
+                                         &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                    SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (get y coordinate)
+                    SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get y coordinate)
+                    SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (there is no time in a 2-D file)
+                    StateSiteFiles(i)=StateSiteFilesR
+                    Sitexcoordinates(i)=SitexcoordinateR
+                    Siteycoordinates(i)=SiteycoordinateR                                        
+                    SiteVarNameinNCDF(i)=VarNameinNCDFR
+!                    RangeMin
+!                    RangeMax
+                    Deallocate(words)
+                    deAllocate(Words7element)
                 end if
                 exit
             end if 
@@ -166,7 +201,27 @@
              SVname
       end if
       go to 300
-400     CLOSE(8)
+400   CLOSE(8)
+
+       Do i=1,n
+        if(isVarFromNC(i).eq. 1) then
+            If(SiteDefDimval(i,1) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+                                                  ! therefore, to get y-dim we need to ask for second element of 
+                                                  ! DefaultDimValues
+                CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
+                CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,1),Siteycoordinates(i)))
+                CALL check(nf90_close(ncidout))
+            End if
+            If(SiteDefDimval(i,2) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+                                                  ! therefore, to get x-dim we need to ask for second element of 
+                                                  ! DefaultDimValues
+                CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
+                CALL check(nf90_inquire_dimension(NCIDout,SiteDefDimval(i,2),Sitexcoordinates(i)))
+                CALL check(nf90_close(ncidout))
+            End if 
+        end if   
+      End do
+      
     ! At this point all information has been read from the input file
     ! Now loop over each variable and if it is a netcdf file read the value out of the right place
     ! also check to make sure we got a value for every variable
@@ -175,8 +230,7 @@
             file_name=StateSiteFiles(i)
             varname=trim(StateSiteVName(i))
             CALL lowercase(StateSiteVName(i),StateSiteVName(i))
-            CALL nCDF2DRead(file_name,SiteVarNameinNCDF(i),SingleArray, &
-                 jlon,ilat)
+            CALL nCDF2DReadReal(file_name,SiteVarNameinNCDF(i),SingleArray,ilat,jlon,Sitexcoordinates(i),Siteycoordinates(i))
             StateSiteValue(i)=SingleArray(1)
         end if
         if (isVarFromNC(i) .eq. -1)then
@@ -204,4 +258,126 @@
         longitude=StateSiteValue(32)
       return
       end subroutine readsv
+! ====== End of reading the values from site variable file===
+
+! =================== for one point within the grid that the model is looping over 
+      subroutine readsvcoordinate(svfile,Sitexcoordinates,Siteycoordinates)
+    ! param (input and output) an array that holds all the paramter values
+    ! statev (output) is state variable array that returns the initial conditions read from input files
+    ! sitev (output)is site variables array that returns the site variables read from input files
+    ! svfile (input)is name of control file for site variables and initial conditions
+    ! slope (output)- site variable slope which for historical consistency is not part of sitev array
+    ! azi (output)- azimuth site variable also not part of sitev array
+    ! lat (output)- latitude site variable also not part of sitev array
+    ! dimlen2 (input) - longitude dimension (number of columns) in netcdf grid covering the model domain
+    ! dimlen1 (input) - latitude dimension (number of rows) in netcdf grid covering the model domain
+    ! ilat (input) - latitude (row) index of the site where data is to be read and returned (from outside loop over space)
+    ! jlat (input) - longitude (col) index of the site where data is to be read and returned (from outside loop over space)
+      use netCDF
+      Implicit None
+      integer:: n,i
+      PARAMETER(n=32)
+      integer:: reason,matched,isVarFromNC(n)         
+      !REAL, DIMENSION(16):: vardefaults
+      CHARACTER*50 SiteHeading, SVcode, SVname, StateSiteVName(n)
+      CHARACTER*50 SiteVarNameinNCDF(n)
+      REAL:: StateSiteValue(n)
+      Character*50 Sitexcoordinate, Siteycoordinate
+      Character*50 Sitexcoordinates(n), Siteycoordinates(n)
+      ! File names are allowed to be up to 512 characters
+      character*50 svfile, StateSiteFiles(n), file_name, varname
+      CHARACTER(200) :: str 
+      CHARACTER(1) :: delimit1,delimit2
+      integer:: nargs,nargs2,nargs3,nargs4,nargs5
+      character(200),Allocatable:: words(:)
+      Character(200):: StateSiteFilesR, SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
+      Character(200):: VarNameinNCDFR
+      Character(200),Allocatable:: words1(:),words2(:),words3(:),words4(:),words5(:)
+      integer:: DefaultDimValues(3)
+      integer:: SiteDefDimval(n,3),NCIDout
+      character(1)::delimit3
+      REAL:: RangeMin,RangeMax
+      character(200),Allocatable::Words7element(:)
+      delimit1=';'
+      delimit2=':'
+      delimit3=','
+      
+      StateSiteVName= (/ "USic     ","WSis     ","Tic      ","WCic     ", &
+             "df       ","apr      ","Aep      ","cc       ","hcan     ", &
+             "lai      ","Sbar     ","ycage    ","slope    ","aspect   ", &
+             "latitude ","subalb   ","subtype  ","gsurf    ","b01      ", &
+             "b02      ","b03      ","b04      ","b05      ","b06      ", &
+             "b07      ","b08      ","b09      ","b10      ","b11      ", &
+             "b12      ","ts_last  ","longitude"/)
+             
+      do i=1,n  
+        isVarFromNC(i)= -1  ! use the coding 0 to indicate SCTC from file, 
+                            ! 1 to indicate from raster, -1 not yet read
+      enddo
+      OPEN(888,FILE=svfile,STATUS='OLD')
+      Read(888,*)  SiteHeading
+      ! Here we start a loop that reads 3 lines at a time and determines the 
+300       Read(888,*,iostat=reason, end=400)SVcode
+          if(reason .eq. 0) then  ! anything other than 0 means some sort of 
+                                  ! quirk in the read - we are not currently checking for this
+            SVname=SVcode(1:(SCAN (SVcode, ':')-1))
+            CALL lowercase(SVcode,SVcode)
+            matched=0
+        do i=1,n,1
+            CALL lowercase(StateSiteVName(i),StateSiteVName(i))
+            CALL lowercase(SVname,SVname)
+            if(SVname .eq. trim(StateSiteVName(i))) then
+                matched=1
+                read(888,*)isVarFromNC(i)                                 !SVDT=site variable data type ditector
+                if(isVarFromNC(i).eq. 0) then
+                    read(888,*)StateSiteValue(i)
+                else
+                    read(888,*)str
+                    CALL StringSep(str,delimit1,nargs)
+                    Allocate(words(nargs))
+                    Allocate(Words7element(7))
+                    CALL StringSepWord(str,delimit1,nargs,words)
+                    words7element(1:nargs)=words(1:nargs)
+                    CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
+                                         &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                    SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (get y coordinate)
+                    SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get y coordinate)
+                    SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (there is no time in a 2-D file)
+                    StateSiteFiles(i)=StateSiteFilesR
+                    Sitexcoordinates(i)=SitexcoordinateR
+                    Siteycoordinates(i)=SiteycoordinateR                                        
+                    SiteVarNameinNCDF(i)=VarNameinNCDFR
+                    Deallocate(words)
+                    deAllocate(Words7element)
+                end if
+                exit
+            end if 
+        end do
+        if(matched .ne. 1)write(6,*)'site or initial condition variable code not matched:  ', &
+             SVname
+      end if
+      go to 300
+400   CLOSE(8)
+
+       Do i=1,n
+        if(isVarFromNC(i).eq. 1) then
+            If(SiteDefDimval(i,1) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+                                                  ! therefore, to get y-dim we need to ask for second element of 
+                                                  ! DefaultDimValues
+                CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
+                CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,1),Siteycoordinates(i)))
+                CALL check(nf90_close(ncidout))
+            End if
+            If(SiteDefDimval(i,2) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+                                                  ! therefore, to get x-dim we need to ask for second element of 
+                                                  ! DefaultDimValues
+                CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
+                CALL check(nf90_inquire_dimension(NCIDout,SiteDefDimval(i,2),Sitexcoordinates(i)))
+                CALL check(nf90_close(ncidout))
+            End if 
+        end if   
+      End do
+      
+     return
+     end subroutine readsvcoordinate
 ! ====== End of reading the values from site variable file===

@@ -28,76 +28,43 @@
 !  http://www.engineering.usu.edu/dtarb/ 
 !  email:  dtarb@usu.edu 
 !
-!**********************************************************************************************  
-
-!!==================3-D netcdf file reading starts and reads a single value ata time=============================================
-Subroutine nCDF3DRead (file_name,Var_name,SingleArray,i,j,rec)
-
-!Task: provides the value of a variable for a particular x- and y-coordinate
-!file_name (in) 2-D netccdf file name
-!varname (in) variable name 
-!SingleArray (output) array that holds the value
-!i (in) partcular y-coordinate
-!j (in) partcular x-coordinate
-use netcdf
-Implicit None
-
-integer, parameter :: NDIMS = 3 
-integer:: nDimensions, nVariables, nAttributes
-character (50) :: FILE_NAME, Var_name
-integer :: start(NDIMS), count(NDIMS),VarId
-integer:: i, j, rec, ncidout
-real, dimension(1):: SingleArray  
-
-count = (/ 1, 1, 1 /)
-start = (/ 1, 1, 1 /)
-!Open the file and see hats inside
-call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
-call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute  
-call check(nf90_inq_varid(ncidout, Var_name, VarId))                       ! information about variableID for a given VariableName
-CALL check(nf90_sync(ncidout))
-!call check(nf90_inquire_variable(ncidout, 3, varname1))                ! information about variableID 3
-
-start(1) = j
-start(2) = i
-start(3) = rec
-call check(nf90_get_var(ncidout,VarId, SingleArray, start, count))          ! Read the surface  Elevation Data from the file
-call check(nf90_close(ncidout))                                         ! Closing the netcdf file
-end subroutine nCDF3DRead
-!!==================3-D netcdf file reading ends  ==================================================================================
-
-
+!**********************************************************************************************
 
 !==================3-D netcdf file reading starts and reads its diemension,variables etc.===========================================
-Subroutine nCDF3DArrayInfo (FILE_NAME,dimlen2,dimlen1,dimlen3)
+Subroutine nCDF3DArrayInfo (FILE_NAME,dimname1,dimname2,dimname3,dimlen2,dimlen1,dimlen3)
 !Task: provides the length of x- and y-coordinate and time
 !FILE_NAME (in) 3-D netccdf file
+!dimname1 (in) name of dimension-x
+!dimname2 (in) name of dimension-y
 !Dimlen2 (out) length of y-coordinate
 !dimlen1 (out) length of x-coordinate
 !dimlen3 (out) length of time steps
 use netcdf
 Implicit None
-character (len = *), parameter :: LAT_NAME = "ycoord"
-character (len = *), parameter :: LON_NAME = "xcoord"
-character (len = *), parameter :: REC_NAME = "time"
+character*50 dimname1,dimname2,dimname3
 integer, parameter :: NDIMS = 3
 integer:: nDimensions, nVariables, nAttributes, dimlen1, dimlen2, dimlen3, ncidout
-character (20) :: dimname1,  dimname2, dimname3
+integer:: DimID1,DimID2,DimID3
 character (50) :: FILE_NAME
 
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
 call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute  
-call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
-call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! information about dimensionID 2
-call check(nf90_inquire_dimension(ncidout, 3, dimname3, dimlen3))       ! information about dimensionID 3  
+! get dimension IDs
+call check(nf90_inq_dimid(ncidout,dimname1, DimID1))
+call check(nf90_inq_dimid(ncidout,dimname2, DimID2))
+call check(nf90_inq_dimid(ncidout,dimname3, DimID3))
+! get information based on IDs
+call check(nf90_inquire_dimension(ncidout, DimID1,len=dimlen1))       ! Information about dimensionID 1
+call check(nf90_inquire_dimension(ncidout, DimID2,len=dimlen2))       ! information about dimensionID 2         
+call check(nf90_inquire_dimension(ncidout, DimID3,len=dimlen3))         
 CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF3DArrayInfo
 !==================3-D netcdf file reading ends  ==================================================================================
 
 !!==================2-D netcdf file reading starts and reads a single value at a time==============================================
-Subroutine nCDF2DRead(file_name,varname,SingleArray,i,j)
+Subroutine nCDF2DReadInteger(file_name,varname,SingleArray,j,i,wsxcoordinate,wsycoordinate)
 !Task: provides the value of a variable for a particular x- and y-coordinate
 !file_name (in) 2-D netccdf file
 !varname (in) variable name 
@@ -106,34 +73,165 @@ Subroutine nCDF2DRead(file_name,varname,SingleArray,i,j)
 !j (in) partcular x-coordinate
 use netcdf
 Implicit None
-
+integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
 integer, parameter :: NDIMS = 2 
 integer:: nDimensions, nVariables, nAttributes, VarID, ncidout
 character (50) :: varname
 character (50) :: FILE_NAME
 integer :: start(NDIMS), count(NDIMS)
 integer:: i, j
-REAL, dimension(1):: SingleArray  
+Integer, dimension(1):: SingleArray,arrayint
+byte inbyte(1)
+character inchar(1)
+integer*2 inshort(1) 
+integer*4 ininteger(1)
+real*4 inreal(1)
+real*8 indouble(1)
+integer:: vartype
+character*50:: wsxcoordinate,wsycoordinate
+integer:: dimid1,dimid2
 
 count = (/ 1, 1 /)
 start = (/ 1, 1/)
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
-call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute  
+call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute
+
 call check(nf90_inq_varid(ncidout, varname, VarID))
 !call check(nf90_inquire_variable(ncidout, 3, varname1))                 ! information about variableID 3
+!  Inquire the type of the data
+call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
+call check(nf90_inq_dimid(ncidout,wsycoordinate,dimid1))
+call check(nf90_inq_dimid(ncidout,wsxcoordinate,dimid2))
+! iycoord=j
+! jxcoord=i
+! tcoord=1, ycoord=2, and xcoord=3 (DEFAULT of UEBGrid)
+! http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html (section 2.4)
+if (dimid1 == 1 .and. dimid2 == 2)THEN
+    start(1) = j
+    start(2) = i        
+END IF
 
-start(1) = j
-start(2) = i
-call check(nf90_get_var(ncidout,VarID, SingleArray, start, count))      ! Read the surface  Elevation Data from the file
+! tcoord=1, ycoord=3, and xcoord=2
+if (dimid1 == 2 .and. dimid2 == 1)THEN
+    start(1) = i
+    start(2) = j
+END IF
+
+if(vartype .eq. NF90_BYTE)then
+    call check(nf90_get_var(ncidout, VarID, inbyte, start, count))        
+    arrayint(1)=INT(inbyte(1))
+elseif(vartype .eq. NF90_CHARs)then
+    call check(nf90_get_var(ncidout, VarID, inchar, start, count))
+    Write (6, *) "Error: A site variable can't be a character in ", file_name
+elseif(vartype .eq. NF90_SHORTs)then
+    call check(nf90_get_var(ncidout, VarID, inshort, start, count))
+    arrayint(1)=INT(inshort(1))
+elseif(vartype .eq. NF90_INTs)then
+    call check(nf90_get_var(ncidout, VarID, ininteger, start, count))
+    arrayint(1)=INT(ininteger(1))
+elseif(vartype .eq. NF90_FLOATs)then 
+    call check(nf90_get_var(ncidout, VarID, inreal, start, count))
+    arrayint(1)=INT(inreal(1)) 
+elseif(vartype .eq. NF90_DOUBLEs)then 
+    call check(nf90_get_var(ncidout, VarID, indouble, start, count))
+    arrayint(1)=INT(indouble(1))
+END IF   
+
+SingleArray(1)=arrayint(1)  
+
+CALL check(nf90_sync(ncidout))
+call check(nf90_close(ncidout))   
+return                                      ! Closing the netcdf file
+end subroutine nCDF2DReadInteger
+!!==================2-D netcdf file reading ends  ==================================================================================
+
+!CALL nCDF2DReadReal(file_name,SiteVarNameinNCDF(i),SingleArray, jlon,ilat,Sitexcoordinates(i),Siteycoordinates(i))
+Subroutine nCDF2DReadReal(file_name,varname,SingleArray,j,i,Sitexcoord,Siteycoord)
+!Task: provides the value of a variable for a particular x- and y-coordinate
+!file_name (in) 2-D netccdf file
+!varname (in) variable name 
+!SingleArray (output) array that holds the value
+!i (in) partcular y-coordinate
+!j (in) partcular x-coordinate
+use netcdf
+Implicit None
+integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
+integer, parameter :: NDIMS = 2 
+integer:: nDimensions, nVariables, nAttributes, VarID, ncidout
+character (50) :: varname
+character (50) :: FILE_NAME
+integer :: start(NDIMS), count(NDIMS)
+integer:: i, j
+REAL, dimension(1):: SingleArray, arrayreal
+byte inbyte(1)
+character inchar(1)
+integer*2 inshort(1) 
+integer*4 ininteger(1)
+real*4 inreal(1)
+real*8 indouble(1)
+integer:: vartype
+character*50:: Sitexcoord,Siteycoord
+integer:: dimid1,dimid2
+
+count = (/ 1, 1 /)
+start = (/ 1, 1/)
+!Open the file and see hats inside
+call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
+call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute
+
+call check(nf90_inq_varid(ncidout, varname, VarID))
+!call check(nf90_inquire_variable(ncidout, 3, varname1))                 ! information about variableID 3
+!  Inquire the type of the data
+call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
+call check(nf90_inq_dimid(ncidout,Siteycoord,dimid1))
+call check(nf90_inq_dimid(ncidout,Sitexcoord,dimid2))
+!
+! tcoord=1, ycoord=2, and xcoord=3 (DEFAULT of UEBGrid)
+! http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html (section 2.4)
+if (dimid1 == 1 .and. dimid2 == 2)THEN
+    start(1) = j
+    start(2) = i        
+END IF
+
+! tcoord=1, ycoord=3, and xcoord=2
+if (dimid1 == 2 .and. dimid2 == 1)THEN
+    start(1) = i
+    start(2) = j
+END IF
+
+call check(nf90_get_var(ncidout,VarID, arrayreal, start, count))      
+if(vartype .eq. NF90_BYTE)then
+    call check(nf90_get_var(ncidout,VarID, inbyte, start, count)) 
+    arrayreal(1)=real(inbyte(1))
+elseif(vartype .eq. NF90_CHARs)then
+    call check(nf90_get_var(ncidout,VarID, inchar, start, count)) 
+    Write (6, *) "Error: A site variable can't be a character in ", file_name
+elseif(vartype .eq. NF90_SHORTs)then
+    call check(nf90_get_var(ncidout,VarID, inshort, start, count)) 
+    arrayreal(1)=real(inshort(1))
+elseif(vartype .eq. NF90_INTs)then
+    call check(nf90_get_var(ncidout,VarID, ininteger, start, count)) 
+    arrayreal(1)=real(ininteger(1))
+elseif(vartype .eq. NF90_FLOATs)then 
+    call check(nf90_get_var(ncidout,VarID, inreal, start, count)) 
+    arrayreal(1)=real(inreal(1)) 
+elseif(vartype .eq. NF90_DOUBLEs)then 
+    call check(nf90_get_var(ncidout,VarID, indouble, start, count)) 
+    arrayreal(1)=real(indouble(1)) 
+END IF   
+
+SingleArray(1)=arrayreal(1)  !  loop over all values
+
 CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
-end subroutine nCDF2DRead
+
+end subroutine nCDF2DReadReal
 !!==================2-D netcdf file reading ends  ==================================================================================
 
 
 !!==================3-D netcdf file reading starts and reads timeSTEPS=============================================
-Subroutine nCDF3DtimeRead(file_name,time_pos,time_val,numtimeStep,syear,smonth,sday)
+Subroutine nCDF3DtimeRead(file_name,rec_name,time_pos,time_val,numtimeStep,syear,smonth,sday,daysstring)
 !!  file_name  (in)  Netcdf file to read from
 !!  time_pos  (in)  NetCDF time position to read value from
 !!  time_val  (out)  time value read from netcdf file
@@ -141,32 +239,37 @@ Subroutine nCDF3DtimeRead(file_name,time_pos,time_val,numtimeStep,syear,smonth,s
 !!  syear   (out)  year from the "days since YYYY..." netcdf time units attribute
 !!  smonth  (out)  month from the "days since YYYY-MM..."  time units attribute
 !!  sday    (out)  day from the "days since YYYY-MM-DD..." time units attribute
-
+!!  rec_name (in) name of time-dimension
 !!  Note - the first call of this should have time_pos as 1 to determine numtimeStep. 
 !!  Thereafter it is responsibility of calling program to not input a time_pos greater than numtimeStep
 
 use netcdf
 Implicit None
-
+integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
 ! integer, parameter :: NDIMS = 3 
 integer:: numtimeStep
-character (50) :: FILE_NAME, Rec_name="time"
+character (50) :: FILE_NAME, Rec_name
 ! integer :: start(NDIMS), count(NDIMS)
 integer :: VarId, isep1, isep2, isep3, ncidout
 integer start1(1),count1(1),time_pos
 character (len = *), parameter :: UNITS = "units"
-Double precision:: time_val(1)
+DOUBLE precision:: time_val(1),Time_real(1)
 integer, parameter :: MAX_ATT_LEN = 100
 character*(MAX_ATT_LEN) :: time_units_in
 integer :: att_len
 character*50:: daysstring,sincestring,datestring
 integer syear,smonth,sday
 LOGICAL:: is_numeric
-
+byte inbyte(1)
+character inchar(1)
+integer*2 inshort(1) 
+integer*4 ininteger(1)
+real*4 inreal(1)
+real*8 indouble(1)
+integer:: vartype
 !Open the file and see whats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                     
-!call check(nf90_inq_varid(ncidout, Var_name, VarId))                       ! information about variableID for a given VariableName
-Varid=3  !  We require that time is the 3rd dimension
+call check(nf90_inq_varid(ncidout, Rec_name, VarId))                    ! information about variableID for a given VariableName
 call check(nf90_get_att(ncidout, Varid, UNITS, time_units_in))  
 call check(nf90_inquire_attribute(ncidout, Varid, UNITS, len = att_len))
 !call check(nf90_inq_dimid(ncidout, REC_NAME, time_dimid))
@@ -183,8 +286,30 @@ if(time_pos .gt. numtimeStep)then  !  here asked for a time step not in ncdf fil
   start1(1) = numtimeStep
 endif
 
-call check(nf90_get_var(ncidout,VarId,time_val,start1,count1))          ! Read the first time value from the file
-call check(nf90_close(ncidout))                          ! Closing the netcdf file
+call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
+  
+if(vartype .eq. NF90_BYTE)then
+    call check(nf90_get_var(ncidout,VarId,inbyte,start1,count1))   
+    Time_real(1)=DBLE(inbyte(1))
+elseif(vartype .eq. NF90_CHARs)then
+    call check(nf90_get_var(ncidout,VarId,inchar,start1,count1))   
+    Write (6, *) "Error: A site variable can't be a character in ", file_name
+elseif(vartype .eq. NF90_SHORTs)then
+    call check(nf90_get_var(ncidout,VarId,inshort,start1,count1))
+    Time_real(1)=DBLE(inshort(1))
+elseif(vartype .eq. NF90_INTs)then
+    call check(nf90_get_var(ncidout,VarId,ininteger,start1,count1))
+    Time_real(1)=DBLE(ininteger(1))
+elseif(vartype .eq. NF90_FLOATs)then 
+    call check(nf90_get_var(ncidout,VarId,inreal,start1,count1))
+    Time_real(1)=DBLE(inreal(1)) 
+elseif(vartype .eq. NF90_DOUBLEs)then 
+    call check(nf90_get_var(ncidout,VarId,indouble,start1,count1))
+    Time_real(1)=DBLE(indouble(1))
+END IF   
+    time_val(1)=Time_real(1) !  loop over all values
+   
+call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 
 read(time_units_in,*)daysstring,sincestring,datestring
 isep1=1
@@ -229,24 +354,28 @@ end subroutine nCDF3DtimeRead
 !!==================3-D netcdf file reading ends  ==================================================================================
 
 !==================2-D netcdf file reading starts and reads its diemension,variables etc.===========================================
-Subroutine nCDF2DArrayInfo(FILE_NAME,dimlen2,dimlen1)
+Subroutine nCDF2DArrayInfo(FILE_NAME,dimname1,dimname2,dimlen2,dimlen1)
 !Task: provides the length of x- and y-coordinate and time
 !FILE_NAME (in) 2-D netccdf file
 !Dimlen2 (out) length of y-coordinate
 !dimlen1 (out) length of x-coordinate
+!dimname1 (in) name of dimension-x
+!dimname2 (in) name of dimension-y
 use netcdf
 Implicit None
 !character (len = *), parameter :: LAT_NAME = "ycoord"
 !character (len = *), parameter :: LON_NAME = "xcoord"
 integer, parameter :: NDIMS = 2
-integer:: dimlen1, dimlen2, ncidout
-character (20) :: dimname1,  dimname2
+integer:: dimlen1, dimlen2, ncidout, DimID1, DimID2
 character (200) :: FILE_NAME
-
+Character (50) :: dimname1,dimname2
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
-call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
-call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! information about dimensionID 2                    
+! get dimension IDs
+call check(nf90_inq_dimid(ncidout,dimname1, DimID1))
+call check(nf90_inq_dimid(ncidout,dimname2, DimID2))
+call check(nf90_inquire_dimension(ncidout, DimID1,len=dimlen1))       ! Information about dimensionID 1
+call check(nf90_inquire_dimension(ncidout, DimID2,len=dimlen2))       ! information about dimensionID 2                    
 !call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! returns no od dimension, variable and global attribute  
 !call check(nf90_inq_dimid(ncidout, LAT_NAME, y_dimid))
 !call check(nf90_inquire_dimension(ncidout, y_dimid, y_NAME, dimlen1))       ! information about dimensionID 3
@@ -257,7 +386,7 @@ call check(nf90_close(ncidout))                                         ! Closin
 end subroutine nCDF2DArrayInfo
 !==================2-D netcdf file reading ends  ==================================================================================
 !==================2-D netcdf file reading starts and reads its diemension,variables etc.===========================================
-Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
+Subroutine nCDF2DArrayInfo2(FILE_NAME,dimname2,dimname1,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
 !Task: provides the length of x- and y-coordinate and time
 !FILE_NAME (in) 2-D netccdf file
 !Dimlen2 (out) length of y-coordinate
@@ -265,22 +394,34 @@ Subroutine nCDF2DArrayInfo2(FILE_NAME,dimlen2,dimlen1,WatershedVARID,WsMissingVa
 !WatershedVARID (in) vaiable ID (in this case watershed variable ID)
 !WsMissingValues (out) missing value attribute for a variable in a netCDF 
 !WsFillValues (out) missing value attribute in a netCDF 
+!dimname1 (in) name of dimension-x
+!dimname2 (in) name of dimension-y
 use netcdf
 Implicit None
 integer, parameter :: NDIMS = 2
 integer ::  iii
 integer:: dimlen1, dimlen2,WSVarId
-character (20) :: dimname1,  dimname2
+character (50) :: dimname1,  dimname2
 character (200) :: FILE_NAME
 character (200) :: WatershedVARID
 character (len = *), parameter :: missing_value = "missing_value",fillvalue="_FillValue"
 integer::numAtts, ncidout
 character (len = 50):: AttName
 real::WSMissingValues,wsfillvalues
+integer:: DimID1,DImID2
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
-call check(nf90_inquire_dimension(ncidout, 1, dimname1, dimlen1))       ! Information about dimensionID 1
-call check(nf90_inquire_dimension(ncidout, 2, dimname2, dimlen2))       ! information about dimensionID 2 
+! get dimension IDs
+call check(nf90_inq_dimid(ncidout,dimname1,DimID1))
+call check(nf90_inq_dimid(ncidout,dimname2,DimID2))
+if (DimID1==1 .and. dimID2==2)THEN
+    call check(nf90_inquire_dimension(ncidout,DimID1,len=dimlen1))       ! Information about dimensionID 1
+    call check(nf90_inquire_dimension(ncidout,DimID2,len=dimlen2))       ! information about dimensionID 2  
+END IF
+if (DimID1==2 .and. dimID2==1)THEN
+    call check(nf90_inquire_dimension(ncidout,DimID1,len=dimlen2))       ! Information about dimensionID 1
+    call check(nf90_inquire_dimension(ncidout,DimID2,len=dimlen1))       ! information about dimensionID 2  
+END IF
 call check(nf90_inq_varid(ncidout,WatershedVARID,WSVarId))
 CALL check(nf90_inquire_variable(ncidout,WSVarId,natts=numAtts))
 
@@ -289,7 +430,7 @@ CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
     if(AttName .eq. missing_value)THEN
         CALL check(nf90_get_att(ncidout,WSVarId,missing_value,WsMissingValues)) 
     ELSE
-        WsFillValues=0
+        WsMissingValues=0
     end IF
     if(AttName .eq. fillvalue)THEN
         CALL check(nf90_get_att(ncidout,WSVarId,fillvalue,WsFillValues))  
@@ -463,65 +604,578 @@ FUNCTION is_numeric(string)
   is_numeric = e == 0
 END FUNCTION is_numeric
 
-!!!==================3-D netcdf file reading starts and reads timeSTEPS=============================================
-Subroutine SpatialCoordinate(File_name,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
+!!!================== Spatial coordinates of netCDF file  =============================================
+Subroutine FindDimensionLength(File_name,DimName1,DimName2,Dimlen1,Dimlen2)
+use netcdf
+Implicit None
+character (50) :: FILE_NAME
+character (50):: DimName1,DimName2
+integer:: ncidout,dimlen1,dimlen2,dimID1,DImID2
+
+!Open the file and see whats inside
+call check(nf90_open(File_name, nf90_nowrite, ncidout))                ! open the netcdf file    
+call check(nf90_inq_dimid(ncidout,dimname1, DimID1))
+call check(nf90_inq_dimid(ncidout,dimname2, DimID2))
+call check(nf90_inquire_dimension(ncidout, DimID1,len=dimlen1))        ! Information about dimensionID 1
+call check(nf90_inquire_dimension(ncidout, DimID2,len=dimlen2))        ! information about dimensionID 2  
+
+End Subroutine FindDimensionLength
+
+!!!================== Spatial coordinates of netCDF file  =============================================
+Subroutine SpatialCoordinate(File_name,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2,Dimlen1,DimLen2)
+!Subroutine SpatialCoordinate('LangtangKholaWatershed.nc','latitude','longitude',DimValue1,DimValue2,DimUnit1,DimUnit2)
 ! this will give us spatial coornate names, their unit and value
 ! file_name  (in)  Netcdf file to read from
 ! dimlen1 (out) length of dimension (lon) 1
 ! dimlen2(out) length of dimension (lat) 2
-! DimName1(out) name of dimension (lon) 1
-! DimName2(out) name of dimension (lat) 2
+! DimName1(in) name of dimension (lon) 1
+! DimName2(in) name of dimension (lat) 2
 ! DimValue1(out) values in dimension (lon) 1
 ! DimValue2(out) values in dimension (lat) 1
 ! DimUnit1(out) unit of dimension (lon) 1
 ! DimUnit2(out) unit of dimension (lat) 2
 use netcdf
 Implicit None
+integer, parameter:: NF90_BYTEs1 = 1, NF90_CHARs1 = 2, NF90_SHORTs1 = 3, NF90_INTs1 = 4, NF90_FLOATs1 = 5, NF90_DOUBLEs1 = 6
+integer, parameter:: NF90_BYTEs2 = 1, NF90_CHARs2 = 2, NF90_SHORTs2 = 3, NF90_INTs2 = 4, NF90_FLOATs2 = 5, NF90_DOUBLEs2 = 6
 character (50) :: FILE_NAME
 character (50):: DimName1,DimName2
 integer, parameter :: MAX_ATT_LEN = 100
 character(100) :: DimUnit1,DimUnit2
-integer:: ncidout,dimlen1,dimlen2,len1,len2
+integer:: ncidout,dimlen1,dimlen2
 character (len = *), parameter :: UNITS = "units",missing_value = "missing_value"
-Double precision:: DimValue1(dimlen1), DimValue2(dimlen2)
 integer :: varid
+integer:: DimID1,DimID2
+integer:: vartype
+byte, allocatable:: inbyte1(:)
+character, allocatable:: inchar1(:)
+integer*2, allocatable:: inshort1(:)
+integer*4, allocatable:: ininteger1(:)
+real*4, allocatable:: inreal1(:)
+real*8, allocatable:: indouble1(:)
+
+byte, allocatable:: inbyte2(:)
+character, allocatable:: inchar2(:)
+integer*2, allocatable:: inshort2(:)
+integer*4, allocatable:: ininteger2(:)
+real*4, allocatable:: inreal2(:)
+real*8, allocatable:: indouble2(:)
+Real*8, allocatable:: DimValue1Org(:),DimValue2Org(:)
+
+Real*8:: dimvalue1(dimlen1),dimvalue2(dimlen2)
 
 !Open the file and see whats inside
-call check(nf90_open(File_name, nf90_nowrite, ncidout))           ! open the netcdf file  
+call check(nf90_open(File_name, nf90_nowrite, ncidout))                ! open the netcdf file  
 
 ! names are important to create output NetCDFs. So plz donnot delete following two lines  
-call check(nf90_inquire_dimension(ncidout,1,dimname1,len1))       ! Information about dimensionID 1
-call check(nf90_inquire_dimension(ncidout,2,dimname2,len2))       ! information about dimensionID 2
-                
-Varid=1                                                           ! We require that time is the 1st dimension
-call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit1)) 
-call check(nf90_get_var(ncidout,Varid,DimValue1)) 
+call check(nf90_inq_dimid(ncidout,dimname1, DimID1))
+call check(nf90_inq_dimid(ncidout,dimname2, DimID2))
+!call check(nf90_inquire_dimension(ncidout, DimID1,len=dimlen1))        ! Information about dimensionID 1
+!call check(nf90_inquire_dimension(ncidout, DimID2,len=dimlen2))        ! information about dimensionID 2  
+ 
+Allocate(inbyte1(dimlen1))
+Allocate(inchar1(dimlen1))
+Allocate(inshort1(dimlen1))
+Allocate(ininteger1(dimlen1))
+Allocate(inreal1(dimlen1))
+Allocate(indouble1(dimlen1))
+Allocate(DimValue1Org(dimlen1))
 
-Varid=2                                                           ! We require that time is the 2nd dimension
+Allocate(inbyte2(dimlen2))
+Allocate(inchar2(dimlen2))
+Allocate(inshort2(dimlen2))
+Allocate(ininteger2(dimlen2))
+Allocate(inreal2(dimlen2))
+Allocate(indouble2(dimlen2))
+Allocate(DimValue2Org(dimlen1))
+               
+call check(nf90_inq_varid(ncidout,dimname1, VarId))                    ! information about variableID for a given VariableName
+call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
+call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit1)) 
+
+if(vartype .eq. NF90_BYTEs1)then
+    call check(nf90_get_var(ncidout,Varid,inbyte1)) 
+    DimValue1Org=REAL(inbyte1,8)
+elseif(vartype .eq. NF90_CHARs1)then
+    call check(nf90_get_var(ncidout,Varid,inchar1)) 
+    Write (6, *) "Error: A site variable can't be a character in ", file_name
+elseif(vartype .eq. NF90_SHORTs1)then
+    call check(nf90_get_var(ncidout,Varid,inshort1)) 
+    DimValue1Org=REAL(inshort1,8)
+elseif(vartype .eq. NF90_INTs1)then
+    call check(nf90_get_var(ncidout,Varid,ininteger1)) 
+    DimValue1Org=REAL(ininteger1,8)
+elseif(vartype .eq. NF90_FLOATs1)then 
+    call check(nf90_get_var(ncidout,Varid,inshort1)) 
+    DimValue1Org=REAL(inreal1,8) 
+elseif(vartype .eq. NF90_DOUBLEs1)then
+    call check(nf90_get_var(ncidout,Varid,indouble1))  
+    DimValue1Org=REAL(indouble1,8) 
+END IF 
+DimValue1=DimValue1Org
+
+call check(nf90_inq_varid(ncidout,dimname2, VarId))                    ! information about variableID for a given VariableName 
+call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
 call check(nf90_get_att(ncidout,Varid, UNITS,DimUnit2)) 
-call check(nf90_get_var(ncidout,Varid,DimValue2))
+
+if(vartype .eq. NF90_BYTEs2)then
+    call check(nf90_get_var(ncidout,Varid,inbyte2))
+    DimValue2Org=REAL(inbyte2,8)
+elseif(vartype .eq. NF90_CHARs2)then
+    call check(nf90_get_var(ncidout,Varid,inchar2))
+    Write (6, *) "Error: A site variable can't be a character in ", file_name
+elseif(vartype .eq. NF90_SHORTs2)then
+    call check(nf90_get_var(ncidout,Varid,inshort2))
+    DimValue2Org=REAL(inshort2,8)
+elseif(vartype .eq. NF90_INTs2)then
+    call check(nf90_get_var(ncidout,Varid,ininteger2))
+    DimValue2Org=REAL(ininteger2,8)
+elseif(vartype .eq. NF90_FLOATs2)then
+    call check(nf90_get_var(ncidout,Varid,inreal2)) 
+    DimValue2Org=REAL(inreal2,8) 
+elseif(vartype .eq. NF90_DOUBLEs2)then
+    call check(nf90_get_var(ncidout,Varid,indouble2)) 
+    DimValue2Org=REAL(indouble2,8) 
+END IF 
+DimValue2=DimValue2Org
+
+!Deallocate(inbyte)
+!Deallocate(inchar)
+!Deallocate(inshort)
+!Deallocate(ininteger)
+!Deallocate(inreal)
+!Deallocate(indouble)
+
+Deallocate(inbyte1)
+Deallocate(inchar1)
+Deallocate(inshort1)
+Deallocate(ininteger1)
+Deallocate(inreal1)
+Deallocate(indouble1)
+
+Deallocate(inbyte2)
+Deallocate(inchar2)
+Deallocate(inshort2)
+Deallocate(ininteger2)
+Deallocate(inreal2)
+Deallocate(indouble2)
 
 CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout)) 
 End Subroutine SpatialCoordinate
 
-SubRoutine NCDFReadAllTS(file_name,Var_name,AllVal,iycoord,jxcoord,rec)
+
+!!!==================3-D netcdf file reading starts and reads timeSTEPS=============================================
+SubRoutine NCDFReadAllTS(file_name,Var_name,AllVal,iycoord,jxcoord,rec,&
+                         &Inputxcoord,inputycoord,inputtcoord)
 use netcdf
 Implicit None
 integer, parameter :: NDIMS = 3 
+integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
 character (50) :: FILE_NAME, Var_name
 integer :: start(NDIMS), count(NDIMS),VarId
 integer:: iycoord,jxcoord, rec, ncidout
-real, dimension(rec):: AllVal  
-count = (/ 1, 1, rec /)
-start = (/ 1, 1, 1 /)
+real, dimension(rec):: AllVal,AllVals  
+byte, allocatable:: inbyte(:)
+character, allocatable:: inchar(:)
+integer*2, allocatable:: inshort(:)
+integer*4, allocatable:: ininteger(:)
+real*4, allocatable:: inreal(:)
+real*8, allocatable:: indouble(:)
+integer:: vartype
+Character*50:: Inputxcoord,inputycoord,inputtcoord
+INTEGER:: DIMID1,DIMID2,DIMID3, ncid
+
+Allocate(inbyte(rec))
+Allocate(inchar(rec))
+Allocate(inshort(rec))
+Allocate(ininteger(rec))
+Allocate(inreal(rec))
+Allocate(indouble(rec))
+
+
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
 call check(nf90_inq_varid(ncidout, Var_name, VarId))                    ! information about variableID for a given VariableName
-start(1) = iycoord
-start(2) = jxcoord
-call check(nf90_get_var(ncidout,VarId, AllVal, start, count))           ! Read the surface  Elevation Data from the file
+call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
+call check(nf90_inq_dimid(ncidout,Inputtcoord,dimid1))
+call check(nf90_inq_dimid(ncidout,Inputycoord,dimid2))
+call check(nf90_inq_dimid(ncidout,Inputxcoord,dimid3))
+
+! tcoord=1, ycoord=2, and xcoord=3 (DEFAULT of UEBGrid)
+! http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html (section 2.4)
+if (dimid1 == 1 .and. dimid2 == 2 .and. dimid3 == 3)THEN
+    count = (/ rec, 1, 1 /)
+    start = (/ 1, 1, 1 /)
+    start(2) = iycoord
+    start(3) = jxcoord         
+END IF
+
+! tcoord=1, ycoord=3, and xcoord=2
+if (dimid1 == 1 .and. dimid2 == 3 .and. dimid3 == 2)THEN
+    count = (/ rec, 1, 1 /)
+    start = (/ 1, 1, 1 /)
+    start(2) = jxcoord
+    start(3) = iycoord         
+END IF
+
+! tcoord=2, ycoord=1, and xcoord=3
+if (dimid1 == 2 .and. dimid2 == 1 .and. dimid3 == 3)THEN
+    count = (/ 1, rec, 1 /)
+    start = (/ 1, 1, 1 /)
+    start(1) = iycoord
+    start(3) = jxcoord         
+END IF
+
+! tcoord=2, ycoord=3, and xcoord=1
+if (dimid1 == 2 .and. dimid2 == 3 .and. dimid3 == 1)THEN
+    count = (/ 1, rec, 1 /)
+    start = (/ 1, 1, 1 /)
+    start(1) = jxcoord 
+    start(3) = iycoord        
+END IF
+
+! tcoord=3, ycoord=1, and xcoord=2
+if (dimid1 == 3 .and. dimid2 == 1 .and. dimid3 == 2)THEN
+    count = (/ 1, 1, rec /)
+    start = (/ 1, 1, 1 /)
+    start(1) = iycoord
+    start(2) = jxcoord         
+END IF
+
+! tcoord=3, ycoord=2, and xcoord=1
+if (dimid1 == 3 .and. dimid2 == 2 .and. dimid3 == 1)THEN
+    count = (/ 1, 1, rec /)
+    start = (/ 1, 1, 1 /)
+    start(1) = jxcoord
+    start(2) = iycoord         
+END IF
+
+if(vartype .eq. NF90_BYTEs)then
+    call check(nf90_get_var(ncidout,VarId, inbyte, start, count))
+    AllVals=REAL(inbyte)
+elseif(vartype .eq. NF90_CHARs)then
+    call check(nf90_get_var(ncidout,VarId, inchar, start, count))
+    Write (6, *) "Error: A site variable can't be a character in ", file_name
+elseif(vartype .eq. NF90_SHORTs)then
+    call check(nf90_get_var(ncidout,VarId, inshort, start, count))
+    AllVals=REAL(inshort)
+elseif(vartype .eq. NF90_INTs)then
+    call check(nf90_get_var(ncidout,VarId, ininteger, start, count))
+    AllVals=REAL(ininteger)
+elseif(vartype .eq. NF90_FLOATs)then 
+    call check(nf90_get_var(ncidout,VarId, inreal, start, count))
+    AllVals=REAL(inreal) 
+elseif(vartype .eq. NF90_DOUBLEs)then 
+    call check(nf90_get_var(ncidout,VarId, indouble, start, count))
+    AllVals=REAL(indouble) 
+END IF 
+AllVal=AllVals
+
 CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 
+Deallocate(inbyte)
+Deallocate(inchar)
+Deallocate(inshort)
+Deallocate(ininteger)
+Deallocate(inreal)
+Deallocate(indouble)
+
 End SubRoutine NCDFReadAllTS
+!**********************************************************************
+! Count of words separated by a delimiter
+Subroutine StringSep(str,delims,nargs)
+Implicit none
+CHARACTER(200) :: str 
+CHARACTER(1) :: delims
+integer:: nargs
+INTEGER :: pos1, pos2, n, i
+pos1=1
+n=0
+DO
+    pos2 = INDEX(str(pos1:), delims)
+    IF (pos2 == 0) THEN
+       n = n + 1
+       EXIT
+    END IF
+    n = n + 1
+    pos1 = pos2+pos1
+END DO
+nargs=n
+return
+End Subroutine StringSep
+!**********************************************
+
+! Obtain words separated by a delimiter
+Subroutine StringSepWord(str,delims,nargs,word)
+Implicit none
+CHARACTER(200) :: str 
+CHARACTER(1) :: delims
+integer:: nargs
+character(200), dimension(nargs) :: word
+INTEGER :: pos1, pos2, n, i
+pos1 = 1
+n = 0
+
+DO i=1,nargs
+    pos2 = INDEX(str(pos1:), delims)
+    IF (pos2 == 0) THEN
+       word(i) = str(pos1:)
+       EXIT
+    END IF
+    word(i) = str(pos1:pos1+pos2-2)
+    pos1 = pos2+pos1
+END DO
+return
+END Subroutine StringSepWord 
+!**********************************************
+
+! Obtain name of the NC/Index files, Xcoordinate, Ycoordinate, Time and Variable names
+Subroutine StringToVarName(nargs,words,delimit,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
+                &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                         
+Implicit none
+integer:: nargs,nargs2,nargs3,nargs4,nargs5,nargs6,nargs7
+Character(200):: SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
+Character(100):: VarNameinNCDFR
+Character(200),Allocatable:: words1(:),words2(:),words3(:),words4(:),words5(:),words6(:),words7(:)
+REAL,Allocatable:: words7Real(:) 
+!character(200):: words(nargs)
+character(200):: words(7)
+Character(1):: delimit,delimit3
+Character(200):: StateSiteFilesR
+Integer:: DefaultDimValues(3)
+real:: RangeMin, RangeMax
+
+StateSiteFilesR = words(1)
+
+CALL StringSep(words(2),delimit,nargs2)
+Allocate(words2(nargs2))
+CALL StringSepWord(words(2),delimit,nargs2,words2)
+
+CALL StringSep(words(3),delimit,nargs3)
+Allocate(words3(nargs3))
+CALL StringSepWord(words(3),delimit,nargs3,words3)
+
+CALL StringSep(words(4),delimit,nargs4)
+Allocate(words4(nargs4))
+CALL StringSepWord(words(4),delimit,nargs4,words4)
+
+CALL StringSep(words(5),delimit,nargs5)
+Allocate(words5(nargs5))
+CALL StringSepWord(words(5),delimit,nargs5,words5) 
+
+CALL StringSep(words(6),delimit,nargs6)
+Allocate(words6(nargs6))
+CALL StringSepWord(words(6),delimit,nargs6,words6) 
+
+CALL lowercase(words2(1),words2(1))
+CALL lowercase(words3(1),words3(1))
+CALL lowercase(words4(1),words4(1))
+CALL lowercase(words5(1),words5(1))
+call lowercase(words6(1),words6(1))
+
+Allocate(words7(3))
+Allocate(words7Real(2))
+
+if (words2(1) == 'x')Then
+    SitexcoordinateR=words2(2)
+end if
+if (words3(1) == 'x')Then
+    SitexcoordinateR=words3(2)
+end if
+if (words4(1) == 'x')Then
+    SitexcoordinateR=words4(2)
+end if
+if (words5(1) == 'x')Then
+    SitexcoordinateR=words5(2)
+end if
+if (words6(1) == 'x')Then
+    SitexcoordinateR=words6(2)
+end if   
+  
+if (words2(1) .eq. 'x' .or. words3(1) .eq. 'x' .or. words4(1) .eq. 'x' .or. words5(1) .eq. 'x' .or. words6(1) .eq. 'x')THEN
+    DefaultDimValues(3)=-9999
+else 
+    DefaultDimValues(3)=3
+end if
+
+if (words2(1) == 'y')Then
+    SiteycoordinateR=words2(2)
+end if
+if (words3(1) == 'y')Then
+    SiteycoordinateR=words3(2)
+end if
+if (words4(1) == 'y')Then
+    SiteycoordinateR=words4(2)
+end if
+if (words5(1) == 'y')Then
+    SitexcoordinateR=words5(2)
+end if
+if (words6(1) == 'y')Then
+    SitexcoordinateR=words6(2)
+end if
+
+if (words2(1) .eq. 'y' .or. words3(1) .eq. 'y' .or. words4(1) .eq. 'y' .or. words5(1) .eq. 'y' .or. words6(1) .eq. 'y')THEN
+    DefaultDimValues(2)=-9999
+else 
+    DefaultDimValues(2)=2
+end if
+    
+if (words2(1) == 'time')Then
+    InputtcoordinateR=words2(2)
+end if
+if (words3(1) == 'time')Then
+    InputtcoordinateR=words3(2)
+end if
+if (words4(1) == 'time')Then
+    InputtcoordinateR=words4(2)
+end if
+if (words5(1) == 'time')Then
+    InputtcoordinateR=words5(2)
+end if
+if (words6(1) == 'time')Then
+    InputtcoordinateR=words6(2)
+end if
+
+if (words2(1) .eq. 'time' .or. words3(1) .eq. 'time' .or. words4(1) .eq. 'time' .or. words5(1) .eq. 'time' .or. words6(1) .eq. 'time')THEN
+    DefaultDimValues(1)=-9999
+else 
+    DefaultDimValues(1)=1
+end if
+      
+if (words2(1) == 'd')Then
+    VarNameinNCDFR=words2(2)
+elseif (words3(1) == 'd')Then
+    VarNameinNCDFR=words3(2)
+elseif (words4(1) == 'd')Then
+    VarNameinNCDFR=words4(2)
+elseif (words5(1) == 'd')Then
+    VarNameinNCDFR=words5(2)
+elseif (words6(1) == 'd')Then
+    VarNameinNCDFR=words6(2)
+else
+write(6,*) "variable name must be writen along with file name", StateSiteFilesR
+end if
+
+if (words2(1) == 'range')Then
+    deallocate(words7)
+    CALL StringSep(words2(2),delimit3,nargs7)
+    Allocate(words7(nargs7))
+    CALL StringSepWord(words2(2),delimit3,nargs7,words7) 
+    READ(words7(1),*)words7Real(1)
+    READ(words7(2),*)words7Real(2) 
+    RangeMin=words7Real(1)
+    RangeMax=words7Real(2)
+end if
+if (words3(1) == 'range')Then
+    deallocate(words7)
+    deallocate(words7Real)
+    CALL StringSep(words3(2),delimit3,nargs7)
+    Allocate(words7(nargs7))
+    Allocate(words7Real(nargs7))
+    CALL StringSepWord(words3(2),delimit3,nargs7,words7)
+    READ(words7(1),*)words7Real(1)
+    READ(words7(2),*)words7Real(2) 
+    RangeMin=words7Real(1)
+    RangeMax=words7Real(2)
+end if
+if (words4(1) == 'range')Then
+    deallocate(words7)
+    deallocate(words7Real)
+    CALL StringSep(words4(2),delimit3,nargs7)
+    Allocate(words7(nargs7))
+    Allocate(words7Real(nargs7))
+    CALL StringSepWord(words4(2),delimit3,nargs7,words7)
+    READ(words7(1),*)words7Real(1)
+    READ(words7(2),*)words7Real(2) 
+    RangeMin=words7Real(1)
+    RangeMax=words7Real(2)
+end if
+if (words5(1) == 'range')Then
+    deallocate(words7)
+    deallocate(words7Real)
+    CALL StringSep(words5(2),delimit3,nargs7)
+    Allocate(words7(nargs7))
+    Allocate(words7Real(nargs7))
+    CALL StringSepWord(words5(2),delimit3,nargs7,words7)
+    READ(words7(1),*)words7Real(1)
+    READ(words7(2),*)words7Real(2) 
+    RangeMin=words7Real(1)
+    RangeMax=words7Real(2)
+end if
+if (words6(1) == 'range')Then
+    deallocate(words7)
+    deallocate(words7Real)
+    CALL StringSep(words6(2),delimit3,nargs7)
+    Allocate(words7(nargs7))
+    Allocate(words7Real(nargs7))
+    CALL StringSepWord(words6(2),delimit3,nargs7,words7)
+    READ(words7(1),*)words7Real(1)
+    READ(words7(2),*)words7Real(2) 
+    RangeMin=words7Real(1)
+    RangeMax=words7Real(2)
+end if
+
+if (words2(1) .eq. 'range' .or. words3(1) .eq. 'range' .or. words4(1) .eq. 'range' .or. words5(1) .eq. 'range' .or. words6(1) .eq. 'range')THEN
+    RangeMin=RangeMin
+    RangeMax=RangeMax
+else
+    RangeMin=-9999
+    RangeMax=-9999
+end if
+
+deallocate(words2)
+deallocate(words3)
+deallocate(words4)
+deallocate(words5)
+deallocate(words6)
+deallocate(words7)
+
+End Subroutine StringToVarName
+
+!==================Obtain Input Variable Missing and Filling value ===========================================
+Subroutine VarMissFill(FILE_NAME,Varname,VarMissingValues,varFillValues)
+!Task: provides the length of x- and y-coordinate and time
+!FILE_NAME (in) 2-D netccdf file
+!Dimlen2 (out) length of y-coordinate
+!dimlen1 (out) length of x-coordinate
+!WatershedVARID (in) vaiable ID (in this case watershed variable ID)
+!WsMissingValues (out) missing value attribute for a variable in a netCDF 
+!WsFillValues (out) missing value attribute in a netCDF 
+!dimname1 (in) name of dimension-x
+!dimname2 (in) name of dimension-y
+use netcdf
+Implicit None
+integer ::  iii
+integer:: VarId
+character (200) :: FILE_NAME
+character (50) :: Varname
+character (len = *), parameter :: missing_value = "missing_value",fillvalue="_FillValue"
+integer::numAtts, ncidout
+character (len = 50):: AttName
+real::VarMissingValues,varFillValues
+
+!Open the file and see hats inside
+call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
+call check(nf90_inq_varid(ncidout,VarName,VarId))
+CALL check(nf90_inquire_variable(ncidout,VarId,natts=numAtts))
+
+DO iii=1,numAtts
+CALL check(nf90_inq_attname(ncidout,VarId,iii,AttName))
+    if(AttName .eq. missing_value)THEN
+        CALL check(nf90_get_att(ncidout,VarId,missing_value,VarMissingValues)) 
+    ELSE
+        VarMissingValues=-9999
+    end IF
+    if(AttName .eq. fillvalue)THEN
+        CALL check(nf90_get_att(ncidout,VarId,fillvalue,varFillValues))  
+    ELSE
+        VarMissingValues=-9999
+    end IF
+END DO
+CALL check(nf90_sync(ncidout))
+call check(nf90_close(ncidout))                                         ! Closing the netcdf file
+end Subroutine VarMissFill
+!==================Obtain Input Variable Missing and Filling value ===========================================

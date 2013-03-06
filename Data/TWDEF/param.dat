@@ -1,6 +1,6 @@
 Model Parameters
 irad:  Radiation control flag (0=from ta, 1= input qsi, 2= input qsi,qli 3= input qnet)
-1   
+1
 ireadalb:  Albedo reading control flag (0=albedo is computed internally, 1 albedo is read)
 0
 tr: Temperature above which all is rain (3 C)

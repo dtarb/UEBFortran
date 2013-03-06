@@ -33,14 +33,13 @@
 ! ============================== This subroutine reads the values from input control file ========================================
 
  subroutine InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
-   implicit none
- 
-        integer :: n, i, xx, MaxNumofFile, count
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! inputvarname (output) Name of the variables that are provided inside inputcontrol.dat file
         ! UTCOffSet(output) UTC offset for the region/wateshed we are dealing with
         
+        implicit none
+        integer :: n, i, xx, MaxNumofFile, count
         PARAMETER(n=11)
         ! TA,P,V,RH,trange,QSIOBS,QNETOB,qg,qli,inputcon, iloop
         integer:: reason,InumOfFile(n),IsInputFromNC(n)
@@ -50,10 +49,24 @@
         CHARACTER*200 NCfileContain, NCfileContainer,varnameinncdf(n),inputvarname(n)
         !InputNCFilename(n)=here inpdex file names will be stored for those variables are both spatially-temporally variable (SVTV)
         !InputNCFilename(n)=here time series text file names will be stored for those variables are both temporally variable but spatially constant(SCTV)
+        CHARACTER(200) :: str 
+        CHARACTER(1) :: delimit1,delimit2
+        integer:: nargs
+        character(200),Allocatable:: words(:)
+        Character(200):: StateSiteFilesR, SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
+        Character(100):: VarNameinNCDFR
+        integer:: DEFAULTDIMVALUES(3)
+        REAL::RangeMin,RangeMax
+        CHARACTER(1):: delimit3
+        character(200),Allocatable::words7element(:)
+        delimit1=';'
+        delimit2=':'
+        delimit3='&'
         InputVName= (/ "Ta     ","Prec   ","v      ","RH     ", &
              "Tmin   ","Tmax   ","Qsi    ","Qg     ","Qli    ", &
              "Qnet   ","Snowalb"  /)
         IsInputFromNC=(/ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 /)
+        
           OPEN(19,FILE=inputcon,STATUS='OLD')
           Read (19,*)  inputHeading
           Read (19,*)  Syear, Smonth, sdate, shour
@@ -74,8 +87,17 @@
                     if(IsInputFromNC(i) .eq. 0) then
                         read(19,*)InputTSFilename(i)
                     else if(IsInputFromNC(i) .eq. 1) then
-                        read(19,*)InputNCFilename(i)
-                        read(19,*)varnameinncdf(i) 
+                        read(19,*)str
+                        CALL StringSep(str,delimit1,nargs)
+                        Allocate(words(nargs))
+                        Allocate(Words7element(7))
+                        CALL StringSepWord(str,delimit1,nargs,words)
+                        Words7element(1:nargs)=words(1:nargs)
+                        CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
+                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                        InputNCFilename(i)=StateSiteFilesR
+                        Deallocate(words)
+                        deallocate(words7element)
                     else
                         read(19,*)VARVALUES(i) 
                     end if
@@ -101,11 +123,14 @@
         end if
         end do   
         MaxNumofFile = MAXVAL(InumOfFile)
-        end subroutine InputMaxNCFiles
+
+   end subroutine InputMaxNCFiles
 !================================================================================================================================
+
         Subroutine InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
         &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
+        &nrefyr,nrefmo,nrefday,inputvarnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
+        &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,daysstring)
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! IsInputFromNC(n) (Output) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)
@@ -141,7 +166,7 @@
         !  Arrays to hold temporary information before sort
         character*200, allocatable :: tempfilelist(:)
         integer, allocatable :: tempfilesteps(:)
-        double precision, allocatable :: tempstarttime(:)
+        Double precision, allocatable :: tempstarttime(:)
         integer,allocatable :: iy(:)           
         CHARACTER*200 inputHeading, inputcode, inputname, inputcon, inputVName(n), InputNCFilename(n)
         CHARACTER*200 InputTSFilename(n)
@@ -158,19 +183,50 @@
         real:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
         integer::  numAtts
         character (len = 50):: AttName
-
+        Character*50 Inputxcoordinates(n),inputycoordinates(n),inputtcoordinates(n)
+        Character*50:: Inputxs(MaxNumofFile,n),inputys(MaxNumofFile,n),inputts(MaxNumofFile,n)
+        Character*50 Inputxcoordinate,Inputycoordinate,Inputtcoordinate
+        CHARACTER(200) :: str 
+        CHARACTER(1) :: delimit1,delimit2
+        integer:: nargs,nargs2,nargs3,nargs4,nargs5
+        character(200),Allocatable:: words(:)
+        Character(200):: StateSiteFilesR, SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
+        Character(100):: VarNameinNCDFR,Inputvarnameinncdf(n)
+        Character(200),Allocatable:: words1(:),words2(:),words3(:),words4(:),words5(:)
+        REAL:: InputvarMissVal(MaxNumofFile,n), InputvarFillVal(MaxNumofFile,n)
+        REAL:: VarMissValueOne,varFillValueOne
+        integer:: DefaultDimValues(3),InputDefDimval(n,3)
+        integer:: uniqueIDNumberts(n),uniqueIDNumberys(n),uniqueIDNumberxs(n)
+        integer:: uniqueIDNumbert,uniqueIDNumbery,uniqueIDNumberx
+        Logical:: found
+        Integer::j
+        REAL::RangeMin,RangeMax
+        REAL:: ModelMissVaue
+        Character(1):: delimit3
+        character(200),allocatable::Words7element(:)
+        real::InputVarRange(n,2)
+        character(50):: daysstring
+        
         allocate(tempfilelist(MaxNumofFile))
         allocate(tempfilesteps(MaxNumofFile))
         allocate(tempstarttime(MaxNumofFile))
         allocate(iy(MaxNumofFile))
         
+        ModelMissVaue=-9999 
+        InputVarRange=ModelMissVaue
+        delimit1=';'
+        delimit2=':'
+        delimit3='&'
+        uniqueIDNumbert=0
+        uniqueIDNumbery=0
+        uniqueIDNumberx=0
         !Double precision:: NCfiletimeDimesions(MaxNumofFile,n,3)
         !InputNCFilename(9)=here inpdex file names will be stored for those variables are both spatially-temporally variable (SVTV)
         !InputNCFilename(9)=here time series text file names will be stored for those variables are both temporally variable but spatially constant(SCTV)
-        InputVName= (/ "ta     ","prec   ","v      ","rh     ", &
+          InputVName= (/ "ta     ","prec   ","v      ","rh     ", &
              "tmin   ","tmax   ","qsi    ","qg     ","qli    ", &
              "qnet   ","snowalb"  /)
-        IsInputFromNC=(/ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 /)  !  3 is used to indicate this variable is not input
+          IsInputFromNC=(/ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 /)  !  3 is used to indicate this variable is not input
           OPEN(99,FILE=inputcon,STATUS='OLD')
           Read (99,*)  inputHeading
           Read (99,*)  ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),ModelStartHour
@@ -188,8 +244,26 @@
                     if(IsInputFromNC(i) .eq. 0) then
                         read(99,*)InputTSFilename(i)
                     elseif(IsInputFromNC(i) .eq. 1)then
-                        read(99,*)InputNCFilename(i)  !  This is file that contains list of NC files
-                         read(99,*)varnameinncdf(i)
+                        read(99,*)str
+                        CALL StringSep(str,delimit1,nargs)
+                        Allocate(words(nargs))
+                        Allocate(Words7element(7))
+                        CALL StringSepWord(str,delimit1,nargs,words)
+                        Words7element(1:nargs)=words(1:nargs)
+                        CALL StringToVarName(nargs,Words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
+                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                        InputDefDimval(i,1)=DefaultDimValues(1)
+                        InputDefDimval(i,2)=DefaultDimValues(2)
+                        InputDefDimval(i,3)=DefaultDimValues(3)                                             
+                        InputNCFilename(i)=StateSiteFilesR
+                        Inputxcoordinates(i)=SitexcoordinateR
+                        Inputycoordinates(i)=SiteycoordinateR
+                        Inputtcoordinates(i)=InputtcoordinateR
+                        Inputvarnameinncdf(i)=VarNameinNCDFR
+                        InputVarRange(i,1)=RangeMin
+                        InputVarRange(i,2)=RangeMax
+                        Deallocate(words) 
+                        deAllocate(Words7element)                
                     elseif(IsInputFromNC(i) .eq. 2)then
                         read(99,*)InpVals(i)
                     elseif(IsInputFromNC(i) .ne. 3)then
@@ -202,6 +276,142 @@
         xx=0
         go to 1300
 1400    CLOSE(99)
+        
+!  At this point we have IsInputFromNC, InputTSFilename, InputNCFilename, varnameinncdf, InpVals populated
+!  Done with control file
+        first=1
+        do i=1,n
+        count=0
+            if (IsInputFromNC(i) .eq. 1) then
+                ! NCfileContainer=InputNCFilename(i) !NCfileContainer= contains the name of netCDF files for 1 variable
+                OPEN(59,FILE=InputNCFilename(i),STATUS='OLD')
+1701            Read(59,*,end=1801)NCfileContain
+                count=count+1
+                tempfilelist(count)=NCfileContain 
+                NumNCFiles(i)=count
+                iy(count)=count
+                go to 1701
+1801            CLOSE(59)
+            end if
+            do ii=1,count
+                  NCDFContainer(ii,i)=tempfilelist(iy(count-ii+1))
+            enddo  
+        end do
+        
+        
+       Do i=1,n
+            if (IsInputFromNC(i) .eq. 1)then
+                Do k=1,MaxNumofFile
+                    If(InputDefDimval(i,1) .NE. ModelMissVaue)THEN ! Get the name of time-coordinate
+                        CALL check(nf90_open(NCfileContain,NF90_NOWRITE, ncidout))
+                        CALL check(nf90_inquire_dimension(NCIDout,InputDefDimval(i,1),inputts(k,i)))
+                        CALL check(nf90_close(ncidout))
+                    End if
+                    If(InputDefDimval(i,2) .NE. ModelMissVaue)THEN ! Get the name of Y-coordinate
+                        CALL check(nf90_open(NCfileContain,NF90_NOWRITE, ncidout))
+                        CALL check(nf90_inquire_dimension(ncidout,InputDefDimval(i,2),inputys(k,i)))
+                        CALL check(nf90_close(ncidout))
+                    End if
+                    If(InputDefDimval(i,3) .NE. ModelMissVaue)THEN ! Get the name of X-coordinate
+                        CALL check(nf90_open(NCfileContain,NF90_NOWRITE, ncidout))
+                        CALL check(nf90_inquire_dimension(NCIDout,InputDefDimval(i,3),Inputxs(k,i)))
+                        CALL check(nf90_close(ncidout))
+                    End if  
+                end do 
+            end if  
+      End do
+      
+    Do k=1,n
+        if (IsInputFromNC(k) .eq. 1)then
+            If(InputDefDimval(k,3) .NE. ModelMissVaue)THEN ! Get the name of x-coordinate
+                Do i=1,NumNCFiles(k)
+                    found=.true.
+                    uniqueIDNumberx=1
+                    Do j=(i+1),NumNCFiles(i)
+                        if (inputxs(i,k) .eq. inputxs(j,k))then
+                            found=.false.
+                        end if
+                        if(found)then
+                            uniqueIDNumberx=uniqueIDNumberx+1
+                        end if
+                    End do
+                end do
+                uniqueIDNumberxs(k)=uniqueIDNumberx
+            end if
+        end if
+    end do
+    
+    Do k=1,n
+        if (IsInputFromNC(k) .eq. 1)then
+            If(InputDefDimval(k,2) .NE. -9999)THEN ! Get the name of y-coordinate
+                Do i=1,NumNCFiles(k)
+                    found=.true.
+                    uniqueIDNumbery=1
+                    Do j=(i+1),NumNCFiles(i)
+                        if (inputys(i,k) .eq. inputys(j,k))then
+                            found=.false.
+                        end if
+                        if(found)then
+                            uniqueIDNumbery=uniqueIDNumbery+1
+                        end if
+                    End do
+                end do
+                uniqueIDNumberys(k)=uniqueIDNumbery
+            end if
+        end if
+    end do
+
+    Do k=1,n
+        if (IsInputFromNC(k) .eq. 1)then
+            If(InputDefDimval(k,1) .NE. -9999)THEN ! Get the name of t-coordinate
+                Do i=1,NumNCFiles(k)
+                    found=.true.
+                    uniqueIDNumbert=1
+                    Do j=(i+1),NumNCFiles(k)
+                        if (inputts(i,k) .eq. inputts(j,k))then
+                            found=.false.
+                        end if
+                        if(found)then
+                            uniqueIDNumbert=uniqueIDNumbert+1
+                        end if
+                    End do
+                end do
+                uniqueIDNumberts(k)=uniqueIDNumbert
+            end if
+        end if
+    end do
+    
+    Do i = 1,n 
+        if (IsInputFromNC(i) .LE. 1)then 
+            Do k=1,MaxNumofFile
+                If(InputDefDimval(i,3) .NE. -9999)THEN ! Get the name of x-coordinate
+                    If (uniqueIDNumberxs(i) .GT. 1)THEN
+                        write(6,*) 'X coordinate should be the same in all files containing the same variable'
+                    End if 
+                    If (uniqueIDNumberxs(i) .EQ. 1)THEN
+                        Inputxcoordinates(i)=inputxs(k,i)
+                    End if  
+                end if
+                If(InputDefDimval(i,2) .NE. -9999)THEN ! Get the name of y-coordinate
+                    If (uniqueIDNumberys(i) .GT. 1)THEN
+                        write(6,*) 'Y coordinate should be the same in all files containing the same variable'
+                    End if 
+                    If (uniqueIDNumberys(i) .EQ. 1)THEN
+                        Inputycoordinates(i)=inputys(k,i)
+                    End if 
+                end if
+                If(InputDefDimval(i,1) .NE. -9999)THEN ! Get the name of y-coordinate
+                    If (uniqueIDNumberts(i) .GT. 1)THEN
+                        write(6,*) 'time coordinate should be the same in all files containing the same variable'
+                    End if 
+                    If (uniqueIDNumberts(i) .EQ. 1)THEN
+                        Inputtcoordinates(i)=inputts(k,i)
+                    End if 
+                end if
+            end do
+        end if
+    end do
+    
 !  At this point we have IsInputFromNC, InputTSFilename, InputNCFilename, varnameinncdf, InpVals populated
 !  Done with control file
         first=1
@@ -215,7 +425,8 @@
         tempfilelist(count)=NCfileContain 
         NumNCFiles(i)=count
         iy(count)=count
-        CALL nCDF3DtimeRead (NCfileContain,1,tempstarttime(count),tempfilesteps(count),syear,smonth,sday)
+        CALL nCDF3DtimeRead(NCfileContain,Inputtcoordinates(i),1,tempstarttime(count),tempfilesteps(count),syear,smonth,sday,daysstring)
+       !CALL nCDF3DtimeRead(file_name,rec_name,time_pos,time_val,numtimeStep,syear,smonth,sday,daysstring)
         if (first .eq. 1)then
            first=0
            nrefyr=syear
@@ -244,14 +455,18 @@
         deallocate(tempstarttime)
         deallocate(iy)
         NOofTS=0
-        Varid=3  !  We require that time is the 3rd dimension
+        
+
         Do i = 1,n 
             if (IsInputFromNC(i) .eq. 1)then
+                Rec_name=Inputtcoordinates(i)
                 Do k=1,NumNCFiles(i)
                     File_name=NCDFContainer(k,i)
                     call check(nf90_open(File_name, nf90_nowrite, ncidout))                         ! open the netcdf file
+                    call check(nf90_inq_varid(ncidout,Rec_name,Varid))
                     call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC))  ! information about dimensionID 3
-                    Call check(nf90_inq_varid(ncidout,varnameinncdf(i),InputVarId))
+                    Call check(nf90_inq_varid(ncidout,Inputvarnameinncdf(i),InputVarId))
+                    Call VarMissFill(FILE_NAME,Inputvarnameinncdf(i),VarMissValueOne,varFillValueOne)
                     CALL check(nf90_inquire_variable(ncidout,InputVarId,natts = numAtts))
                     DO iii=1,numAtts
                         CALL check(nf90_inq_attname(ncidout,InputVarId,iii,AttName))
@@ -288,7 +503,7 @@
         End subroutine
         
         subroutine timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        arrayx,NOofTS,TSV,Allvalues)
+        arrayx,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
         
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! NumNCFiles(n) (input)  Array giving the number of NC files for NC variables
@@ -311,11 +526,12 @@
         ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         use netcdf
         Implicit None
+        integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
         integer :: n, i, k, FileCount, NumtimeStepEachNC
         Parameter(n=11)
         integer:: arrayx
         integer:: VarID,ncidout
-        Character:: Rec_Name
+        Character*50:: Rec_Name
         integer:: MaxNumofFile
         integer:: TScounts,FileOpenFlag(n),IsInputFromNC(n),NUMNCFILES(n)
         character*200:: TSFile
@@ -327,18 +543,26 @@
         Real:: FileNextVal  
         Double precision:: FileNextHR
         Double precision:: FileNextDateJDT
-        REAL:: AllValues(arrayx,11)
-        Double precision:: TSV(arrayx,11)
-        Double precision,allocatable ::AlltimeSteps(:)
+        REAL:: AllValues(arrayx,n)
+        Double precision:: TSV(arrayx,n)
+        REAL,allocatable ::AlltimeSteps(:),AlltimeSteps1(:)
         character*200:: CurrentInputVariable(n)
         integer::StartY,StartM,StartD
         Double precision:: NCRfeferenceJDT
         double precision:: RefHour
         Integer::TotalTS
-        Double precision:: TVal(1)
+        double precision:: TVal(1)
         integer:: ArrayStart,ArrayEnd
-        
-        Varid=3  !  We require that time is the 3rd dimension
+        Character*50:: Inputtcoordinates(n)
+        byte, allocatable:: inbyte(:)
+        character, allocatable:: inchar(:)
+        integer*2, allocatable:: inshort(:)
+        integer*4, allocatable:: ininteger(:)
+        real*4, allocatable:: inreal(:)
+        real*8, allocatable:: indouble(:)
+        integer:: vartype
+        character*50::daysstring
+        !Varid=3  !  We require that time is the 3rd dimension
         RefHour=0.00
         FileCount=1
         
@@ -367,17 +591,58 @@
                     File_nameM=NCDFContainer(k,i)
                     FileCount=FileCount+1
                     call check(nf90_open(File_nameM, nf90_nowrite, ncidout))                         ! open the netcdf file
-                    call check(nf90_inquire_dimension(ncidout,Varid,Rec_name,NumtimeStepEachNC))  ! information about dimensionID 3  
+                    call check(nf90_inq_varid(ncidout,Inputtcoordinates(i),VarId))                   ! information about variableID for a given VariableName
+                    call check(nf90_inquire_dimension(ncidout,Varid,len=NumtimeStepEachNC))          ! information about dimensionID 3  
                     CALL check(nf90_sync(ncidout))
-                    CALL nCDF3DtimeRead(file_nameM,1,TVal,TotalTS,StartY,StartM,StartD)
+                    CALL nCDF3DtimeRead(file_nameM,Inputtcoordinates(i),1,TVal,TotalTS,StartY,StartM,StartD,daysstring)
                     CALL JULDAT(StartY,StartM,StartD,RefHour,NCRfeferenceJDT)
-                    Allocate(AlltimeSteps(numtimeStepEachNC))                                    
-                    call check(nf90_get_var(ncidout,VarId,AlltimeSteps))                            ! Read the first time value from the file
+                    Allocate(AlltimeSteps(numtimeStepEachNC))  
+                    Allocate(AlltimeSteps1(numtimeStepEachNC))  
+                    Allocate(inbyte(numtimeStepEachNC))
+                    Allocate(inchar(numtimeStepEachNC))
+                    Allocate(inshort(numtimeStepEachNC))
+                    Allocate(ininteger(numtimeStepEachNC))
+                    Allocate(inreal(numtimeStepEachNC))
+                    Allocate(indouble(numtimeStepEachNC))
+                    call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))                                  
+                    call check(nf90_get_var(ncidout,VarId,AlltimeSteps1))                            
+                    if(vartype .eq. NF90_BYTEs)then
+                        call check(nf90_get_var(ncidout,VarId,inbyte)) 
+                        AlltimeSteps1=REAL(inbyte)
+                    elseif(vartype .eq. NF90_CHARs)then
+                        call check(nf90_get_var(ncidout,VarId,inchar)) 
+                        Write (6, *) "Error: Time Steps can't be a character "
+                    elseif(vartype .eq. NF90_SHORTs)then
+                        call check(nf90_get_var(ncidout,VarId,inshort)) 
+                        AlltimeSteps1=REAL(inshort)
+                    elseif(vartype .eq. NF90_INTs)then
+                        call check(nf90_get_var(ncidout,VarId,ininteger)) 
+                        AlltimeSteps1=REAL(ininteger)
+                    elseif(vartype .eq. NF90_FLOATs)then 
+                        call check(nf90_get_var(ncidout,VarId,inreal)) 
+                        AlltimeSteps1=REAL(inreal) 
+                    elseif(vartype .eq. NF90_DOUBLEs)then
+                        call check(nf90_get_var(ncidout,VarId,indouble))  
+                        AlltimeSteps1=REAL(indouble) 
+                    END IF 
+                    AlltimeSteps=AlltimeSteps1
                     CALL check(nf90_sync(ncidout))
                     ArrayStart=ArrayEnd+1                           
                     ArrayEnd=NumtimeStepEachNC+ArrayStart-1
-                    TSV(ArrayStart:ArrayEnd,i)=AlltimeSteps
+                    if ((daysstring .eq. 'hours') .or. (daysstring .eq. 'hour'))then
+                        TSV(ArrayStart:ArrayEnd,i)=AlltimeSteps/24
+                    endif
+                    if ((daysstring .eq. 'days') .or. (daysstring .eq. 'day'))then
+                        TSV(ArrayStart:ArrayEnd,i)=AlltimeSteps
+                    endif
                     deallocate(AlltimeSteps)
+                    Deallocate(AlltimeSteps1)  
+                    Deallocate(inbyte)
+                    Deallocate(inchar)
+                    Deallocate(inshort)
+                    Deallocate(ininteger)
+                    Deallocate(inreal)
+                    Deallocate(indouble)
                 end do
             End if
         End do
@@ -387,7 +652,8 @@
 
         
         Subroutine Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-        &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray)
+        &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
+        &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange)
             
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)    
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -414,7 +680,7 @@
         integer:: MaxNumofFile,NOofTS(n),NUMNCFILES(n),NumtimeStep,StepInADay
         integer:: CurrentArrayPosRegrid(NumtimeStep,n)
         Character*200:: NCDFContainer(MaxNumofFile,n),inputvarname(n)
-        Character*50:: varnameinncdf(n)
+        Character*100:: varnameinncdf(n)
         integer::iycoord,jxcoord,NCfileNumtimesteps(MaxNumofFile,n)
         character*50:: var_name
         Character*200::File_nameM
@@ -425,6 +691,9 @@
         Real, allocatable :: AllVal(:)
         REAL:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
         Integer:: Modx,TOTALDAYMONE,TOTALDAY,GG
+        Character*50 Inputxcoordinates(11),inputycoordinates(11),inputtcoordinates(11)
+        REAL::InputVarRange(11,2)
+        
         Do i = 1,n 
             ArrayEnd=0
             if (IsInputFromNC(i) .eq. 1)then
@@ -433,18 +702,40 @@
                     var_name=varnameinncdf(i)
                     Allocate(AllVal(NCfileNumtimesteps(k,i)))
                     rec=NCfileNumtimesteps(k,i) 
-                    CALL NCDFReadAllTS(file_nameM,Var_name,AllVal,iycoord,jxcoord,rec)
+                    CALL NCDFReadAllTS(file_nameM,Var_name,AllVal,iycoord,jxcoord,rec,&
+                                       &Inputxcoordinates(i),inputycoordinates(i),inputtcoordinates(i))
                     ArrayStart=ArrayEnd+1                      
                     ArrayEnd=rec+ArrayStart-1
                     Allvalues(ArrayStart:ArrayEnd,i)=AllVal(1:rec)
                     Deallocate(AllVal)
+                    CALL lowercase(inputvarname(i),inputvarname(i))
                     Do jj=1,NoofTS(i)
                         if (Allvalues(jj,i) .EQ. VarMissingValues(k,i))Then
-                            Allvalues(jj,i)=Allvalues((jj-1),i)
+                            If (inputvarname(i) .NE. 'qsi')THen
+                                Allvalues(jj,i)=Allvalues((jj-1),i)
+                            else
+                                Allvalues(jj,i)=-9999
+                            end if      
                         End if
+                        
                         if (Allvalues(jj,i) .EQ. VarFillValues(k,i))Then
-                            Allvalues(jj,i)=Allvalues((jj-1),i)
-                        End if
+                            If (inputvarname(i) .NE. 'qsi')THen
+                                Allvalues(jj,i)=Allvalues((jj-1),i)
+                            else
+                                Allvalues(jj,i)=-9999
+                            End if
+                        end if
+                        
+                        If(InputVarRange(i,1) .NE. -9999 .and. InputVarRange(i,2) .NE. -9999)THEN
+                            if (Allvalues(jj,i) .LT. InputVarRange(i,1) .OR. Allvalues(jj,i) .GT. InputVarRange(i,2))Then
+                                If (inputvarname(i) .NE. 'qsi')Then
+                                    Allvalues(jj,i)=Allvalues((jj-1),i)
+                                else
+                                    Allvalues(jj,i)=-9999
+                                end if      
+                            End if
+                        end if
+                        
                     End do
                 End do
             End if
@@ -536,6 +827,8 @@
         REAL:: HOUR,MODELDT,DT,tol
         integer:: NOOFTS(n)
         Double precision:: dhour,DBLEHOUR,EJD,modelTimeJDT(NumtimeStep)
+        integer:: x,y,z,a,b,c
+        double precision:: p,q
         RefHour=0.00
         SHOUR=dble(ModelStartHour)
         TOl=5./(60.*24.) ! 1 minute tolerance
@@ -580,6 +873,8 @@
         
         Do i=1,n
             IF(IsInputFromNC(i) .LT. 2)then
+                call caldat(CurrentModelDT,x,y,z,p)
+                call caldat(FileCurrentDT(i),a,b,c,q)
                 If((FileCurrentDT(i) .GT. CurrentModelDT) .AND. (CurrentArrayPos(i)==1))THEN
                     CurrentArrayPos(i)=1
                     CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
@@ -620,10 +915,17 @@
         
         CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
         DBLEHOUR=DBLE(hour)
+        !If(istep==1)THEN
+            modelTimeJDT(istep)=CurrentModelDT 
+        !End IF
         call JULDAT(YEAR,MONTH,DAY,DBLEHOUR,CurrentModelDT)
-        If (EJD .GE. CurrentModelDT)Then  
-            modelTimeJDT(istep)=CurrentModelDT    
+        If (EJD .GE. CurrentModelDT)Then 
+!            If(istep .GT. 1)THEN
+!                modelTimeJDT(istep)=CurrentModelDT  
+!            end if  
             Go to 8887 
         End if
 
         End subroutine
+        
+        
