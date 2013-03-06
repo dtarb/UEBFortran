@@ -64,10 +64,10 @@
         
         
         Subroutine AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,&
-        &dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues)
+        &uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues,wsxcoordinate,wsycoordinate)
         use netCDF
         Implicit None
-        
+        integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
         integer, parameter:: n=66
         character*200:: AggOutControl, outSymbol(n),AggoutHeading,OutName,filecode,Watershedfile,WatershedVARID
         integer::AggOutNum,OutNum,Reason,dimlen2,dimlen1,AOutNum
@@ -79,9 +79,17 @@
         integer,dimension(:),allocatable:: IDVALUEAllocate
         REAL:: WsMissingValues,WsFillValues
         integer:: IDnumber
-        IDVALUEDim=dimlen2*dimlen1
-        allocate(IDVALUEAllocate(IDVALUEDim))
-        allocate(IDVALUE(dimlen1,dimlen2))
+        byte,dimension(:,:),allocatable:: inbyte
+        character,dimension(:,:),allocatable:: inchar
+        integer*2,dimension(:,:),allocatable:: inshort
+        integer*4,dimension(:,:),allocatable:: ininteger
+        real*4,dimension(:,:),allocatable:: inreal
+        real*8,dimension(:,:),allocatable:: indouble
+        integer*4,dimension(:,:),allocatable:: arrayint
+        integer:: vartype
+        character*50:: wsxcoordinate,wsycoordinate
+        integer:: dimid1,dimid2
+        
         OPEN(10999,FILE=AggOutControl,STATUS='OLD', ACTION='READ')
         READ(10999,*,iostat=reason)AggoutHeading
         OutNum=1
@@ -113,15 +121,83 @@
 
         call check(nf90_open(Watershedfile,nf90_nowrite,ncidout))
         call check(nf90_inq_varid(ncidout,WatershedVARID,WSVarId))
-        CALL check(nf90_get_var(ncidout,WSVarId,IDValue))
-        call check(nf90_close(ncidout)) 
+        call check(NF90_inquire_variable(ncidout,WSVarId,xtype=vartype))
+        !CALL check(nf90_get_var(ncidout,WSVarId,IDValue))
+        call check(nf90_inq_dimid(ncidout,wsycoordinate,dimid1))
+        call check(nf90_inq_dimid(ncidout,wsxcoordinate,dimid2))
+        call check(nf90_inquire_dimension(ncidout, DimID1,len=dimlen1))       ! Information about dimensionID 1
+        call check(nf90_inquire_dimension(ncidout, DimID2,len=dimlen2))       ! information about dimensionID 2  
+        
+        if (dimid1==1 .and. dimid2==2)THEN
+            allocate(inbyte(dimlen1,dimlen2))
+            allocate(inchar(dimlen1,dimlen2))
+            allocate(inshort(dimlen1,dimlen2))
+            allocate(ininteger(dimlen1,dimlen2))
+            allocate(inreal(dimlen1,dimlen2))
+            allocate(indouble(dimlen1,dimlen2))
+            allocate(arrayint(dimlen1,dimlen2))
+            allocate(IDVALUE(dimlen1,dimlen2))
+        end if
+        
+        if (dimid1==2 .and. dimid2==1)THEN
+            allocate(inbyte(dimlen2,dimlen1))
+            allocate(inchar(dimlen2,dimlen1))
+            allocate(inshort(dimlen2,dimlen1))
+            allocate(ininteger(dimlen2,dimlen1))
+            allocate(inreal(dimlen2,dimlen1))
+            allocate(indouble(dimlen2,dimlen1))
+            allocate(arrayint(dimlen2,dimlen1))
+            allocate(IDVALUE(dimlen2,dimlen1))
+        end if
 
+        
+        if(vartype .eq. NF90_BYTE)then
+            call check(nf90_get_var(ncidout,WSVarId,inbyte))        
+            arrayint=INT(inbyte)
+        elseif(vartype .eq. NF90_CHARs)then
+            call check(nf90_get_var(ncidout,WSVarId, inchar))
+            Write (6, *) "Error: A site variable can't be a character in ", Watershedfile
+        elseif(vartype .eq. NF90_SHORTs)then
+            call check(nf90_get_var(ncidout,WSVarId, inshort))
+            arrayint=INT(inshort)
+        elseif(vartype .eq. NF90_INTs)then
+            call check(nf90_get_var(ncidout,WSVarId, ininteger))
+            arrayint=INT(ininteger)
+        elseif(vartype .eq. NF90_FLOATs)then 
+            call check(nf90_get_var(ncidout,WSVarId, inreal))
+            arrayint=INT(inreal) 
+        elseif(vartype .eq. NF90_DOUBLEs)then 
+            call check(nf90_get_var(ncidout,WSVarId, indouble))
+            arrayint=INT(indouble)
+        END IF  
+        IDValue=arrayint
+        call check(nf90_close(ncidout)) 
+        
+        Deallocate(inbyte)
+        Deallocate(inchar)
+        Deallocate(inshort)
+        Deallocate(ininteger)
+        Deallocate(inreal)
+        Deallocate(indouble)
+        IDVALUEDim=dimlen2*dimlen1
+        allocate(IDVALUEAllocate(IDVALUEDim))
+        
+        if (dimid1==2 .and. dimid2==1)THEN
+            Do i=1,dimlen2
+                Do j=1,dimlen1
+                    IDVALUEAllocate((i-1)*dimlen1+j)=IDValue(i,j)
+                end do
+            end do
+        end if
+        
+        if (dimid1==1 .and. dimid2==2)THEN
             Do i=1,dimlen1
                 Do j=1,dimlen2
                     IDVALUEAllocate((i-1)*dimlen2+j)=IDValue(i,j)
                 end do
             end do
-
+        end if
+        
         deallocate(IDVALUE)
         uniqueIDNumber=0
         Do i=1,IDVALUEDim
@@ -140,34 +216,111 @@
         deallocate(IDVALUEAllocate)
         End Subroutine AggOutWSUniqueID
          
-        Subroutine WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues)
+        Subroutine WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues,UniqueIDArrayCount,&
+                          &wsxcoordinate,wsycoordinate)
         use netcdf
         Implicit None
-        
+        integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
         integer:: dimlen1,dimlen2
-        integer, parameter:: n=66
         character*200:: Watershedfile,WatershedVARID
         integer:: IDVALUEDim,uniqueIDNumber,ncidout,WSVarId
         logical:: found
-        integer:: UniqueIDArray(uniqueIDNumber), i, j
+        integer:: UniqueIDArray(uniqueIDNumber), i, j, kk, ll, UniqueIDArrayCount(uniqueIDNumber),counts
         integer,dimension(:,:),allocatable:: IDVALUE
         integer,dimension(:),allocatable:: IDVALUEAllocate
         REAL:: WsMissingValues,WsFillValues
-        IDVALUEDim=dimlen2*dimlen1
-        allocate(IDVALUEAllocate(IDVALUEDim))
-        allocate(IDVALUE(dimlen1,dimlen2))
+        character*50:: wsxcoordinate,wsycoordinate
+        integer:: dimid1,dimid2
         
+        byte,dimension(:,:),allocatable:: inbyte
+        character,dimension(:,:),allocatable:: inchar
+        integer*2,dimension(:,:),allocatable:: inshort
+        integer*4,dimension(:,:),allocatable:: ininteger
+        real*4,dimension(:,:),allocatable:: inreal
+        real*8,dimension(:,:),allocatable:: indouble
+        integer*4,dimension(:,:),allocatable:: arrayint
+        integer:: vartype
+
         call check(nf90_open(Watershedfile,nf90_nowrite,ncidout))
         call check(nf90_inq_varid(ncidout,WatershedVARID,WSVarId))
-        CALL check(nf90_get_var(ncidout,WSVarId,IDValue))
-        call check(nf90_close(ncidout)) 
-
-        Do i=1,dimlen1
-            Do j=1,dimlen2
-                IDVALUEAllocate((i-1)*dimlen2+j)=IDValue(i,j)
-            end do
-        end do
+        call check(NF90_inquire_variable(ncidout,WSVarId,xtype=vartype))
         
+        call check(nf90_inq_dimid(ncidout,wsycoordinate,dimid1))
+        call check(nf90_inq_dimid(ncidout,wsxcoordinate,dimid2))
+        call check(nf90_inquire_dimension(ncidout, DimID1,len=dimlen1))       ! Information about dimensionID 1
+        call check(nf90_inquire_dimension(ncidout, DimID2,len=dimlen2))       ! information about dimensionID 2  
+        
+        if (dimid1==1 .and. dimid2==2)THEN
+            allocate(inbyte(dimlen1,dimlen2))
+            allocate(inchar(dimlen1,dimlen2))
+            allocate(inshort(dimlen1,dimlen2))
+            allocate(ininteger(dimlen1,dimlen2))
+            allocate(inreal(dimlen1,dimlen2))
+            allocate(indouble(dimlen1,dimlen2))
+            allocate(arrayint(dimlen1,dimlen2))
+            allocate(IDVALUE(dimlen1,dimlen2))
+        end if
+        
+        if (dimid1==2 .and. dimid2==1)THEN
+            allocate(inbyte(dimlen2,dimlen1))
+            allocate(inchar(dimlen2,dimlen1))
+            allocate(inshort(dimlen2,dimlen1))
+            allocate(ininteger(dimlen2,dimlen1))
+            allocate(inreal(dimlen2,dimlen1))
+            allocate(indouble(dimlen2,dimlen1))
+            allocate(arrayint(dimlen2,dimlen1))
+            allocate(IDVALUE(dimlen2,dimlen1))
+        end if
+
+        
+        if(vartype .eq. NF90_BYTE)then
+            call check(nf90_get_var(ncidout,WSVarId,inbyte))        
+            arrayint=INT(inbyte)
+        elseif(vartype .eq. NF90_CHARs)then
+            call check(nf90_get_var(ncidout,WSVarId, inchar))
+            Write (6, *) "Error: A site variable can't be a character in ", Watershedfile
+        elseif(vartype .eq. NF90_SHORTs)then
+            call check(nf90_get_var(ncidout,WSVarId, inshort))
+            arrayint=INT(inshort)
+        elseif(vartype .eq. NF90_INTs)then
+            call check(nf90_get_var(ncidout,WSVarId, ininteger))
+            arrayint=INT(ininteger)
+        elseif(vartype .eq. NF90_FLOATs)then 
+            call check(nf90_get_var(ncidout,WSVarId, inreal))
+            arrayint=INT(inreal) 
+        elseif(vartype .eq. NF90_DOUBLEs)then 
+            call check(nf90_get_var(ncidout,WSVarId, indouble))
+            arrayint=INT(indouble)
+        END IF  
+        IDValue=arrayint
+        call check(nf90_close(ncidout)) 
+        
+        Deallocate(inbyte)
+        Deallocate(inchar)
+        Deallocate(inshort)
+        Deallocate(ininteger)
+        Deallocate(inreal)
+        Deallocate(indouble)
+        
+        IDVALUEDim=dimlen2*dimlen1
+        allocate(IDVALUEAllocate(IDVALUEDim))
+        
+        if (dimid1==2 .and. dimid2==1)THEN
+            Do j=1,dimlen1
+                Do i=1,dimlen2
+                    IDVALUEAllocate((j-1)*dimlen2+i)=IDValue(i,j)
+                end do
+            end do
+        end if
+        
+        if (dimid1==1 .and. dimid2==2)THEN
+            Do i=1,dimlen1
+                Do j=1,dimlen2
+                    IDVALUEAllocate((i-1)*dimlen2+j)=IDValue(i,j)
+                end do
+            end do
+        end if
+
         uniqueIDNumber=0
         Do i=1,IDVALUEDim
             found=.true.
@@ -182,6 +335,17 @@
                 UniqueIDArray(uniqueIDNumber)=IDVALUEAllocate(i)
             end if
         end do
+        counts=0
+        Do kk=1,uniqueIDNumber
+            do ll=1,IDVALUEDim
+                if (UniqueIDArray(kk) .eq. IDVALUEAllocate(ll))then
+                    counts=counts+1
+                end if
+            end do
+            UniqueIDArrayCount(kk)=counts
+            counts=0
+        end do
+    !write (6,*) UniqueIDArray, UniqueIDArrayCount
     deallocate(IDVALUEAllocate)
     deallocate(IDVALUE)
     End Subroutine  WSUniqueArray

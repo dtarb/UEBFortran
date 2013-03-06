@@ -1,10 +1,13 @@
 OUTPUT VARIABLES
 pointdetail:  An output point
+1 1
+outputs\Point11file.txt
+pointdetail:  An output point
 1 2
 outputs\Point12file.txt
 pointdetail:  An output point
-2 3
-outputs\Point23file.txt
+2 1
+outputs\Point21file.txt
 SWIT: Total outflow (m/hr)
 Outputs\SWIT.nc
 SWISM: Total outflow from snow melt (m/hr)

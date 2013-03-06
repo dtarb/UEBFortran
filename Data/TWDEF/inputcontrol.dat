@@ -5,8 +5,7 @@ Input Control file
 -7.0 UTCOffSet for the times that are input to the model.  Use 0 for input times in UTC.  (-7 is US Mountain time zone)
 Ta: Air temperature  (always required)
 1  
-TaIndex.dat
-Ta
+TaIndex.dat;D:Ta;range:-20&40
 Prec: Precipitation  (always required)
 0   
 Prec.Dat

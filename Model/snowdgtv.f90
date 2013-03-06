@@ -379,70 +379,50 @@
 !  since Us, Ws was changed need to re-evaluate Tave
     Tave  = tavg(Us,Ws,rhow,cs,to,rhog,de,cg,hf)   
 
-!DGT 7/25/05   To guard against unreasonable Us when there is no snow do not allow bulk temperature to go above 10 C
+! DGT 7/25/05  To guard against unreasonable Us when there is no snow do not allow bulk temperature to go above 10 C
     if(Tave .gt. 10.)then
          Us=rhog*de*cg*10.0
          Tave = 10.0
 	endif
         
-!   Update snow surface age based on snowfall in time step
+! Update snow surface age based on snowfall in time step
     if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
 
-! Compute surface water input that is rain
-! DGT on 11/13/12
-!    If (Ws .GT. 0)THEN 
-!        SWIR=0
-!    ELSE
-!        SWIR=Mr+Es-statev(2)/dt
-!    Endif
-
-! ASG on 11/13/12
+! Partition of melt outflow between rain and snow melt for non glacier case
     If (Ws .GT. 0)THEN 
         SWIR=0
         SWISM=Mr
-    ELSE
-        AvaiableWater=statev(2)/dt+P-Es
-        If(AvaiableWater .GT. (Ps+statev(2)/dt))THEN
-            SWISM=AvaiableWater-(Ps+statev(2)/dt)
-            SWIR=Mr-SWISM
-        ELSE
-            SWISM=0
-            SWIR=Mr-SWISM
-        END IF
+    ELSE   !  This else case is never entered for glaciers because the entire WGT is not melted in one time step
+       AvailableSnow=(Ps+statev(2)/dt)
+       SWISM=min(AvailableSnow,Mr)       ! This bounds snow surface melt by the available snow - the balance is due to rain
+       SWIR=Mr-SWISM   
     Endif
-    
- ! calculations for glacier melting  Done after Tavg evaluation to maintain consistency with energy content
- ! seperation 
-   IF (Ws .LT. WGT)Then
-       WGM=WGT-Ws
-       Ws=0
-   ELSE
-       Ws=Ws-WGT
-       WGM=0
-   END IF   
-   SWIGM=WGM/dt 
    
-! DGT on 11/13/12
-!    SWIT=Mr
-!    SWISM=SWIT-SWIR-SWIGM
+!  Correction to partition to account for presence of glaciers 
+   IF (Ws .LT. WGT)Then                  ! There was glacier melt
+       AvailableSnow=(Ps+statev(2)/dt)
+       SWISM=min(AvailableSnow,Mr)       !  This bounds snow surface melt by the available snow - the balance is due to rain
+       RemainingAvailableWater=Mr-SWISM  !  This is the remaining melt to allocate
+       SWIGM=min(RemainingAvailableWater,(WGT-Ws)/dt)
+       SWIR=Mr-SWISM-SWIGM
+       Ws=0                              !  Reset      
+   ELSE                                  !  Here ws is greater than the glacier thickness so no glacier melt
+       Ws=Ws-WGT  
+       SWIGM=0
+   END IF   
 
-   SWIT=Mr+SWIGM
+!  SWIT=Mr+SWIGM  ! DGT 2/22/13.  THis seems wrong
+   SWIT=Mr   !  The total is always Mr
     
-! Why SWIR is negative?????????
-! Some possible reasons:
-!   a. Sublimation (from snow to vapor without converting in the liquid phase)
-!   b. interception. Accumulate or in the vegetations
-!   c. Error!!!!!!!!!!!! (investigation needeed)
-    
-    !   accumulate for mass balance
+!  accumulate for mass balance
    cump  = cump+(Ps+Pr)*dt
    cumes  = cumes+Es*dt                  
    cumEc = cumEc+Ec*dt                ! Evaporation from canopy
    cumMr = cumMr+Mr*dt                ! canopy melt not added
-   cumGM = cumGM+WGM                  !  Cumulative glacier melt
+   cumGM = cumGM+SWIGM*dt             !  Cumulative glacier melt
 
-!yjs update the total depth of the refreezing depth in the snow pack according the 
-!yjs the refreezing depth at time step and the positive energy input. 07/22/01
+!  yjs update the total depth of the refreezing depth in the snow pack according the 
+!  yjs the refreezing depth at time step and the positive energy input. 07/22/01
 !  DGT's revised logic  1/13/05
       if(lc.gt.0.0) then
        if(refDepth.gt. 0.0) then
@@ -481,7 +461,7 @@
        ,Inmax,int,ieff ,Ur &                        ! Interception 
        ,Wc,Tc,Tac,QHc,QEc,Ec,Qpc,Qmc,Mc,FMc,&       ! Fluxes and Energies
        SWIGM,SWISM,SWIR
-        ENDIF
+       ENDIF
         
       OutArr(1)=US
       OutArr(2)=Ws

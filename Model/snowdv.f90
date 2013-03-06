@@ -48,11 +48,16 @@
       ! for netCDF declaration
       use netcdf
       Implicit None
+      integer,PARAMETER:: Pointmodel=4,Gridmodel=8
+      integer:: OutSideWS
+      ! Pointmodel = running UEB as a point model would have 4 lines in its conrol file
+      ! Gridmodel = running UEB as a point model would have 8 lines in its conrol file
       integer:: snowdgtvariteflag
       integer::nsv,npar,nxv,niv,nov
       real::to,tk,sbc,hf,hneu,cw,cs,cp,rag,k,hff,rhoi,rhow,pi,narg,UTCOFFSET,Etime,g,w1day,dt
       integer::NUMtimeSTEP,NREFYR,NREFMO,NREFDAY,NumOP
       REAL::us,ws,wc,apr,cg,rhog,de,tave,ws1,wc1,cump,cumes,cumec,cummr,ta,p,v,rh,tmin,tmax,TRANGE,QSIOBS,QG,QLI
+      REAL:: QSIOBSModify ! this is usd to switch to the temperature method just for time steps when radiation is negative
       real::tavg,qnetob,snowalb,coszen,atff,cf,hri,atfimplied,ema,eacl,dstorage,ERRMBAL,HRI0
       integer:: juniqueid,ivar,iradfl
       integer::month
@@ -70,7 +75,7 @@
       character*200, dimension(:),allocatable :: OutPointFiles
       Character (200):: WatershedVARID
       CHARACTER*200 MainHeading
-      Character*50 varnameinncdf(11)
+      Character*100 varnameinncdf(11)
       CHARACTER*200 pfile,inputcon,StateSiteVName(32)
       CHARACTER*200 Watershedfile,AggOutControl,AggdOutput
       CHARACTER*200 afile
@@ -84,21 +89,28 @@
       real dtbar(12)
       real mtime(4)                                     ! YJS pass to reflect the change of Snow (Year, month, Date, Hour)
       integer:: istep
-      REAL:: IDNumber(1)
-      DOUBLE PRECISION, dimension(:), allocatable :: DimValue1,DimValue2
+      Integer:: IDNumber(1)
+      !REAL*8, dimension(:), allocatable :: DimValue1,DimValue2
       Double precision, allocatable :: TSV(:,:)
       integer, allocatable::StartEndNCDF(:,:)
       REAL, allocatable :: Allvalues(:,:)
       integer:: arrayx,NoofTS(11)
       integer::CURRENTARRAYPOS(11)
       real:: cumGM
-      
+      integer:: iycoord1
+      CHARACTER(200) :: strwatershed
+      CHARACTER(1) :: delimit1,delimit2
+      integer:: nargs,nargs2,nargs3,nargs4,nargs5
+      character(200),Allocatable:: wordsw(:)
+      Character(200):: StateSiteFilesR, SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
+      Character(100):: VarNameinNCDFR
+      integer:: ncidout, dimid1,dimid2
 !      REAL, dimension(:,:),Allocatable:: inputstorage
 !      Double precision, dimension(:,:),Allocatable:: inputstorageJDT
 !      CHANGES TO ACCOMODATE GLACIER
       real:: WGT ! WGT=WATER EQUIVALENT GLACIER THICKNESS
-     Double precision:: DBHour
-      
+      Double precision:: DBHour
+      character*50::daysstring
 ! Arrays to keep records of surface temperature and snowpace average 
 ! temperature. This is for the fourth model (Modified force restore approach) 
       real, allocatable :: tsprevday(:)
@@ -121,7 +133,7 @@
 !  First value in a set of input files is the first time step value
 !  If there are multiple netcdf file they are used in the order of their first time value
 !  an input value persists until another value is encountered
-      integer ::  NumofFile,NumOutPoint
+      integer ::  NumofFile,NumOutPoint,ncidout1
       integer, allocatable ::  NCfileNumtimesteps(:,:)   !  holds the number of time steps in each netcdf file
       real :: InpVals(11)
       double precision :: dhour, EJD,tol
@@ -133,46 +145,67 @@
       CHARACTER(200), DIMENSION(66) :: outSymbol
       logical towrite
       Double precision:: ReferenceHour,Referencetime,CTJD
-      ! The start and count arrays will tell the netCDF library where to
-      ! write our data.
+! The start and count arrays will tell the netCDF library where to
+! write our data.
       Double precision, allocatable:: FNDJDT(:)
       Double precision, allocatable:: timeMaxPerFile(:,:)
       Double precision, allocatable:: timeMinPerFile(:,:)
       REAL, allocatable::VarMissingValues(:,:),VarfILLValues(:,:)
       Double precision:: CurrentModelDT 
-      ! FOR PROGRAM EXECUTION time 
+! FOR PROGRAM EXECUTION time 
       real, dimension(2) :: tarray
       real :: tresult, tio, tcomp,tout,tagg,tlast,toutnc,taggre, tsitev
       REAL:: Hour
       Double precision:: SHOUR
-      !aggregated output declaration
+!aggregated output declaration
        integer:: AggOutNum,uniqueIDNumber,IDNum,ioutvar
        Character*200, dimension(:),Allocatable:: AggOutVar
        integer, dimension(:),Allocatable:: AggOutVarnum
-       integer,dimension(:),allocatable:: UniqueIDArray
+       integer,dimension(:),allocatable:: UniqueIDArray,UniqueIDArrayCount
        REAL:: AggValues
-       Real,dimension(:,:,:),Allocatable:: AggdWSVarVal ! Aggregated WaterShed variable Value
+       Real,dimension(:,:,:),Allocatable:: AggdWSVarVal       ! Aggregated WaterShed variable Value
+       Real,dimension(:,:,:),Allocatable:: AggdWSVarValAvg   ! Average over the grid of Aggregated values
        integer, Allocatable:: yymmddarray(:,:)
        Real,dimension(:),Allocatable:: timearray
        Character*200, dimension(:), allocatable :: AllNCDFfile
        integer:: totalNC
-       !declares for check
+! declares for check
        integer:: AggUnit,ST
        REAL:: WsMissingValues,WsFillValues
-      ! UTC time conversion declarations
+! UTC time conversion declarations
        REAL::longitude,NHour,UTChour
        Integer:: MYEAR,MMONTH,MDAY
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
        integer::modx,totaldayMOne,totalDay,StepInADay,gg
        REAL:: DimDiff1,DimDiff2
+       Character*50 Inputxcoordinates(11),inputycoordinates(11),inputtcoordinates(11),Sitexcoordinates(32), Siteycoordinates(32)
+       character*50 wsxcoord,wsycoord,wsxcoordinate,wsycoordinate
+       integer:: nlines 
+       Double pRECISION:: MSTARTHOUR,MENDHOUR
+       DOUBLE PRECISION:: JMSD,JMED
+       integer:: dimlen1OUT,dimlen2OUT
+       REAL, allocatable:: InputvarMissVal(:,:), InputvarFillVal(:,:)
+       integer::WsMissingValuesInt,WsFillValuesInt
+       Character (50):: DefaultDimNames(3)
+       integer:: DefaultDimValues(3)
+       REAL::RangeMin,RangeMax
+       CHARACTER(1):: delimit3
+       REAL:: InputVarRange(11,2)
+       character(200), allocatable::Words7element(:)
        
-       ! snowdgtvariteflag=1 means write all the warning messages
-       ! snowdgtvariteflag=0 means do not write all the warning messages
+       DefaultDimNames(1)='time'
+       DefaultDimNames(2)='Y'
+       DefaultDimNames(3)='X'
+       OutSideWS=0
+! snowdgtvariteflag=1 means write all the warning messages
+! snowdgtvariteflag=0 means do not write all the warning messages
        snowdgtvariteflag=0
-       
-      ! the symbol table element lengths have been expanded to match
-      ! fixed width lengths.  This accomidates cross-compiler
-      ! differences and conforms to later Fortran-2003 standards.
+       delimit1=';'
+       delimit2=':'
+       delimit3=','
+! the symbol table element lengths have been expanded to match
+! fixed width lengths.  This accomidates cross-compiler
+! differences and conforms to later Fortran-2003 standards.
       outSymbol = (/ "ATF-BC   ","HRI      ","Eacl     ","Ema      ", &
          "Ta       ","P        ","V        ","RH       ","Qsi      ", &
          "Qli      ","Qnet     ","Cos      ","Ub       ","SWE      ", &
@@ -217,37 +250,98 @@
         WRITE(6,*) 'give filename of input files'
         READ(5,'(A200)') afile
       ENDIF
-
+     
 ! Writing the Long file that includes all warnings
       OPEN(66,FILE='UEBWarning.log',STATUS='UNKNOWN')
       OPEN(636,FILE='UEBTiming.log',STATUS='UNKNOWN')
 !  Open and Read Input File
+      nlines = 0
+      OPEN (875,file = afile,STATUS= 'OLD')
+      DO
+        READ (875,*, END=786)
+        nlines = nlines + 1
+      END DO
+786   CLOSE (785)
+
+      if (nlines .ne. PointModel .OR. GridModel)THEN
+        Continue
+      else 
+         WRITE(6,*) 'Overall Control does not meet criteria. It should contain either 8 or 4 lines'
+         STOP 
+      end if
+
+      if (nlines .eq. GridModel)THEN
       OPEN(1,FILE=afile,STATUS= 'OLD')
       READ(1,*)MainHeading
-      READ(1,*)pfile,svfile,inputcon,OutControlFILE,Watershedfile,WatershedVARID,AggOutControl,AggdOutput
+      READ(1,*)pfile,svfile,inputcon,OutControlFILE
+      READ(1,*)strwatershed
+      CALL StringSep(strwatershed,delimit1,nargs)
+      Allocate(wordsw(nargs))
+      Allocate(Words7element(7))
+      CALL StringSepWord(strwatershed,delimit1,nargs,wordsw)
+      Words7element(1:nargs)=wordsw(1:nargs)
+      CALL StringToVarName(nargs,Words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
+                           &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+      deAllocate(wordsw)
+      deAllocate(Words7element)
+      Watershedfile=StateSiteFilesR
+      If (DefaultDimValues(3) == -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+                                            ! therefore, to get y-dim we need to ask for second element of 
+                                            ! DefaultDimValues
+        wsxcoordinate=SitexcoordinateR
+      else 
+        CALL check(nf90_open(Watershedfile,NF90_NOWRITE, ncidout1))
+        CALL check(nf90_inquire_dimension(ncidout1,DefaultDimValues(2),wsxcoordinate))
+        CALL check(nf90_close(ncidout1))
+      END IF
+      If (DefaultDimValues(2) == -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+                                            ! therefore, to get x-dim we need to ask for second element of 
+                                            ! DefaultDimValues
+        wsycoordinate=SiteycoordinateR
+      else
+        CALL check(nf90_open(Watershedfile,NF90_NOWRITE, ncidout1))
+        CALL check(nf90_inquire_dimension(NCIDout1,DefaultDimValues(1),wsycoordinate))
+        CALL check(nf90_close(ncidout1))
+     End if 
+     
+      WatershedVARID=VarNameinNCDFR
+      read(1,*)AggOutControl,AggdOutput
       CLOSE(1)
-
-      !  Read parameters
+      END IF
+      
+      if (nlines .eq. PointModel)THEN
+      OPEN(1,FILE=afile,STATUS= 'OLD')
+      READ(1,*)MainHeading
+      READ(1,*)pfile,svfile,inputcon
+      CLOSE(1)
+      dimlen1=1
+      dimlen2=1
+      END IF
+      
+!  Read parameters
       CALL readvals(param,irad,ireadalb,bca,bcc,pfile)                 ! pfile = Parameter file 
-
+      
+      if (nlines .eq. GridModel)THEN
+      CALL readsvcoordinate(svfile,Sitexcoordinates,Siteycoordinates)
 !     Flag to control radiation (irad)
 !     0 is no measurements - radiation estimated from diurnal temperature range
 !     1 is incoming shortwave radiation read from file (measured), incoming longwave estimated
 !     2 is incoming shortwave and longwave radiation read from file (measured)
 !     3 is net radiation read from file (measured)
-
 !     Flag to control albedo (ireadalb)
 !     0 is no measurements - albedo estimated internally
 !     1 is net radiation read from file (provided: measured or obrained from another model)
-
-      CALL nCDF2DArrayInfo2(Watershedfile,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
-      CAll InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)
       
+      CALL nCDF2DArrayInfo2(Watershedfile,wsxcoordinate,wsycoordinate,dimlen2,dimlen1,WatershedVARID,WsMissingValues,WsFillValues)
+      end if
+      
+      CAll InputMaxNCFiles(inputcon,MaxNumofFile,inputvarname,UTCOffSet)      
       Allocate(NCDFContainer(MaxNumofFile,11))
       Allocate(NCfileNumtimesteps(MaxNumofFile,11))
       Allocate(VarMissingValues(MaxNumofFile,11))
       Allocate(VarfILLValues(MaxNumofFile,11))
-      
+      Allocate(InputvarMissVal(MaxNumofFile,11))
+      Allocate(InputvarFillVal(MaxNumofFile,11))
 !       Call function to read input files and determine the format of variable input (netcdf or text)
 !       Outputs are 
 !       IsInputFromNC is 0 for text and 1 for netcdf for corresponding variable
@@ -258,24 +352,24 @@
 
        CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
        &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-       &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues)
-       
-       !  FIXME: what if the result is fractional
-       !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
-       !  step on the previous day.  Consider in future making the specification of time step as number of time
-       !  steps in a day, not modeldt to ensure this 
-       !  modeldt is recalculated based on the integer timesteps in a day
-       !  assumption: number of model timesteps in a day must be an integer  
+       &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
+       &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,daysstring)
+!  FIXME: what if the result is fractional
+!  time steps must divide exactly in to a day because we use logic that requires the values from the same time
+!  step on the previous day.  Consider in future making the specification of time step as number of time
+!  steps in a day, not modeldt to ensure this 
+!  modeldt is recalculated based on the integer timesteps in a day
+!  assumption: number of model timesteps in a day must be an integer  
            
        StepInADay=int(24.0/modeldt+0.5)  ! closest rounding
        Modeldt=24.0/StepInADay
-       
+       nstepday=StepInADay
        Allocate(timeMaxPerFile(MaxNumofFile,11))
        Allocate(timeMinPerFile(MaxNumofFile,11))
        allocate(TSV(arrayx,11))
        allocate(AllValues(arrayx,11))
        CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-       arrayx,NOofTS,TSV,Allvalues)
+        arrayx,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
        
       ReferenceHour=0.00
       IF (MaxNumofFile .eq. 0)then
@@ -284,12 +378,18 @@
         nrefday=ModelStartDate(3)
       END IF
       CALL JULDAT(nrefyr,nrefmo,nrefday,ReferenceHour,Referencetime)
-      allocate(DimValue1(dimlen1))
-      allocate(DimValue2(dimlen2))
+
       
       ! Dimvalue1 and dimvalue2 are used to put the dimension values in output netCDFs
       ! this value have precision problem and therefore, ArcGIS canot read output netCDFs
-      CALL SpatialCoordinate(Watershedfile,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
+!      if (nlines .eq. GridModel)THEN
+!          allocate(DimValue1(dimlen1))
+!          allocate(DimValue2(dimlen2))
+!          !    SpatialCoordinate(File_name,dimlen1,dimlen2,DimName1,DimName2,DimValue1,DimValue2,DimUnit1,DimUnit2)
+!          CALL SpatialCoordinate(Watershedfile,wsycoordinate,wsxcoordinate,DimValue1,DimValue2,DimUnit1,DimUnit2)
+!          deallocate(DimValue1)
+!          deallocate(DimValue2)
+!      END IF
       
 !      OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
 !      Do I = 1,dimlen1
@@ -303,16 +403,20 @@
       write(6,*)'time to check inputs: ',tresult
       write(636,*)'Check Inputs: ',tresult, ' seconds'
       
+      if (nlines .eq. GridModel)THEN
       ! Checking netCDFs starts here                    
-        CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
-        allocate(AllNCDFfile(totalNC))
-        ! checking if all the netCDF files are provided in a desired format
-        CALL  NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile)
+      CALL checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
+      allocate(AllNCDFfile(totalNC))
+      ! checking if all the netCDF files are provided in a desired format
+      CALL  NCChecks(svfile,StateSiteVName,WatershedFile,MaxNumofFile,IsInputFromNC,NCDFContainer,NumNCFiles,totalNC,AllNCDFfile,&
+                     Inputxcoordinates,Inputycoordinates,Sitexcoordinates,Siteycoordinates,wsxcoordinate,wsycoordinate)            
+                    
 ! Checking netCDFs starts here 
 
 ! Output file creation starts here
-        CALL NumOutFiles(OutControlFILE,ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
-                         &dimlen2,dimlen1,NumtimeStep,NumofFile,NumOutPoint,OutCount)                  
+        CALL NumOutFiles(OutControlFILE, ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
+        NumtimeStep,NumofFile,NumOutPoint,OutCount,dimlen1,dimlen2)
+                         
         Allocate(NumtimeStepPerFile(NumofFile))          ! This array will contains the number of time steps in the sequence of netcdf files
         Allocate(OutputNCContainer(NumofFile,OutCount))  !  This array will contain the file names for each output netcdf variable
         Allocate(NCOutfileArr(NumofFile,OutCount))  
@@ -322,21 +426,39 @@
         Allocate(OutVar(outcount))
         Allocate(outputfolder(outcount))
         Allocate(OutVarValue(NumtimeStep,66))
-        Allocate(CurrentArrayPosRegrid(NumtimeStep,11))
-        Allocate(ReGriddedArray(NumtimeStep,11))
-        Allocate(modelTimeJDT(NumtimeStep))
-        CALL OutputFiles(OutControlFILE,NumtimeStep,Dimlen2,dimlen1,NumofFile,outSampleFile,NumtimeStepPerFile,OutVar,&
-        &OutPoint,OutPointFiles,NumOutPoint,OutCount)
+        CALL OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile, &
+        OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
-        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,dimlen1,dimlen2,DimName1,DimName2,DimUnit1,&
-        &DimUnit2,NumofFile,outcount,Outvar,&
-        &NumtimeStepPerFile,outSampleFile,OutputNCContainer,NCIDARRAY)
+        DimName1=wsycoordinate
+        DimName2=wsxcoordinate
+         
+        ! dimlen1=340
+        ! dimlen2=309
+        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,WATERSHEDfILE,wsycoordinate,&
+        &wsxcoordinate,NumofFile,outcount,Outvar,NumtimeStepPerFile,&
+        &outSampleFile,OutputNCContainer,NCIDARRAY)
+        end if
+        
+        if (nlines .eq. PointModel)THEN
+            MStartHour=dble(ModelStartHour)
+            MEndHour=dble(ModelEndHour)
+            Call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),MStartHour,JMSD) !JMSD= julian model start date-time
+            Call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),MEndHour,JMED)         !JMED= julian model start date-time
+            tol=5./(60.*24.)     !  5 min tolerance
+            NumtimeStep=(((JMED+tol-JMSD)/(Modeldt/24.0)) + 1)   
+        End if
+        
+        Allocate(ReGriddedArray(NumtimeStep,11))
+        Allocate(modelTimeJDT(NumtimeStep))
+        Allocate(CurrentArrayPosRegrid(NumtimeStep,11))
+        
 ! Output file creation ends here
         CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
         ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
-        
-!        OPEN(665,FILE='Date.DAT',STATUS='UNKNOWN')
+       
+       !*******************************************************************************           
+!        OPEN(665,FILE='DataBeforeRegrid.DAT',STATUS='UNKNOWN')
 !        Do I = 1,arrayx
 !            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
 !            &TSV(i,7),TSV(i,8),TSV(i,9),TSV(i,10),TSV(i,11)
@@ -350,28 +472,28 @@
 !            CurrentArrayPosRegrid(i,9),CurrentArrayPosRegrid(i,10),CurrentArrayPosRegrid(i,11)
 !39          format(I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5)
 !        END DO
+!        Close(668)
+       !*******************************************************************************         
 
-        Close(668)
-        Allocate(StartEndNCDF(NumofFile,2))
-
-
+       If (nlines .eq. GridModel)THEN
+       Allocate(StartEndNCDF(NumofFile,2))
 ! Work with aggregated outputs    
        CALL AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
        Allocate(AggOutVar(AggOutNum))
        Allocate(AggOutVarnum(AggOutNum))
        CALL  AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,&
-       &dimlen2,dimlen1,uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues)
-       Allocate(UniqueIDArray(uniqueIDNumber))   
-       CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues)
+                              &uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues,wsxcoordinate,wsycoordinate)
+       Allocate(UniqueIDArray(uniqueIDNumber))
+       Allocate(UniqueIDArrayCount(uniqueIDNumber))
+       CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues,UniqueIDArrayCount,&
+                          &wsxcoordinate,wsycoordinate)
        Allocate(AggdWSVarVal(NumtimeStep,uniqueIDNumber,AggOutNum))
-       Allocate(yymmddarray(3,NumtimeStep))
-       Allocate(timearray(NumtimeStep))
-       Allocate(FNDJDT(NumtimeStep))
+       Allocate(AggdWSVarValAvg(NumtimeStep,uniqueIDNumber,AggOutNum))
        AggdWSVarVal=0                        
        AggUnit=887
        OPEN(AggUnit,FILE=AggdOutput,STATUS='unknown')
        write(Aggunit,*)'Year month day hour variable watershed value' ! write header
-     
+       
        St=0 
        ii=1
        
@@ -386,7 +508,11 @@
        ! required to calculate percent grid completed
        totalgrid=dimlen1*dimlen2     
        numgrid=0
-
+       END IF
+       
+       Allocate(FNDJDT(NumtimeStep))
+       Allocate(yymmddarray(3,NumtimeStep))
+       Allocate(timearray(NumtimeStep))
        ! calculating model end date-time in julian date
        dhour=dble(ModelEndHour)
        call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
@@ -407,7 +533,8 @@
        toutnc=0.0 
        tsitev=0.0
        dt=Modeldt
-       
+       WsMissingValuesInt = int(WsMissingValues,8)
+       WsFillValuesInt = int(WsFillValues,8)
        !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
        ! Space loop starts here
        !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -415,14 +542,25 @@
        DO iycoord=1,dimlen1
        DO jxcoord=1,dimlen2
        iunit=119  !  unit for point output
-
-       CALL nCDF2DRead(Watershedfile,WatershedVARID,IDNumber(1),jxcoord,iycoord)
-       if((IDNumber(1) .ne. 0) .or. (IDNumber(1) .ne. WsMissingValues) .or. (IDNumber(1) .ne. WsFillValues))then  ! Omit calculations if not in the watershed
        
+!       if (iycoord==204 .and. jxcoord==310)then
+!            iycoord1=jxcoord*100-jxcoord*100+iycoord
+!            write(6,*) iycoord,jxcoord
+!       end if
+       
+       if (nlines .eq. GridModel)THEN
+        CALL nCDF2DReadInteger(Watershedfile,WatershedVARID,IDNumber(1),iycoord,jxcoord,wsxcoordinate,wsycoordinate)
+       ELSE
+        IDNumber(1)=1
+       END IF
+       if((IDNumber(1) .ne. 0) .and. (IDNumber(1) .ne. WsMissingValuesInt) .and. (IDNumber(1) .ne. WsFillValuesInt))then  ! Omit calculations if not in the watershed
+
        !  read site variables and initial conditions of state variables
        !  TODO change the above to also exclude netcdf no data values
-       CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude)
-             !  Glacier adjustment of ws
+       CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude,Sitexcoordinates,Siteycoordinates)
+       
+       ! CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype, ilat,jlon,dtbar,ts_last,longitude,Sitexcoordinates,Siteycoordinates)
+       ! Glacier adjustment of ws
         IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
             WGT=0.0
         ELSE
@@ -438,15 +576,17 @@
        
        if(sitev(10) .ne. 3) then   !  Only do this work for non accumulation cells where model is run 
        CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-       &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray)
-                     
-!       OPEN(665,FILE='date.DAT',STATUS='UNKNOWN')
+       &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
+       &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange)
+       
+       !*******************************************************************************              
+!       OPEN(666,FILE='DataAfterRegrid.DAT',STATUS='UNKNOWN')
 !       Do I = 1,NumtimeStep
-!            Write(665,37) ReGriddedArray(i,1),ReGriddedArray(i,2),ReGriddedArray(i,3),ReGriddedArray(i,4),ReGriddedArray(i,5),ReGriddedArray(i,6)
-!37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
+!            Write(666,40) ReGriddedArray(i,1),ReGriddedArray(i,2),ReGriddedArray(i,3),ReGriddedArray(i,4),ReGriddedArray(i,5),ReGriddedArray(i,6)
+!40          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
 !       End do
-!       Close(665)
-
+!       Close(666)
+       !*******************************************************************************  
 
        ! FIXME: what if the result is fractional
        !  should not be fractional (except numerically)
@@ -475,7 +615,7 @@
       rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
       de   = param(11)                                  ! Thermally active depth of soil (0.1 m)
  
-    Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)        ! This call only
+    Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)     ! This call only
     Taveprevday(nstepday) = Tave
       
 !  initialize variables for mass balance
@@ -489,6 +629,7 @@
 !************************************************************************************************      
 
 !  find out if this is an output point and if so open the point output file
+    IF(nlines .eq. GridModel)THEN
       towrite=.false.
       do NumOP=1,NumOutPoint
        If (iycoord .eq. OutPoint(NumOP,1) .and. jxcoord .eq. OutPoint(NumOP,2))Then  
@@ -496,9 +637,13 @@
             towrite= .true.
             exit
         endif 
-      enddo                     
-     endif  !  end the skip block done only for accumulation cells
-     
+      enddo
+    ELSE 
+        towrite=.TRUE.
+        OPEN(iUnit,FILE='PointOutput.DAT',STATUS='unknown')
+    END IF                     
+    endif  !  end the skip block done only for accumulation cells
+
         ! Variables to keep track of which time step we are in and which netcdf output file we are in
         istep=0  ! time step initiated as 0
         
@@ -509,7 +654,7 @@
         Hour=ModelStartHour
         SHOUR=DBLE(ModelStartHour)
         call JULDAT(YEAR,MONTH,DAY,SHOUR,CurrentModelDT)
-        
+
         tresult= Etime(tarray)
         tio=tio+tresult-tlast
         tlast=tresult
@@ -519,7 +664,12 @@
        ! This is the start of the main time loop 
        !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++              
 1       istep=istep+1
-       
+
+        yymmddarray(1,istep)=year
+        yymmddarray(2,istep)=month
+        yymmddarray(3,istep)=day
+        timearray(istep)=hour
+        
         IF(sitev(10).NE. 3)THEN
         Do i= 1,11
             InpVals(i)=ReGriddedArray(istep,i)
@@ -538,8 +688,8 @@
         trange=Tmax-Tmin
         if (trange .LE. 0)THEN
             If (snowdgtvariteflag .EQ. 1)then
-                write(6,*) "Diernal temperature range is given as 0 which is unrealistic "
-                write(6,*) "Diernal temperature range is assumed as zero "
+                write(6,*) "Diurnal temperature range is given as 0 which is unrealistic "
+                write(6,*) "Diurnal temperature range is assumed as eight degree celsius "
                 write(66,*)"on ",year,month,day
             End  if
             trange=8.0
@@ -558,7 +708,7 @@
         INPT(4,1)=RH
         INPT(7,1)= QNETOB
         
-!UTC to local time conversion
+! UTC to local time conversion
         CALL CALDAT(modelTimeJDT(istep),YEAR,MONTH,DAY,DBHour)
         Hour=REAL(DBHour)
         UTCHour=Hour-UTCOffset
@@ -576,14 +726,15 @@
             CALL atf(atff,trange,month,dtbar,bca,bcc)
             IF(IRAD.EQ.0) THEN                     
                 INPT(5,1)=atff*IO*HRI
-                          CALL cloud(param,atff,cf)   ! For cloudiness fraction
+                CALL cloud(param,atff,cf)   ! For cloudiness fraction
             ELSE 
                If(QSIOBS .lt. 0) then
-                    If (snowdgtvariteflag .EQ. 1)then
-                         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
-                         write(66,*)"at date",year,month,day,hour
-                         write(66,*)"was set to zero."
-                    end if
+                    QSIOBSModify=QSIOBS
+!                    If (snowdgtvariteflag .EQ. 1)then
+!                         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
+!                         write(66,*)"at date",year,month,day,hour
+!                         write(66,*)"was set to zero."
+!                    end if
                     QSIOBS=0       
                Endif
 !      Need to call HYRI for horizontal surface to perform horizontal
@@ -616,6 +767,27 @@
           IRADFL=1                    ! This case is when given IRAD =3 (From Net Radiation)  
           INPT(7,1) = QNETOB          
        ENDIF
+       
+       IF(IRAD .EQ. 1 .Or. 2)THEN
+         If(QSIOBSModify .lt. 0) then
+            INPT(5,1)=atff*IO*HRI
+            CALL cloud(param,atff,cf)   ! For cloudiness fraction
+            If (snowdgtvariteflag .EQ. 1)then
+                 write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
+                 write(66,*)"at date",year,month,day,hour
+                 write(66,*)"was set to ", INPT(5,1),"using radiation calculation from temperature"
+            end if
+         END IF
+      End if
+      
+ ! We found that Model reanalysis and dowscaled data may prodice some ureasonably negative solar radiation.
+ ! this is simply bad data and It is generally better policy to try to give a model good data. 
+ ! If this is not possible, then the UEB checks will avoid the model doing anything too bad, 
+ ! it handles negative solar radiation in following way:
+
+ ! "no data in radiation would be to switch to the temperature method just for time steps 
+ ! when radiation is negative." 
+       
        
 !************************************************************************************************
        if(towrite)WRITE(iunit,*)YEAR,MONTH,DAY,HOUR,atff,HRI,Eacl,Ema,(INPT(i,1),i=1,8) 
@@ -678,13 +850,13 @@
         errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
 
         if(towrite)WRITE(iunit,*)ERRMBAL
-        
+        if (nlines .eq. GridModel)THEN
         !mapping to OutVarValue
         OutVarValue(istep,1:12)=IniOutVals(5:16)
         OutVarValue(istep,13:62)=OutArr(1:50)
         OutVarValue(istep,63)=ERRMBAL
         OutVarValue(istep,64:66)=OutArr(51:53)
-        
+        END IF
         ! These settings tell netcdf to write one timestep of data. (The
         ! setting of start(4) inside the loop below tells netCDF which
         ! timestep to write.)
@@ -700,29 +872,33 @@
         tresult= Etime(tarray)
         tout=tout+tresult-tlast
         tlast=tresult
-    
-        !  Here we rely on the even spread of time steps until the last file
+        
+        if (nlines .eq. GridModel)THEN
+        ! Here we rely on the even spread of time steps until the last file
         incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
+        END IF
+        
         ReferenceHour=DBLE(hour)
         call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
         FNDJDT(istep)=DBLE(CTJD-Referencetime)
-             
-        IDNum=Int(IDNumber(1))
         
-        Do jUniqueID=1,uniqueIDNumber
-            If(UniqueIDArray(jUniqueID) .eq. IDNum)then
-                do ioutvar=1,AggOutNum
-                    AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
-                    AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
-                END DO
-                Exit
-            End if
-        end do
+        IF (nlines .eq. GridModel)THEN      
+        IDNum=Int(IDNumber(1))
+            if((IDNum .ne. 0) .and. (IDNum .ne. WsMissingValuesInt) .and. (IDNum .ne. WsFillValuesInt))then
+                Do jUniqueID=1,uniqueIDNumber
+                    If(UniqueIDArray(jUniqueID) .eq. IDNum)then
+                        do ioutvar=1,AggOutNum
+                            AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
+                            AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
+                            ! Averaging requires according to Joseph D. Nigro
+                            AggdWSVarValAvg(istep,jUniqueID,ioutvar) = AggdWSVarVal(istep,jUniqueID,ioutvar)/UniqueIDArrayCount(jUniqueID)
+                        END DO
+                        Exit
+                    End if
+                end do
+            end if
+        END IF
 
-        yymmddarray(1,istep)=year
-        yymmddarray(2,istep)=month
-        yymmddarray(3,istep)=day
-        timearray(istep)=hour
 
         CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)   
         ModHour=DBLE(Hour)
@@ -744,6 +920,7 @@
         deallocate(Taveprevday)
         Close(iunit)
         
+        IF (nlines .eq. GridModel)THEN 
          do ioutv=1,outcount
            do incfile = 1,NumofFile
                 CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
@@ -751,7 +928,7 @@
                 CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
            enddo
          enddo
-     
+        END IF
         endif  !  this is the end of if we are in a watershed    
         
         tresult= Etime(tarray)
@@ -768,12 +945,10 @@
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    ! Space loop ends here
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-
+    IF (nlines .eq. GridModel)THEN 
    ! Putting all the dimension values inside the netcdf files
     do ioutv=1,outcount
        do incfile = 1,NumofFile
-        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),2,DimValue2)) ! longtude/x is dimension 2
-        CALL Check(NF90_PUT_VAR(NCIDARRAY(incfile,ioutv),3,DimValue1)) ! latitude/y is dimension 3
         CALL OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT) ! time is dimension 1
         CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))     !syncing the netcdf
         CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))    !closing the netcdf
@@ -781,17 +956,21 @@
     enddo
     Write (6,FMT="(/A32)") " Now aggregation will be started"
     Write (6,FMT="(A35/)")  " Time taken for various operations:"
-    ! Writing the aggregated outputs inside the aggregatedOutputs.dat file 
+    
      do istep=1,Numtimestep
         do ivar=1,AggOutNum
             Do jUniqueID=1,uniqueIDNumber
-                WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
-                &UniqueIDArray(jUniqueID),AggdWSVarVal(istep,jUniqueID,ivar)
-47             format(1x,i5,i3,i3,f8.3,1x,a11,i7,1x,g13.6)
+                if((UniqueIDArray(jUniqueID) .ne. 0) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValuesInt) .and.&
+                &(UniqueIDArray(jUniqueID) .ne. WsFillValuesInt))then
+                    WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
+                    &UniqueIDArray(jUniqueID),AggdWSVarValAvg(istep,jUniqueID,ivar)
+47                  format(1x,i5,i3,i3,f8.3,1x,a11,i7,1x,g13.6)
+                end if
             end do
         enddo
     end do
     Close(AggUnit)
+    END IF
     
     tresult= Etime(tarray)
     tagg=tagg+tresult-tlast
