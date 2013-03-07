@@ -94,7 +94,7 @@
       Double precision, allocatable :: TSV(:,:)
       integer, allocatable::StartEndNCDF(:,:)
       REAL, allocatable :: Allvalues(:,:)
-      integer:: arrayx,NoofTS(11)
+      integer:: maxncfilents,NoofTS(11)
       integer::CURRENTARRAYPOS(11)
       real:: cumGM
       integer:: iycoord1
@@ -352,7 +352,7 @@
 
        CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
        &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-       &nrefyr,nrefmo,nrefday,varnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
+       &nrefyr,nrefmo,nrefday,varnameinncdf,maxncfilents,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
        &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,daysstring)
 !  FIXME: what if the result is fractional
 !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
@@ -366,10 +366,10 @@
        nstepday=StepInADay
        Allocate(timeMaxPerFile(MaxNumofFile,11))
        Allocate(timeMinPerFile(MaxNumofFile,11))
-       allocate(TSV(arrayx,11))
-       allocate(AllValues(arrayx,11))
+       allocate(TSV(maxncfilents,11))
+       allocate(AllValues(maxncfilents,11))
        CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        arrayx,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
+        maxncfilents,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
        
       ReferenceHour=0.00
       IF (MaxNumofFile .eq. 0)then
@@ -454,12 +454,12 @@
         Allocate(CurrentArrayPosRegrid(NumtimeStep,11))
         
 ! Output file creation ends here
-        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
+        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,maxncfilents,ModelStartDate,ModelStartHour,&
         ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
        
        !*******************************************************************************           
 !        OPEN(665,FILE='DataBeforeRegrid.DAT',STATUS='UNKNOWN')
-!        Do I = 1,arrayx
+!        Do I = 1,maxncfilents
 !            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
 !            &TSV(i,7),TSV(i,8),TSV(i,9),TSV(i,10),TSV(i,11)
 !37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
@@ -576,8 +576,8 @@
        
        if(sitev(10) .ne. 3) then   !  Only do this work for non accumulation cells where model is run 
        CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-       &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
-       &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange)
+       &NCfileNumtimesteps,NOofTS,maxncfilents,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
+       &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,InpVals)
        
        !*******************************************************************************              
 !       OPEN(666,FILE='DataAfterRegrid.DAT',STATUS='UNKNOWN')
@@ -688,7 +688,7 @@
         trange=Tmax-Tmin
         if (trange .LE. 0)THEN
             If (snowdgtvariteflag .EQ. 1)then
-                write(6,*) "Diurnal temperature range is given as 0 which is unrealistic "
+                write(6,*) "Input Diurnal temperature range is less than or equal to 0 which is unrealistic "
                 write(6,*) "Diurnal temperature range is assumed as eight degree celsius "
                 write(66,*)"on ",year,month,day
             End  if
@@ -760,6 +760,8 @@
           IF(irad .lt. 2)THEN    
             CALL qlif(TA,RH,TK,SBC,Ema,Eacl,cf,inpt(6,1) )
           Else
+            Ema=-99  !  These values are not evaluated but may need to be written out so are assigned for completeness
+            Eacl=-99
             inpt(6,1)=qli
           ENDIF 
           IRADFL=0                        ! Long wave or shortwave either measured and calculated
@@ -833,7 +835,9 @@
        mtime(4) = hour
 
 !**************************************************************************************************
-
+        if(day .eq. 29)then
+          mtime(3) = day
+        endif
         CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
          &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
      

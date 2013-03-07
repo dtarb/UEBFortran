@@ -82,7 +82,6 @@
                 if(inputname .eq. trim(inputVName(i))) then
                     inputvarname(i)=inputname
                     xx=1
-                    inputvarname(i)=inputname
                     read(19,*)IsInputFromNC(i)                                                                   
                     if(IsInputFromNC(i) .eq. 0) then
                         read(19,*)InputTSFilename(i)
@@ -129,7 +128,7 @@
 
         Subroutine InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
         &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-        &nrefyr,nrefmo,nrefday,inputvarnameinncdf,arrayx,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
+        &nrefyr,nrefmo,nrefday,inputvarnameinncdf,maxncfilents,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
         &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,daysstring)
         ! inputcon (input) is name of control file
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -146,7 +145,7 @@
         ! nrefyr,nrefmo,nrefday,(output) Reference year, month, day from netcdf time units specified as "days from y/m/d"
         !  Our convention is that our start hour must be 0
         ! varnameinncdf(n) (output)  variable name in control file specifying the netcdf variable to use for reading from NC
-        ! arrayx  (output).  Maximum across variables of the sum of number of time steps in all NC files for that variable
+        ! maxncfilents  (output).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! NoofTS(n) (output).  The number of combined NC time steps for each variable
         ! InpVals(n) (output).  Variable to hold the current value of each input variable.  This subroutine fills this for inputs that are constant
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
@@ -178,7 +177,7 @@
         REAL:: FileNextH, FileNextVal
         integer:: FileOpenFlag(n)
         Character*200:: TSFile, CurrentInputVariable(n)
-        integer::arrayx
+        integer::maxncfilents
         character (len = *), parameter :: missing_value = "missing_value",fillvalue='_FillValue'
         real:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
         integer::  numAtts
@@ -206,6 +205,7 @@
         character(200),allocatable::Words7element(:)
         real::InputVarRange(n,2)
         character(50):: daysstring
+        logical:: MissFound, FillFound
         
         allocate(tempfilelist(MaxNumofFile))
         allocate(tempfilesteps(MaxNumofFile))
@@ -244,7 +244,7 @@
                     if(IsInputFromNC(i) .eq. 0) then
                         read(99,*)InputTSFilename(i)
                     elseif(IsInputFromNC(i) .eq. 1)then
-                        read(99,*)str
+                        read(99,fmt='(A)')str
                         CALL StringSep(str,delimit1,nargs)
                         Allocate(words(nargs))
                         Allocate(Words7element(7))
@@ -455,12 +455,15 @@
         deallocate(tempstarttime)
         deallocate(iy)
         NOofTS=0
-        
+        VarMissingValues=-9999
+        VarfILLValues=-9999
 
         Do i = 1,n 
             if (IsInputFromNC(i) .eq. 1)then
                 Rec_name=Inputtcoordinates(i)
                 Do k=1,NumNCFiles(i)
+                    MissFound=.false.
+                    FillFound=.false.
                     File_name=NCDFContainer(k,i)
                     call check(nf90_open(File_name, nf90_nowrite, ncidout))                         ! open the netcdf file
                     call check(nf90_inq_varid(ncidout,Rec_name,Varid))
@@ -470,16 +473,18 @@
                     CALL check(nf90_inquire_variable(ncidout,InputVarId,natts = numAtts))
                     DO iii=1,numAtts
                         CALL check(nf90_inq_attname(ncidout,InputVarId,iii,AttName))
-                        if(AttName .eq. missing_value)THEN
-                            CALL check(nf90_get_att(ncidout,InputVarId,missing_value,VarMissingValues(k,i))) 
-                        ELSE
-                            VarMissingValues(k,i)=-9999
-                        end IF
-                        if(AttName .eq. fillvalue)THEN
-                            CALL check(nf90_get_att(ncidout,InputVarId,fillvalue,VarfILLValues(k,i)))  
-                        ELSE
-                            VarfILLValues(k,i)=-9999
-                        end IF
+                        If (.NOT. MissFound)THEN
+                            if(AttName .eq. missing_value)THEN
+                                CALL check(nf90_get_att(ncidout,InputVarId,missing_value,VarMissingValues(k,i)))
+                                MissFound=.true.
+                            end if
+                        end if
+                        If (.NOT. FillFound)THEN
+                            if(AttName .eq. fillvalue)THEN
+                                CALL check(nf90_get_att(ncidout,InputVarId,fillvalue,VarfILLValues(k,i)))
+                                FillFound=.true.
+                            end if
+                        End if
                     END DO
                     CALL check(nf90_sync(ncidout))
                     NOofTS(i)=NOofTS(i)+NumtimeStepEachNC
@@ -499,11 +504,11 @@
 2750            close(FileOpenFlag(i))
             end if
         End do
-        arrayx=MAXVAL(NOofTS)
+        maxncfilents=MAXVAL(NOofTS)
         End subroutine
         
         subroutine timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        arrayx,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
+        maxncfilents,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
         
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
         ! NumNCFiles(n) (input)  Array giving the number of NC files for NC variables
@@ -519,17 +524,17 @@
         ! nrefyr,nrefmo,nrefday,(input) Reference year, month, day from netcdf time units specified as "days from y/m/d"
         !                                Our convention is that our start hour must be 0
         ! varnameinncdf(n) (input)  variable name in control file specifying the netcdf variable to use for reading from NC
-        ! arrayx  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
+        ! maxncfilents  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! NoofTS(n) (input).  The number of combined NC time steps for each variable
-        ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
+        ! TSV (maxncfilents,11) (output) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
         !                          julian and time from NC files are stored as day/hour from the reference date (time unit in NC).
-        ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
+        ! Allvalues (maxncfilents,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         use netcdf
         Implicit None
         integer, parameter:: NF90_BYTEs = 1, NF90_CHARs = 2, NF90_SHORTs = 3, NF90_INTs = 4, NF90_FLOATs = 5, NF90_DOUBLEs = 6
         integer :: n, i, k, FileCount, NumtimeStepEachNC
         Parameter(n=11)
-        integer:: arrayx
+        integer:: maxncfilents
         integer:: VarID,ncidout
         Character*50:: Rec_Name
         integer:: MaxNumofFile
@@ -543,8 +548,8 @@
         Real:: FileNextVal  
         Double precision:: FileNextHR
         Double precision:: FileNextDateJDT
-        REAL:: AllValues(arrayx,n)
-        Double precision:: TSV(arrayx,n)
+        REAL:: AllValues(maxncfilents,n)
+        Double precision:: TSV(maxncfilents,n)
         REAL,allocatable ::AlltimeSteps(:),AlltimeSteps1(:)
         character*200:: CurrentInputVariable(n)
         integer::StartY,StartM,StartD
@@ -652,8 +657,8 @@
 
         
         Subroutine Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-        &NCfileNumtimesteps,NOofTS,arrayx,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
-        &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange)
+        &NCfileNumtimesteps,NOofTS,maxncfilents,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
+        &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,InpVals)
             
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)    
         ! MaxNumofFile (input) is the maximum number of NC files for any variable 
@@ -663,14 +668,14 @@
         ! iycoord (input) Y-position of a grid for which values for entire time-series is obtianed
         ! jxcoord (input) X-position of a grid for which values for entire time-series is obtianed
         ! NCfileNumtimesteps(MaxNF,n) (input) array giving the number of time steps in each NC file
-        ! arrayx  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
+        ! maxncfilents  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! NoofTS(n) (oinput).  The number of combined NC time steps for each variable
-        ! TSV (arrayx,11) (output) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
+        ! TSV (maxncfilents,11) (output) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
         !                          julian and time from NC files are stored as day/hour from the reference date (time unit in NC).
-        ! Allvalues (arrayx,11) (output) holds values of enite timeseries for each variable for a particular grid  point
+        ! Allvalues (maxncfilents,11) (output) holds values of enite timeseries for each variable for a particular grid  point
         ! VarMissingValues (MaxNC,n) (out) contains the missing values in each netCDF
         ! VarfILLValues (MaxNC,n) (out) contains the filling values in each netCDF
-        ! ReGriddedArray(arrayx,n) (out) stored all regridded values
+        ! ReGriddedArray(maxncfilents,n) (out) stored all regridded values
         ! NumtimeStep (in)
         ! CurrentArrayPosRegrid(NumtimeStep,n) (in)
         
@@ -684,9 +689,9 @@
         integer::iycoord,jxcoord,NCfileNumtimesteps(MaxNumofFile,n)
         character*50:: var_name
         Character*200::File_nameM
-        integer:: arrayx
+        integer:: maxncfilents
         integer:: ArrayStart,ArrayEnd,IsInputFromNC(n),rec
-        Real:: Allvalues(arrayx,n)
+        Real:: Allvalues(maxncfilents,n), InpVals(n)
         REAL:: ReGriddedArray(NumtimeStep,n)
         Real, allocatable :: AllVal(:)
         REAL:: VarMissingValues(MaxNumofFile,n),VarfILLValues(MaxNumofFile,n)
@@ -746,6 +751,10 @@
                 Do j = 1,NumtimeStep
                     ReGriddedArray(j,i)=Allvalues(CurrentArrayPosRegrid(j,i),i)
                 end do
+            else  !  Here the variable is either not input (assuming default value) or is input as a constant (IsInputFromNC is 2 or 3)
+               Do j = 1,NumtimeStep
+                    ReGriddedArray(j,i)=InpVals(i)
+               end do            
             END IF
         end do
 
@@ -789,17 +798,17 @@
         END IF
         End Subroutine
         
-        Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,arrayx,ModelStartDate,ModelStartHour,&
+        Subroutine InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,maxncfilents,ModelStartDate,ModelStartHour,&
         ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
         Implicit None
         
         ! inputvarname (n) (input) Name of the variables that are provided inside inputcontrol.dat file
         ! IsInputFromNC(n) (inputt) Array indicating whether variable is from NC (0 for TS, 1 for NC, 2 for value, 3 for not provided)   
         ! NoofTS(n) (input).  The number of combined NC time steps for each variable
-        ! TSV (arrayx,11) (input) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
+        ! TSV (maxncfilents,11) (input) holds all the timsteps bot from NC and time series (TS) text files. time from TS files are stored as
         !                         julian and time from NC files are stored as day/hour from the reference date (time unit in NC).
-        ! Allvalues (arrayx,11) (input) holds values of enite timeseries for each variable for a particular grid  point
-        ! arrayx  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
+        ! Allvalues (maxncfilents,11) (input) holds values of enite timeseries for each variable for a particular grid  point
+        ! maxncfilents  (input).  Maximum across variables of the sum of number of time steps in all NC files for that variable
         ! ModelEndDate(3) (input)  Array giving end year, month, day
         ! ModelStartDate(3) (input) Array giving start year, month, day
         ! ModelStartHour (input) Start hour
@@ -817,9 +826,9 @@
         integer:: NumtimeStep
         integer:: CurrentArrayPosRegrid(NumtimeStep,n)
         Character*200:: INPUTVARNAME(n)
-        integer::arrayx,ModelStartDate(3),istep,ModelEndDate(3)
-        REAL:: Allvalues(Arrayx,n),ModelStartHour,ModelEndHour
-        Double precision:: TSV(Arrayx,n)
+        integer::maxncfilents,ModelStartDate(3),istep,ModelEndDate(3)
+        REAL:: Allvalues(maxncfilents,n),ModelStartHour,ModelEndHour
+        Double precision:: TSV(maxncfilents,n)
         Double precision:: CurrentModelDT,RefJD
         Double precision:: FileCurrentDT(n),FileNextDT(n),SJD,RefHour,SHOUR
         Integer:: CurrentArrayPos(n),NextArrayPos(n),IsInputFromNC(n),nrefyr,nrefmo,nrefday
@@ -827,8 +836,9 @@
         REAL:: HOUR,MODELDT,DT,tol
         integer:: NOOFTS(n)
         Double precision:: dhour,DBLEHOUR,EJD,modelTimeJDT(NumtimeStep)
-        integer:: x,y,z,a,b,c
-        double precision:: p,q
+!        integer:: x,y,z,a,b,c
+!        double precision:: p,q
+
         RefHour=0.00
         SHOUR=dble(ModelStartHour)
         TOl=5./(60.*24.) ! 1 minute tolerance
@@ -873,8 +883,8 @@
         
         Do i=1,n
             IF(IsInputFromNC(i) .LT. 2)then
-                call caldat(CurrentModelDT,x,y,z,p)
-                call caldat(FileCurrentDT(i),a,b,c,q)
+!                call caldat(CurrentModelDT,x,y,z,p)
+!                call caldat(FileCurrentDT(i),a,b,c,q)
                 If((FileCurrentDT(i) .GT. CurrentModelDT) .AND. (CurrentArrayPos(i)==1))THEN
                     CurrentArrayPos(i)=1
                     CurrentArrayPosRegrid(istep,i)=CurrentArrayPos(i)
@@ -916,7 +926,7 @@
         CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)
         DBLEHOUR=DBLE(hour)
         !If(istep==1)THEN
-            modelTimeJDT(istep)=CurrentModelDT 
+        modelTimeJDT(istep)=CurrentModelDT 
         !End IF
         call JULDAT(YEAR,MONTH,DAY,DBLEHOUR,CurrentModelDT)
         If (EJD .GE. CurrentModelDT)Then 
