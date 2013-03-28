@@ -174,7 +174,7 @@
                 if(isVarFromNC(i).eq. 0) then
                     read(8,*)StateSiteValue(i)
                 else
-                    read(8,*)str
+                    read(8,fmt='(A)')str
                     CALL StringSep(str,delimit1,nargs)
                     Allocate(words(nargs))
                     Allocate(Words7element(7))
@@ -332,7 +332,7 @@
                 if(isVarFromNC(i).eq. 0) then
                     read(888,*)StateSiteValue(i)
                 else
-                    read(888,*)str
+                    read(888,fmt='(A)')str
                     CALL StringSep(str,delimit1,nargs)
                     Allocate(words(nargs))
                     Allocate(Words7element(7))

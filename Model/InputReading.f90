@@ -61,7 +61,7 @@
         character(200),Allocatable::words7element(:)
         delimit1=';'
         delimit2=':'
-        delimit3='&'
+        delimit3=','
         InputVName= (/ "Ta     ","Prec   ","v      ","RH     ", &
              "Tmin   ","Tmax   ","Qsi    ","Qg     ","Qli    ", &
              "Qnet   ","Snowalb"  /)
@@ -86,7 +86,7 @@
                     if(IsInputFromNC(i) .eq. 0) then
                         read(19,*)InputTSFilename(i)
                     else if(IsInputFromNC(i) .eq. 1) then
-                        read(19,*)str
+                        read(19,fmt='(A)')str
                         CALL StringSep(str,delimit1,nargs)
                         Allocate(words(nargs))
                         Allocate(Words7element(7))
@@ -216,7 +216,7 @@
         InputVarRange=ModelMissVaue
         delimit1=';'
         delimit2=':'
-        delimit3='&'
+        delimit3=','
         uniqueIDNumbert=0
         uniqueIDNumbery=0
         uniqueIDNumberx=0
