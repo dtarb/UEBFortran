@@ -85,7 +85,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
                         read(81,*)StateSiteValue
                     else    
                         count=count+1
-                        read(81,*)str
+                        read(81,fmt='(A)')str
                         CALL StringSep(str,delimit1,nargs)
                         Allocate(words(nargs))
                         CALL StringSepWord(str,delimit1,nargs,words)
@@ -171,7 +171,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
                     if(isVarFromNC(i).eq. 0) then
                         read(8,*)StateSiteValue
                     else
-                        read(8,*)str
+                        read(8,fmt='(A)')str
                         CALL StringSep(str,delimit1,nargs)
                         Allocate(words(nargs))
                         Allocate(Words7element(7))
