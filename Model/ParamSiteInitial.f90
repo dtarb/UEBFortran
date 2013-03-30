@@ -301,7 +301,7 @@
       delimit1=';'
       delimit2=':'
       delimit3=','
-      
+      SiteDefDimval=-9999
       StateSiteVName= (/ "USic     ","WSis     ","Tic      ","WCic     ", &
              "df       ","apr      ","Aep      ","cc       ","hcan     ", &
              "lai      ","Sbar     ","ycage    ","slope    ","aspect   ", &
@@ -361,14 +361,14 @@
 
        Do i=1,n
         if(isVarFromNC(i).eq. 1) then
-            If(SiteDefDimval(i,1) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+            If(SiteDefDimval(i,2) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
                                                   ! therefore, to get y-dim we need to ask for second element of 
                                                   ! DefaultDimValues
                 CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
                 CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,1),Siteycoordinates(i)))
                 CALL check(nf90_close(ncidout))
             End if
-            If(SiteDefDimval(i,2) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+            If(SiteDefDimval(i,3) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
                                                   ! therefore, to get x-dim we need to ask for second element of 
                                                   ! DefaultDimValues
                 CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))

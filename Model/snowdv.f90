@@ -781,7 +781,7 @@
             end if
          END IF
       End if
-      
+!      
  ! We found that Model reanalysis and dowscaled data may prodice some ureasonably negative solar radiation.
  ! this is simply bad data and It is generally better policy to try to give a model good data. 
  ! If this is not possible, then the UEB checks will avoid the model doing anything too bad, 
