@@ -409,7 +409,7 @@ integer::numAtts, ncidout
 character (len = 50):: AttName
 real::WSMissingValues,wsfillvalues
 integer:: DimID1,DImID2
-!Open the file and see hats inside
+!Open the file and see what's inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
 ! get dimension IDs
 call check(nf90_inq_dimid(ncidout,dimname1,DimID1))
@@ -443,7 +443,7 @@ call check(nf90_close(ncidout))                                         ! Closin
 end subroutine nCDF2DArrayInfo2
 !==================2-D netcdf file reading ends  ==================================================================================
 
-!==================Start hecking eavh of the netCDf command functions  ============================================================
+!==================Start checking each of the netCDf command functions  ============================================================
 subroutine check(status)
 !Task: converts year month date and hours (yyyy mm dd hh.hh) into a simgle double precision julian date
 use netcdf

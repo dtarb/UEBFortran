@@ -181,8 +181,8 @@
        Character*50 Inputxcoordinates(11),inputycoordinates(11),inputtcoordinates(11),Sitexcoordinates(32), Siteycoordinates(32)
        character*50 wsxcoord,wsycoord,wsxcoordinate,wsycoordinate
        integer:: nlines 
-       Double pRECISION:: MSTARTHOUR,MENDHOUR
-       DOUBLE PRECISION:: JMSD,JMED
+       Double precision:: MSTARTHOUR,MENDHOUR
+       Double precision:: JMSD,JMED
        integer:: dimlen1OUT,dimlen2OUT
        REAL, allocatable:: InputvarMissVal(:,:), InputvarFillVal(:,:)
        integer::WsMissingValuesInt,WsFillValuesInt
