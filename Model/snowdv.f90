@@ -251,7 +251,7 @@
         READ(5,'(A200)') afile
       ENDIF
      
-! Writing the Long file that includes all warnings
+! Opening the log files 
       OPEN(66,FILE='UEBWarning.log',STATUS='UNKNOWN')
       OPEN(636,FILE='UEBTiming.log',STATUS='UNKNOWN')
 !  Open and Read Input File
@@ -302,7 +302,7 @@
         CALL check(nf90_open(Watershedfile,NF90_NOWRITE, ncidout1))
         CALL check(nf90_inquire_dimension(NCIDout1,DefaultDimValues(1),wsycoordinate))
         CALL check(nf90_close(ncidout1))
-     End if 
+      End if 
      
       WatershedVARID=VarNameinNCDFR
       read(1,*)AggOutControl,AggdOutput
@@ -350,10 +350,10 @@
 !       NCDFContainer - Character array.  Rows (first dimension) contain file names of netCDF files for the variable.  
 !       Columns correspond to each input variable.  Columns are only filled if var is netCDF
 
-       CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
-       &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
-       &nrefyr,nrefmo,nrefday,varnameinncdf,maxncfilents,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
-       &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,daysstring)
+      CALL InputFiles(inputcon,MaxNumofFile,IsInputFromNC,NumNCFiles,InputTSFilename,NCDFContainer,&
+      &ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,NCfileNumtimesteps,&
+      &nrefyr,nrefmo,nrefday,varnameinncdf,maxncfilents,NoofTS,InpVals,VarMissingValues,VarfILLValues,&
+      &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,daysstring)
 !  FIXME: what if the result is fractional
 !  time steps must divide exactly in to a day because we use logic that requires the values from the same time
 !  step on the previous day.  Consider in future making the specification of time step as number of time
@@ -361,15 +361,15 @@
 !  modeldt is recalculated based on the integer timesteps in a day
 !  assumption: number of model timesteps in a day must be an integer  
            
-       StepInADay=int(24.0/modeldt+0.5)  ! closest rounding
-       Modeldt=24.0/StepInADay
-       nstepday=StepInADay
-       Allocate(timeMaxPerFile(MaxNumofFile,11))
-       Allocate(timeMinPerFile(MaxNumofFile,11))
-       allocate(TSV(maxncfilents,11))
-       allocate(AllValues(maxncfilents,11))
-       CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
-        maxncfilents,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
+      StepInADay=int(24.0/modeldt+0.5)  ! closest rounding
+      Modeldt=24.0/StepInADay
+      nstepday=StepInADay
+      Allocate(timeMaxPerFile(MaxNumofFile,11))
+      Allocate(timeMinPerFile(MaxNumofFile,11))
+      allocate(TSV(maxncfilents,11))
+      allocate(AllValues(maxncfilents,11))
+      CALL timeSeriesAndtimeSteps(MaxNumofFile,NUMNCFILES,IsInputFromNC,InputTSFilename,NCDFContainer,&
+      maxncfilents,NOofTS,TSV,Allvalues,Inputtcoordinates,daysstring)
        
       ReferenceHour=0.00
       IF (MaxNumofFile .eq. 0)then
@@ -414,48 +414,48 @@
 ! Checking netCDFs starts here 
 
 ! Output file creation starts here
-        CALL NumOutFiles(OutControlFILE, ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
-        NumtimeStep,NumofFile,NumOutPoint,OutCount,dimlen1,dimlen2)
+      CALL NumOutFiles(OutControlFILE, ModelStartDate,ModelStartHour,ModelEndDate,ModelEndHour,Modeldt,&
+      NumtimeStep,NumofFile,NumOutPoint,OutCount,dimlen1,dimlen2)
                          
-        Allocate(NumtimeStepPerFile(NumofFile))          ! This array will contains the number of time steps in the sequence of netcdf files
-        Allocate(OutputNCContainer(NumofFile,OutCount))  !  This array will contain the file names for each output netcdf variable
-        Allocate(NCOutfileArr(NumofFile,OutCount))  
-        Allocate(OutPoint(NumOutPoint,2))
-        Allocate(OutPointFiles(NumOutPoint))
-        Allocate(outSampleFile(outcount))
-        Allocate(OutVar(outcount))
-        Allocate(outputfolder(outcount))
-        Allocate(OutVarValue(NumtimeStep,66))
-        CALL OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile, &
-        OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
-        Allocate(NCIDARRAY(NumofFile,outcount))
-        Allocate(OutFolder(outcount))
-        DimName1=wsycoordinate
-        DimName2=wsxcoordinate
+      Allocate(NumtimeStepPerFile(NumofFile))          ! This array will contains the number of time steps in the sequence of netcdf files
+      Allocate(OutputNCContainer(NumofFile,OutCount))  !  This array will contain the file names for each output netcdf variable
+      Allocate(NCOutfileArr(NumofFile,OutCount))  
+      Allocate(OutPoint(NumOutPoint,2))
+      Allocate(OutPointFiles(NumOutPoint))
+      Allocate(outSampleFile(outcount))
+      Allocate(OutVar(outcount))
+      Allocate(outputfolder(outcount))
+      Allocate(OutVarValue(NumtimeStep,66))
+      CALL OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile, &
+      OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
+      Allocate(NCIDARRAY(NumofFile,outcount))
+      Allocate(OutFolder(outcount))
+      DimName1=wsycoordinate
+      DimName2=wsxcoordinate
          
-        ! dimlen1=340
-        ! dimlen2=309
-        CALL DirectoryCreate(nrefyr,nrefmo,nrefday,WATERSHEDfILE,wsycoordinate,&
-        &wsxcoordinate,NumofFile,outcount,Outvar,NumtimeStepPerFile,&
-        &outSampleFile,OutputNCContainer,NCIDARRAY)
-        end if
+      ! dimlen1=340
+      ! dimlen2=309
+      CALL DirectoryCreate(nrefyr,nrefmo,nrefday,WATERSHEDfILE,wsycoordinate,&
+      &wsxcoordinate,NumofFile,outcount,Outvar,NumtimeStepPerFile,&
+      &outSampleFile,OutputNCContainer,NCIDARRAY)
+      end if
         
-        if (nlines .eq. PointModel)THEN
-            MStartHour=dble(ModelStartHour)
-            MEndHour=dble(ModelEndHour)
-            Call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),MStartHour,JMSD) !JMSD= julian model start date-time
-            Call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),MEndHour,JMED)         !JMED= julian model start date-time
-            tol=5./(60.*24.)     !  5 min tolerance
-            NumtimeStep=(((JMED+tol-JMSD)/(Modeldt/24.0)) + 1)   
-        End if
+      if (nlines .eq. PointModel)THEN
+          MStartHour=dble(ModelStartHour)
+          MEndHour=dble(ModelEndHour)
+          Call JULDAT(ModelStartDate(1),ModelStartDate(2),ModelStartDate(3),MStartHour,JMSD) !JMSD= julian model start date-time
+          Call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),MEndHour,JMED)         !JMED= julian model start date-time
+          tol=5./(60.*24.)     !  5 min tolerance
+          NumtimeStep=(((JMED+tol-JMSD)/(Modeldt/24.0)) + 1)   
+      End if
         
-        Allocate(ReGriddedArray(NumtimeStep,11))
-        Allocate(modelTimeJDT(NumtimeStep))
-        Allocate(CurrentArrayPosRegrid(NumtimeStep,11))
+      Allocate(ReGriddedArray(NumtimeStep,11))
+      Allocate(modelTimeJDT(NumtimeStep))
+      Allocate(CurrentArrayPosRegrid(NumtimeStep,11))
         
 ! Output file creation ends here
-        CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,maxncfilents,ModelStartDate,ModelStartHour,&
-        ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
+      CALL InputVariableValue(INPUTVARNAME,IsInputFromNC,NoofTS,TSV,Allvalues,maxncfilents,ModelStartDate,ModelStartHour,&
+      ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
        
        !*******************************************************************************           
 !        OPEN(665,FILE='DataBeforeRegrid.DAT',STATUS='UNKNOWN')
@@ -473,466 +473,468 @@
 !39          format(I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5)
 !        END DO
 !        Close(668)
-       !*******************************************************************************         
+      !*******************************************************************************         
 
-       If (nlines .eq. GridModel)THEN
-       Allocate(StartEndNCDF(NumofFile,2))
+      If (nlines .eq. GridModel)THEN
+      Allocate(StartEndNCDF(NumofFile,2))
 ! Work with aggregated outputs    
-       CALL AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
-       Allocate(AggOutVar(AggOutNum))
-       Allocate(AggOutVarnum(AggOutNum))
-       CALL  AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,&
-                              &uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues,wsxcoordinate,wsycoordinate)
-       Allocate(UniqueIDArray(uniqueIDNumber))
-       Allocate(UniqueIDArrayCount(uniqueIDNumber))
-       CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues,UniqueIDArrayCount,&
-                          &wsxcoordinate,wsycoordinate)
-       Allocate(AggdWSVarVal(NumtimeStep,uniqueIDNumber,AggOutNum))
-       Allocate(AggdWSVarValAvg(NumtimeStep,uniqueIDNumber,AggOutNum))
-       AggdWSVarVal=0                        
-       AggUnit=887
-       OPEN(AggUnit,FILE=AggdOutput,STATUS='unknown')
-       write(Aggunit,*)'Year month day hour variable watershed value' ! write header
+      CALL AggregatedOutNum(AggOutControl,outSymbol,AggOutNum)
+      Allocate(AggOutVar(AggOutNum))
+      Allocate(AggOutVarnum(AggOutNum))
+      CALL  AggOutWSUniqueID(AggOutControl,outSymbol,AggOutNum,AggOutVar,Watershedfile,WatershedVARID,&
+                            &uniqueIDNumber,AggOutVarnum,WsMissingValues,WsFillValues,wsxcoordinate,wsycoordinate)
+      Allocate(UniqueIDArray(uniqueIDNumber))
+      Allocate(UniqueIDArrayCount(uniqueIDNumber))
+      CALL WSUniqueArray(Watershedfile,WatershedVARID,dimlen1,dimlen2,uniqueIDNumber,UniqueIDArray,WsMissingValues,WsFillValues,UniqueIDArrayCount,&
+                        &wsxcoordinate,wsycoordinate)
+      Allocate(AggdWSVarVal(NumtimeStep,uniqueIDNumber,AggOutNum))
+      Allocate(AggdWSVarValAvg(NumtimeStep,uniqueIDNumber,AggOutNum))
+      AggdWSVarVal=0                        
+      AggUnit=887
+      OPEN(AggUnit,FILE=AggdOutput,STATUS='unknown')
+      write(Aggunit,*)'Year month day hour variable watershed value' ! write header
        
-       St=0 
-       ii=1
+      St=0 
+      ii=1
        
 1056   If (ii .LE. NumofFile)THEN
-            StartEndNCDF(ii,1)=ST+1
-            StartEndNCDF(ii,2)=StartEndNCDF(ii,1)+NumtimeStepPerFile(ii)-1
-            ST=StartEndNCDF(ii,2)
-            ii=ii+1
-            Go to 1056
-       End if
+          StartEndNCDF(ii,1)=ST+1
+          StartEndNCDF(ii,2)=StartEndNCDF(ii,1)+NumtimeStepPerFile(ii)-1
+          ST=StartEndNCDF(ii,2)
+          ii=ii+1
+          Go to 1056
+      End if
        
-       ! required to calculate percent grid completed
-       totalgrid=dimlen1*dimlen2     
-       numgrid=0
-       END IF
+      ! required to calculate percent grid completed
+      totalgrid=dimlen1*dimlen2     
+      numgrid=0
+      END IF
        
-       Allocate(FNDJDT(NumtimeStep))
-       Allocate(yymmddarray(3,NumtimeStep))
-       Allocate(timearray(NumtimeStep))
-       ! calculating model end date-time in julian date
-       dhour=dble(ModelEndHour)
-       call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
+      Allocate(FNDJDT(NumtimeStep))
+      Allocate(yymmddarray(3,NumtimeStep))
+      Allocate(timearray(NumtimeStep))
+      ! calculating model end date-time in julian date
+      dhour=dble(ModelEndHour)
+      call JULDAT(ModelEndDate(1),ModelEndDate(2),ModelEndDate(3),dhour,EJD)
        
-       !  Initialize timing results
-       tresult= Etime(tarray)
-       write(6,*)'time to create netCDFs: ',(tresult-tlast)
-       write(636,*)'Create netCDFs: ',(tresult-tlast),' seconds'  
-       write(6,*)"Starting loop over grid cells"
+      !  Initialize timing results
+      tresult= Etime(tarray)
+      write(6,*)'time to create netCDFs: ',(tresult-tlast)
+      write(636,*)'Create netCDFs: ',(tresult-tlast),' seconds'  
+      write(6,*)"Starting loop over grid cells"
        
-       ! time tracking variables are inititated as 0.0
-       tlast=tresult
-       tio=0.0
-       tcomp=0.0
-       tout=0.0
-       tagg=0.0
-       taggre=0.0
-       toutnc=0.0 
-       tsitev=0.0
-       dt=Modeldt
-       WsMissingValuesInt = int(WsMissingValues,8)
-       WsFillValuesInt = int(WsFillValues,8)
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-       ! Space loop starts here
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! time tracking variables are inititated as 0.0
+      tlast=tresult
+      tio=0.0
+      tcomp=0.0
+      tout=0.0
+      tagg=0.0
+      taggre=0.0
+      toutnc=0.0 
+      tsitev=0.0
+      dt=Modeldt
+      WsMissingValuesInt = int(WsMissingValues,8)
+      WsFillValuesInt = int(WsFillValues,8)
+      !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! Space loop starts here
+      !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
        
-       DO iycoord=1,dimlen1
-       DO jxcoord=1,dimlen2
-       iunit=119  !  unit for point output
-       
-!       if (iycoord==204 .and. jxcoord==310)then
-!            iycoord1=jxcoord*100-jxcoord*100+iycoord
-!            write(6,*) iycoord,jxcoord
-!       end if
-       
-       if (nlines .eq. GridModel)THEN
-        CALL nCDF2DReadInteger(Watershedfile,WatershedVARID,IDNumber(1),iycoord,jxcoord,wsxcoordinate,wsycoordinate)
-       ELSE
-        IDNumber(1)=1
-       END IF
-       if((IDNumber(1) .ne. 0) .and. (IDNumber(1) .ne. WsMissingValuesInt) .and. (IDNumber(1) .ne. WsFillValuesInt))then  ! Omit calculations if not in the watershed
-
-       !  read site variables and initial conditions of state variables
-       !  TODO change the above to also exclude netcdf no data values
-       CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude,Sitexcoordinates,Siteycoordinates)
-       
-       ! CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype, ilat,jlon,dtbar,ts_last,longitude,Sitexcoordinates,Siteycoordinates)
-       ! Glacier adjustment of ws
-        IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
-            WGT=0.0
+      DO iycoord=1,dimlen1
+      DO jxcoord=1,dimlen2
+        iunit=119  !  unit for point output       
+        if (nlines .eq. GridModel)THEN
+          CALL nCDF2DReadInteger(Watershedfile,WatershedVARID,IDNumber(1),iycoord,jxcoord,wsxcoordinate,wsycoordinate)
         ELSE
-            WGT=1.0
+          IDNumber(1)=1
         END IF
+        ! Perform calculations only if grid cell is in the watershed
+        if((IDNumber(1) .ne. 0) .and. (IDNumber(1) .ne. WsMissingValuesInt) .and. (IDNumber(1) .ne. WsFillValuesInt))then  
+!  TODO change the above to also exclude netcdf no data values
+
+          !  read site variables and initial conditions of state variables
+          CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude,Sitexcoordinates,Siteycoordinates)
+          ! Set water equivalent thickness of glacier based on substrate type
+          ! subtype = sitev(10)
+          !   0 = Ground/Non Glacier, 
+          !   1 = Clean Ice/glacier, 
+          !   2 = Debris covered ice/glacier, 
+          !   3 = Glacier snow accumulation zone
+          ! 
+          IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
+              WGT=0.0
+          ELSE
+              WGT=1.0
+          END IF
     
-       tresult= Etime(tarray)
-       tsitev=tsitev+tresult-tlast
-       tlast=tresult
+          tresult= Etime(tarray)
+          tsitev=tsitev+tresult-tlast
+          tlast=tresult
        
-       ALLOCATE(Tsprevday(nstepday))
-       ALLOCATE(Taveprevday(nstepday))
+          ALLOCATE(Tsprevday(nstepday))
+          ALLOCATE(Taveprevday(nstepday))
        
-       if(sitev(10) .ne. 3) then   !  Only do this work for non accumulation cells where model is run 
-       CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
-       &NCfileNumtimesteps,NOofTS,maxncfilents,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
-       &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,InpVals)
+          if(sitev(10) .ne. 3) then   !  Only do this work for non accumulation cells where model is run 
+            ! TODO check logic and consolidate with to perform calculations only on grid
+            CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
+            &NCfileNumtimesteps,NOofTS,maxncfilents,Allvalues,VarMissingValues,VarfILLValues,StepInADay,NumtimeStep,CurrentArrayPosRegrid,ReGriddedArray,&
+            &Inputxcoordinates,inputycoordinates,inputtcoordinates,InputVarRange,InpVals)
        
-       !*******************************************************************************              
+      !*******************************************************************************              
 !       OPEN(666,FILE='DataAfterRegrid.DAT',STATUS='UNKNOWN')
 !       Do I = 1,NumtimeStep
 !            Write(666,40) ReGriddedArray(i,1),ReGriddedArray(i,2),ReGriddedArray(i,3),ReGriddedArray(i,4),ReGriddedArray(i,5),ReGriddedArray(i,6)
 !40          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
 !       End do
 !       Close(666)
-       !*******************************************************************************  
+      !*******************************************************************************  
 
-       ! FIXME: what if the result is fractional
-       !  should not be fractional (except numerically)
-       nstepday=StepInADay  ! number of time steps/day
+      ! FIXME: what if the result is fractional
+      !  should not be fractional (except numerically)
+            nstepday=StepInADay  ! number of time steps/day
 
 
-!  Initialize Tsbackup and TaveBackup
-       DO 3 i = 1,nstepday
-            Tsprevday(i)=-9999.
-            Taveprevday(i)=-9999.0
- 3     CONTINUE
+            !  Initialize Tsbackup and TaveBackup
+            DO 3 i = 1,nstepday
+                Tsprevday(i)=-9999.
+                Taveprevday(i)=-9999.0
+3            CONTINUE
 
-       IF(ts_last .le. -9999.)THEN    
-         Tsprevday(nstepday)=0  
-       ELSE
-         Tsprevday(nstepday)=ts_last                      !has measurements
-       END IF 
+            ! Take surface temperature as 0 where it is unknown the previous time step
+            ! This is for first day of the model to get the force restore going
+            IF(ts_last .le. -9999.)THEN    
+              Tsprevday(nstepday)=0  
+            ELSE
+              Tsprevday(nstepday)=ts_last                      !has measurements
+            END IF 
 
-!****************** To compute Ave.Temp (For Previous day temp.)  ******************************
-
-      Us   = statev(1)                                  ! Ub in UEB
-      Ws   = statev(2)                                  ! W in UEB
-      Wc   = statev(4)                                  !
-      Apr  = sitev(2)                                   ! Atm. Pressure  (PR in UEB)
-      cg   = param(4)                                   ! Ground heat capacity (nominally 2.09 KJ/kg/C)
-      rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
-      de   = param(11)                                  ! Thermally active depth of soil (0.1 m)
+    ! compute Ave.Temp for previous day 
+            Us   = statev(1)                                  ! Ub in UEB
+            Ws   = statev(2)                                  ! W in UEB
+            Wc   = statev(4)                                  ! Canopy SWE
+            Apr  = sitev(2)                                   ! Atm. Pressure  (PR in UEB)
+            cg   = param(4)                                   ! Ground heat capacity (nominally 2.09 KJ/kg/C)
+            rhog = param(8)                                   ! Soil Density (nominally 1700 kg/m^3)
+            de   = param(11)                                  ! Thermally active depth of soil (0.1 m)
  
-    Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)     ! This call only
-    Taveprevday(nstepday) = Tave
+            Tave = TAVG(Us,Ws+WGT,RHOW,CS,TO,RHOG,DE,CG,HF)     ! This call only
+            Taveprevday(nstepday) = Tave
       
-!  initialize variables for mass balance
-    Ws1   = statev(2)
-    Wc1   = statev(4)     
-    cumP = 0.
-    cumEs = 0.
-    cumEc = 0.
-    cumMr = 0.
-    cumGM = 0.
-!************************************************************************************************      
+        !  initialize variables for mass balance
+            Ws1   = statev(2)
+            Wc1   = statev(4)     
+            cumP = 0.
+            cumEs = 0.
+            cumEc = 0.
+            cumMr = 0.
+            cumGM = 0.
+    !************************************************************************************************      
 
-!  find out if this is an output point and if so open the point output file
-    IF(nlines .eq. GridModel)THEN
-      towrite=.false.
-      do NumOP=1,NumOutPoint
-       If (iycoord .eq. OutPoint(NumOP,1) .and. jxcoord .eq. OutPoint(NumOP,2))Then  
-            OPEN(iUnit,FILE=OutPointFiles(NumOP),STATUS='unknown')
-            towrite= .true.
-            exit
-        endif 
-      enddo
-    ELSE 
-        towrite=.TRUE.
-        OPEN(iUnit,FILE='PointOutput.DAT',STATUS='unknown')
-    END IF                     
-    endif  !  end the skip block done only for accumulation cells
+        !  find out if this is an output point and if so open the point output file
+            IF(nlines .eq. GridModel)THEN
+              towrite=.false.
+              do NumOP=1,NumOutPoint
+                If (iycoord .eq. OutPoint(NumOP,1) .and. jxcoord .eq. OutPoint(NumOP,2))Then  
+                    OPEN(iUnit,FILE=OutPointFiles(NumOP),STATUS='unknown')
+                    towrite= .true.
+                    exit
+                endif 
+              enddo
+            ELSE ! For point mode always write output
+                towrite=.TRUE.
+                OPEN(iUnit,FILE='PointOutput.DAT',STATUS='unknown')
+            END IF                     
+          endif  !  end the skip block done only for accumulation cells
 
-        ! Variables to keep track of which time step we are in and which netcdf output file we are in
-        istep=0  ! time step initiated as 0
+          ! Variables to keep track of which time step we are in and which netcdf output file we are in
+          istep=0  ! time step initiated as 0
         
-        ! map on to old UEB names
-        YEAR=ModelStartDate(1)
-        MONTH=ModelStartDate(2)
-        DAY=ModelStartDate(3)
-        Hour=ModelStartHour
-        SHOUR=DBLE(ModelStartHour)
-        call JULDAT(YEAR,MONTH,DAY,SHOUR,CurrentModelDT)
+          ! map on to old UEB names
+          YEAR=ModelStartDate(1)
+          MONTH=ModelStartDate(2)
+          DAY=ModelStartDate(3)
+          Hour=ModelStartHour
+          SHOUR=DBLE(ModelStartHour)
+          call JULDAT(YEAR,MONTH,DAY,SHOUR,CurrentModelDT)
 
-        tresult= Etime(tarray)
-        tio=tio+tresult-tlast
-        tlast=tresult
+          tresult= Etime(tarray)
+          tio=tio+tresult-tlast
+          tlast=tresult
 
 
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-       ! This is the start of the main time loop 
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++              
-1       istep=istep+1
-
-        yymmddarray(1,istep)=year
-        yymmddarray(2,istep)=month
-        yymmddarray(3,istep)=day
-        timearray(istep)=hour
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          ! This is the start of the main time loop 
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++              
+          do while(EJD >= CurrentModelDT)
+            istep=istep+1
+            yymmddarray(1,istep)=year
+            yymmddarray(2,istep)=month
+            yymmddarray(3,istep)=day
+            timearray(istep)=hour
         
-        IF(sitev(10).NE. 3)THEN
-        Do i= 1,11
-            InpVals(i)=ReGriddedArray(istep,i)
-        End do
+            IF(sitev(10).NE. 3)THEN
+            Do i= 1,11
+                InpVals(i)=ReGriddedArray(istep,i)
+            End do
                      
-!        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
-!            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
+    !        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
+    !            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
 
- !      Map from wrapper input variables to UEB variables     
-        TA=INPVals(1)
-        P=INPVals(2)
-        V=INPVals(3)
-        RH=INPVals(4)
-        Tmin=INPVals(5)
-        Tmax=INPVals(6)
-        trange=Tmax-Tmin
-        if (trange .LE. 0)THEN
-            If (snowdgtvariteflag .EQ. 1)then
-                write(6,*) "Input Diurnal temperature range is less than or equal to 0 which is unrealistic "
-                write(6,*) "Diurnal temperature range is assumed as eight degree celsius "
-                write(66,*)"on ",year,month,day
-            End  if
-            trange=8.0
-        End if
-        QSIOBS=INPVals(7)
-        qg=INPVals(8)
-        qli=INPVals(9)
-        QNETOB=INPVals(10)
-        Snowalb=INPVals(11)
+      !      Map from wrapper input variables to UEB variables     
+            TA=INPVals(1)
+            P=INPVals(2)
+            V=INPVals(3)
+            RH=INPVals(4)
+            Tmin=INPVals(5)
+            Tmax=INPVals(6)
+            trange=Tmax-Tmin
+            if (trange .LE. 0)THEN
+                If (snowdgtvariteflag .EQ. 1)then
+                    write(6,*) "Input Diurnal temperature range is less than or equal to 0 which is unrealistic "
+                    write(6,*) "Diurnal temperature range is assumed as eight degree celsius "
+                    write(66,*)"on ",year,month,day
+                End  if
+                trange=8.0
+            End if
+            QSIOBS=INPVals(7)
+            qg=INPVals(8)
+            qli=INPVals(9)
+            QNETOB=INPVals(10)
+            Snowalb=INPVals(11)
         
-!  Below is code from point UEB 
-        sitev(3)=qg   
-        INPT(1,1)=TA
-        INPT(2,1)=P
-        INPT(3,1)=V
-        INPT(4,1)=RH
-        INPT(7,1)= QNETOB
+    !  Below is code from point UEB 
+            sitev(3)=qg   
+            INPT(1,1)=TA
+            INPT(2,1)=P
+            INPT(3,1)=V
+            INPT(4,1)=RH
+            INPT(7,1)= QNETOB
         
-! UTC to local time conversion
-        CALL CALDAT(modelTimeJDT(istep),YEAR,MONTH,DAY,DBHour)
-        Hour=REAL(DBHour)
-        UTCHour=Hour-UTCOffset
-        NHour=UTCHour+longitude/15.0
-        OHour=DBLE(NHour)
-        CALL JulDat(YEAR,MONTH,DAY,OHour,UTCJulDat)
-        CALL CALDat(UTCJulDat,MYEAR,MMONTH,MDAY,MHOUR)
-        NHOUR=REAL(MHOUR)
+    ! UTC to local time conversion
+            CALL CALDAT(modelTimeJDT(istep),YEAR,MONTH,DAY,DBHour)
+            Hour=REAL(DBHour)
+            UTCHour=Hour-UTCOffset
+            NHour=UTCHour+longitude/15.0
+            OHour=DBLE(NHour)
+            CALL JulDat(YEAR,MONTH,DAY,OHour,UTCJulDat)
+            CALL CALDat(UTCJulDat,MYEAR,MMONTH,MDAY,MHOUR)
+            NHOUR=REAL(MHOUR)
         
-!******************     Radiation Input Parameterization  ***************************************
-       !CALL hyri(YEAR,MONTH,DAY,HOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
-       CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
-       INPT(8,1)=COSZEN                
-       IF(IRAD.LE.2)THEN               
-            CALL atf(atff,trange,month,dtbar,bca,bcc)
-            IF(IRAD.EQ.0) THEN                     
+    !******************     Radiation Input Parameterization  ***************************************
+            !CALL hyri(YEAR,MONTH,DAY,HOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
+            CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
+            INPT(8,1)=COSZEN                
+            IF(IRAD.LE.2)THEN               
+                CALL atf(atff,trange,month,dtbar,bca,bcc)
+                IF(IRAD.EQ.0) THEN                     
+                    INPT(5,1)=atff*IO*HRI
+                    CALL cloud(param,atff,cf)   ! For cloudiness fraction
+                ELSE 
+                    If(QSIOBS .lt. 0) then
+                        QSIOBSModify=QSIOBS
+    !                    If (snowdgtvariteflag .EQ. 1)then
+    !                         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
+    !                         write(66,*)"at date",year,month,day,hour
+    !                         write(66,*)"was set to zero."
+    !                    end if
+                        QSIOBS=0       
+                    Endif
+    !      Need to call HYRI for horizontal surface to perform horizontal
+    !      measurement adjustment
+                    CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,0.0,AZI,LAT,HRI0,COSZEN)
+    !      If HRI0 is 0 the sun should have set so QSIOBS should be 0.  If it is
+    !      not it indicates a potential measurement problem. i.e. moonshine
+                    if(HRI0 .GT. 0.0) then
+                        atfimplied=min(qsiobs/(HRI0*IO),0.9) ! To avoid unreasonably large radiation when HRI0 is small
+                        INPT(5,1)=atfimplied * HRI * IO
+                    else
+                        INPT(5,1)=QSIOBS
+                          if(qsiobs .ne. 0.)then
+                            If (snowdgtvariteflag .EQ. 1)then
+                                write(66,*)"Warning ! you have nonzero nightime"
+                                write(66,*)"incident radiation of",qsiobs
+                                write(66,*)"at date",year,month,day,hour
+                            End if
+                          endif
+                      endif
+                      CALL cloud(param,atff,cf)   ! For cloudiness fraction  This is more theoretically correct
+                  ENDIF        
+              IF(irad .lt. 2)THEN    
+                CALL qlif(TA,RH,TK,SBC,Ema,Eacl,cf,inpt(6,1) )
+              Else
+                Ema=-99  !  These values are not evaluated but may need to be written out so are assigned for completeness
+                Eacl=-99
+                inpt(6,1)=qli
+              ENDIF 
+              IRADFL=0                        ! Long wave or shortwave either measured and calculated
+            ELSE 
+              IRADFL=1                    ! This case is when given IRAD =3 (From Net Radiation)  
+              INPT(7,1) = QNETOB          
+            ENDIF
+       
+            IF((IRAD == 1) .Or. (IRAD == 2))THEN
+              If(QSIOBSModify .lt. 0) then
                 INPT(5,1)=atff*IO*HRI
                 CALL cloud(param,atff,cf)   ! For cloudiness fraction
-            ELSE 
-               If(QSIOBS .lt. 0) then
-                    QSIOBSModify=QSIOBS
-!                    If (snowdgtvariteflag .EQ. 1)then
-!                         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
-!                         write(66,*)"at date",year,month,day,hour
-!                         write(66,*)"was set to zero."
-!                    end if
-                    QSIOBS=0       
-               Endif
-!      Need to call HYRI for horizontal surface to perform horizontal
-!      measurement adjustment
-               CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,0.0,AZI,LAT,HRI0,COSZEN)
-!      If HRI0 is 0 the sun should have set so QSIOBS should be 0.  If it is
-!      not it indicates a potential measurement problem. i.e. moonshine
-               if(HRI0 .GT. 0.0) then
-                    atfimplied=min(qsiobs/(HRI0*IO),0.9) ! To avoid unreasonably large radiation when HRI0 is small
-                    INPT(5,1)=atfimplied * HRI * IO
-               else
-                   INPT(5,1)=QSIOBS
-                     if(qsiobs .ne. 0.)then
-                        If (snowdgtvariteflag .EQ. 1)then
-                            write(66,*)"Warning ! you have nonzero nightime"
-                            write(66,*)"incident radiation of",qsiobs
-                            write(66,*)"at date",year,month,day,hour
-                        End if
-                     endif
-                 endif
-                 CALL cloud(param,atff,cf)   ! For cloudiness fraction  This is more theoretically correct
-             ENDIF        
-          IF(irad .lt. 2)THEN    
-            CALL qlif(TA,RH,TK,SBC,Ema,Eacl,cf,inpt(6,1) )
-          Else
-            Ema=-99  !  These values are not evaluated but may need to be written out so are assigned for completeness
-            Eacl=-99
-            inpt(6,1)=qli
-          ENDIF 
-          IRADFL=0                        ! Long wave or shortwave either measured and calculated
-       ELSE 
-          IRADFL=1                    ! This case is when given IRAD =3 (From Net Radiation)  
-          INPT(7,1) = QNETOB          
-       ENDIF
-       
-       IF(IRAD .EQ. 1 .Or. 2)THEN
-         If(QSIOBSModify .lt. 0) then
-            INPT(5,1)=atff*IO*HRI
-            CALL cloud(param,atff,cf)   ! For cloudiness fraction
-            If (snowdgtvariteflag .EQ. 1)then
-                 write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
-                 write(66,*)"at date",year,month,day,hour
-                 write(66,*)"was set to ", INPT(5,1),"using radiation calculation from temperature"
-            end if
-         END IF
-      End if
+                If (snowdgtvariteflag .EQ. 1)then
+                      write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
+                      write(66,*)"at date",year,month,day,hour
+                      write(66,*)"was set to ", INPT(5,1),"using radiation calculation from temperature"
+                end if
+              END IF
+          End if
 !      
- ! We found that Model reanalysis and dowscaled data may prodice some ureasonably negative solar radiation.
- ! this is simply bad data and It is generally better policy to try to give a model good data. 
- ! If this is not possible, then the UEB checks will avoid the model doing anything too bad, 
- ! it handles negative solar radiation in following way:
+! We found that Model reanalysis and dowscaled data may produce some unreasonably negative solar radiation.
+! this is simply bad data and it is generally better policy to try to give a model good data. 
+! If this is not possible, then the UEB checks will avoid the model doing anything too bad, 
+! it handles negative solar radiation in following way:
 
- ! "no data in radiation would be to switch to the temperature method just for time steps 
- ! when radiation is negative." 
+! "no data in radiation would be to switch to the temperature method just for time steps 
+! when radiation is negative." 
        
        
 !************************************************************************************************
-       if(towrite)WRITE(iunit,*)YEAR,MONTH,DAY,HOUR,atff,HRI,Eacl,Ema,(INPT(i,1),i=1,8) 
-       IniOutVals(1)=YEAR
-       IniOutVals(2)=MONTH
-       IniOutVals(3)=DAY
-       IniOutVals(4)=HOUR
-       IniOutVals(5)=atff
-       IniOutVals(6)=HRI
-       IniOutVals(7)=Eacl
-       IniOutVals(8)=Ema
-       IniOutVals(9)=INPT(1,1)
-       IniOutVals(10)=INPT(2,1)
-       IniOutVals(11)=INPT(3,1)
-       IniOutVals(12)=INPT(4,1)
-       IniOutVals(13)=INPT(5,1)
-       IniOutVals(14)=INPT(6,1)
-       IniOutVals(15)=INPT(7,1)
-       IniOutVals(16)=INPT(8,1)
+            if(towrite)WRITE(iunit,*)YEAR,MONTH,DAY,HOUR,atff,HRI,Eacl,Ema,(INPT(i,1),i=1,8) 
+            IniOutVals(1)=YEAR
+            IniOutVals(2)=MONTH
+            IniOutVals(3)=DAY
+            IniOutVals(4)=HOUR
+            IniOutVals(5)=atff
+            IniOutVals(6)=HRI
+            IniOutVals(7)=Eacl
+            IniOutVals(8)=Ema
+            IniOutVals(9)=INPT(1,1)
+            IniOutVals(10)=INPT(2,1)
+            IniOutVals(11)=INPT(3,1)
+            IniOutVals(12)=INPT(4,1)
+            IniOutVals(13)=INPT(5,1)
+            IniOutVals(14)=INPT(6,1)
+            IniOutVals(15)=INPT(7,1)
+            IniOutVals(16)=INPT(8,1)
        
-!      set control flags
-       iflag(1) = iradfl   ! radiation (0=radiation is shortwave in col 5 and longwave in col 6, else = net radiation in column 7)
-       !  In the code above radiation inputs were either computed or read from input files
-       iflag(2) = 0        ! no 0 (/yes 1) printing
-       iflag(3) = iunit        ! Output unit to which to print
-       if(ireadalb .eq. 0)then
-        iflag(4) = 1        ! Albedo Calculation (a value 1 means albedo is calculated, otherwise statev(3) is albedo
-       else
-        iflag(4)=0
-        statev(3)=Snowalb
-       endif 
-!      iflag(5) = 4        ! yjs Surface temperature modeling method, read above from input file
-!          iflag(5)  model option for surface temperature approximation (This is read as a model parameter stmflag
-!              1) the Simple Gradient, almost the same as Original UEB,
-!              2) Simple Gradient approach with shallow snow correction. 
-!              3) The classical force-restore approach.
-!              4) Modified force-restore approach.
-!       iflag(6) = 2     !This is read as a model parameter forwsflag   ! Wind speed in forest canopy: 1 is observed and 2 is computed from above canopy observation
-!      set modeling time
-       mtime(1) = Year
-       mtime(2) = month
-       mtime(3) = day
-       mtime(4) = hour
+    !      set control flags
+            iflag(1) = iradfl   ! radiation (0=radiation is shortwave in col 5 and longwave in col 6, else = net radiation in column 7)
+            !  In the code above radiation inputs were either computed or read from input files
+            iflag(2) = 0        ! no 0 (/yes 1) printing
+            iflag(3) = iunit        ! Output unit to which to print
+            if(ireadalb .eq. 0)then
+            iflag(4) = 1        ! Albedo Calculation (a value 1 means albedo is calculated, otherwise statev(3) is albedo
+            else
+            iflag(4)=0
+            statev(3)=Snowalb
+            endif 
+    !      iflag(5) = 4        ! yjs Surface temperature modeling method, read above from input file
+    !          iflag(5)  model option for surface temperature approximation (This is read as a model parameter stmflag
+    !              1) the Simple Gradient, almost the same as Original UEB,
+    !              2) Simple Gradient approach with shallow snow correction. 
+    !              3) The classical force-restore approach.
+    !              4) Modified force-restore approach.
+    !       iflag(6) = 2     !This is read as a model parameter forwsflag   ! Wind speed in forest canopy: 1 is observed and 2 is computed from above canopy observation
+    !      set modeling time
+            mtime(1) = Year
+            mtime(2) = month
+            mtime(3) = day
+            mtime(4) = hour
 
-!**************************************************************************************************
-        if(day .eq. 29)then
-          mtime(3) = day
-        endif
-        CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
-         &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
+    !**************************************************************************************************
+            if(day .eq. 29)then
+              mtime(3) = day
+            endif
+            CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
+              &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
      
-        tresult= Etime(tarray)
-        tcomp=tcomp+tresult-tlast
-        tlast=tresult
+            tresult= Etime(tarray)
+            tcomp=tcomp+tresult-tlast
+            tlast=tresult
 
-!        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
-!           OutArr=0
-!        END IF
+    !        IF(sitev(10).EQ. 3)THEN  ! Substrate type is accumulation zone
+    !           OutArr=0
+    !        END IF
         
-        if(towrite)WRITE(iunit,*)OutArr       
-        DStorage=statev(2)-Ws1+statev(4)-Wc1
-        errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
+            if(towrite)WRITE(iunit,*)OutArr       
+            DStorage=statev(2)-Ws1+statev(4)-Wc1
+            errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
 
-        if(towrite)WRITE(iunit,*)ERRMBAL
-        if (nlines .eq. GridModel)THEN
-        !mapping to OutVarValue
-        OutVarValue(istep,1:12)=IniOutVals(5:16)
-        OutVarValue(istep,13:62)=OutArr(1:50)
-        OutVarValue(istep,63)=ERRMBAL
-        OutVarValue(istep,64:66)=OutArr(51:53)
-        END IF
-        ! These settings tell netcdf to write one timestep of data. (The
-        ! setting of start(4) inside the loop below tells netCDF which
-        ! timestep to write.)
+            if(towrite)WRITE(iunit,*)ERRMBAL
+            if (nlines .eq. GridModel)THEN
+            !mapping to OutVarValue
+            OutVarValue(istep,1:12)=IniOutVals(5:16)
+            OutVarValue(istep,13:62)=OutArr(1:50)
+            OutVarValue(istep,63)=ERRMBAL
+            OutVarValue(istep,64:66)=OutArr(51:53)
+            END IF
+            ! These settings tell netcdf to write one timestep of data. (The
+            ! setting of start(4) inside the loop below tells netCDF which
+            ! timestep to write.)
   
-        ELSE  ! this block entered only if sitev(10)= 3
-           OutArr=0.0
-           ERRMBAL=0.0
-           if(towrite)WRITE(iunit,*)OutArr 
-           if(towrite)WRITE(iunit,*)ERRMBAL 
-           OutVarValue(istep,1:66)=0.00
-        END IF
+            ELSE  ! this block entered only if sitev(10)= 3
+                OutArr=0.0
+                ERRMBAL=0.0
+                if(towrite)WRITE(iunit,*)OutArr 
+                if(towrite)WRITE(iunit,*)ERRMBAL 
+                OutVarValue(istep,1:66)=0.00
+            END IF
         
-        tresult= Etime(tarray)
-        tout=tout+tresult-tlast
-        tlast=tresult
+            tresult= Etime(tarray)
+            tout=tout+tresult-tlast
+            tlast=tresult
         
-        if (nlines .eq. GridModel)THEN
-        ! Here we rely on the even spread of time steps until the last file
-        incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
-        END IF
+            if (nlines .eq. GridModel)THEN
+            ! Here we rely on the even spread of time steps until the last file
+            incfile=(istep-1)/NumtimeStepPerFile(1)+1  !  the netcdf file position
+            END IF
         
-        ReferenceHour=DBLE(hour)
-        call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
-        FNDJDT(istep)=DBLE(CTJD-Referencetime)
+            ReferenceHour=DBLE(hour)
+            call JULDAT(YEAR,MONTH,DAY,ReferenceHour,CTJD)  !  current julian date time
+            FNDJDT(istep)=DBLE(CTJD-Referencetime)
         
-        IF (nlines .eq. GridModel)THEN      
-        IDNum=Int(IDNumber(1))
-            if((IDNum .ne. 0) .and. (IDNum .ne. WsMissingValuesInt) .and. (IDNum .ne. WsFillValuesInt))then
-                Do jUniqueID=1,uniqueIDNumber
-                    If(UniqueIDArray(jUniqueID) .eq. IDNum)then
-                        do ioutvar=1,AggOutNum
-                            AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
-                            AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
-                            ! Averaging requires according to Joseph D. Nigro
-                            AggdWSVarValAvg(istep,jUniqueID,ioutvar) = AggdWSVarVal(istep,jUniqueID,ioutvar)/UniqueIDArrayCount(jUniqueID)
-                        END DO
-                        Exit
-                    End if
-                end do
-            end if
-        END IF
+            IF (nlines .eq. GridModel)THEN      
+            IDNum=Int(IDNumber(1))
+                if((IDNum .ne. 0) .and. (IDNum .ne. WsMissingValuesInt) .and. (IDNum .ne. WsFillValuesInt))then
+                    Do jUniqueID=1,uniqueIDNumber
+                        If(UniqueIDArray(jUniqueID) .eq. IDNum)then
+                            do ioutvar=1,AggOutNum
+                                AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
+                                AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
+                                ! Averaging requires according to Joseph D. Nigro
+                                AggdWSVarValAvg(istep,jUniqueID,ioutvar) = AggdWSVarVal(istep,jUniqueID,ioutvar)/UniqueIDArrayCount(jUniqueID)
+                            END DO
+                            Exit
+                        End if
+                    end do
+                end if
+            END IF
 
 
-        CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)   
-        ModHour=DBLE(Hour)
-        call JULDAT(YEAR,MONTH,DAY,ModHour,CurrentModelDT)
+            CALL UPDATEtime(YEAR,MONTH,DAY,HOUR,DT)   
+            ModHour=DBLE(Hour)
+            call JULDAT(YEAR,MONTH,DAY,ModHour,CurrentModelDT)
         
-        tresult= Etime(tarray)
-        taggre=taggre+tresult-tlast
-        tlast=tresult
+            tresult= Etime(tarray)
+            taggre=taggre+tresult-tlast
+            tlast=tresult
+          end do   
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          ! This is the End of the main time loop 
+          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
-        If (EJD .GE. CurrentModelDT)Then      
-            Go to 1
-        End if
-        
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-       ! This is the End of the main time loop 
-       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      !If (EJD .GE. CurrentModelDT)Then      
+      !    Go to 1
+      !End if
+      !
        
-        deallocate(Tsprevday)
-        deallocate(Taveprevday)
-        Close(iunit)
+          deallocate(Tsprevday)
+          deallocate(Taveprevday)
+          Close(iunit)
         
-        IF (nlines .eq. GridModel)THEN 
-         do ioutv=1,outcount
-           do incfile = 1,NumofFile
-                CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
-                &StartEndNCDF,OutVarValue)  
-                CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
-           enddo
-         enddo
-        END IF
+          IF (nlines .eq. GridModel)THEN 
+            do ioutv=1,outcount
+              do incfile = 1,NumofFile
+                  CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
+                  &StartEndNCDF,OutVarValue)  
+                  CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))
+              enddo
+            enddo
+          END IF
         endif  !  this is the end of if we are in a watershed    
         
         tresult= Etime(tarray)
@@ -943,62 +945,61 @@
         numgrid=numgrid+1
         write(6,FMT="(A1,A,t30,F6.2,A$)") achar(13), " Percent Grid completed: ", (real(numgrid)/real(totalgrid))*100.0, "%"
     
-       END DO  !  These are the end of the space loop
-     END DO
-     
+      END DO  !  These are the end of the space loop
+      END DO    
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    ! Space loop ends here
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-    IF (nlines .eq. GridModel)THEN 
-   ! Putting all the dimension values inside the netcdf files
-    do ioutv=1,outcount
-       do incfile = 1,NumofFile
-        CALL OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT) ! time is dimension 1
-        CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))     !syncing the netcdf
-        CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))    !closing the netcdf
-       enddo
-    enddo
-    Write (6,FMT="(/A32)") " Now aggregation will be started"
-    Write (6,FMT="(A35/)")  " Time taken for various operations:"
-    
-     do istep=1,Numtimestep
-        do ivar=1,AggOutNum
-            Do jUniqueID=1,uniqueIDNumber
-                if((UniqueIDArray(jUniqueID) .ne. 0) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValuesInt) .and.&
-                &(UniqueIDArray(jUniqueID) .ne. WsFillValuesInt))then
-                    WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
-                    &UniqueIDArray(jUniqueID),AggdWSVarValAvg(istep,jUniqueID,ivar)
-47                  format(1x,i5,i3,i3,f8.3,1x,a11,i7,1x,g13.6)
-                end if
-            end do
+      IF (nlines .eq. GridModel)THEN 
+         ! Putting all the dimension values inside the netcdf files
+        do ioutv=1,outcount
+          do incfile = 1,NumofFile
+            CALL OutputtimenetCDF(NCIDARRAY,NumtimeStep,outcount,incfile,ioutv,NumtimeStepPerFile,NumofFile,StartEndNCDF,FNDJDT) ! time is dimension 1
+            CALL check(nf90_sync(NCIDARRAY(incfile,ioutv)))     !syncing the netcdf
+            CALL Check(nf90_close(NCIDARRAY(incfile,ioutv)))    !closing the netcdf
+          enddo
         enddo
-    end do
-    Close(AggUnit)
-    END IF
+        Write (6,FMT="(/A32)") " Now aggregation will be started"
+        Write (6,FMT="(A35/)")  " Time taken for various operations:"
     
-    tresult= Etime(tarray)
-    tagg=tagg+tresult-tlast
-    tlast=tresult
+        do istep=1,Numtimestep
+          do ivar=1,AggOutNum
+            Do jUniqueID=1,uniqueIDNumber
+              if((UniqueIDArray(jUniqueID) .ne. 0) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValuesInt) .and.&
+                &(UniqueIDArray(jUniqueID) .ne. WsFillValuesInt))then
+                  WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
+                  &UniqueIDArray(jUniqueID),AggdWSVarValAvg(istep,jUniqueID,ivar)
+47                format(1x,i5,i3,i3,f8.3,1x,a11,i7,1x,g13.6)
+              end if
+            end do
+          enddo
+        end do
+        Close(AggUnit)
+      END IF
+    
+      tresult= Etime(tarray)
+      tagg=tagg+tresult-tlast
+      tlast=tresult
 
-    tarray(1)=tarray(1)
-    write(636,*) "Reading SiteVariable: ",tsitev," Seconds"
-    write(636,*) "Input time: ",tio," Seconds"
-    write(636,*) "Compute time: ",tcomp," Seconds"
-    write(636,*) "Out time: ",tout," Seconds"
-    write(636,*) "Out timeinNC: ",toutnc," Seconds"
-    write(636,*) "Aggregated StorageArray: ",taggre," Seconds"
-    write(636,*) "Aggregation time: ",tagg," Seconds"
-    write(636,*) "Complete runtime: ",tarray(1)," Seconds"
-    Close(636)
+      tarray(1)=tarray(1)
+      write(636,*) "Reading SiteVariable: ",tsitev," Seconds"
+      write(636,*) "Input time: ",tio," Seconds"
+      write(636,*) "Compute time: ",tcomp," Seconds"
+      write(636,*) "Out time: ",tout," Seconds"
+      write(636,*) "Out timeinNC: ",toutnc," Seconds"
+      write(636,*) "Aggregated StorageArray: ",taggre," Seconds"
+      write(636,*) "Aggregation time: ",tagg," Seconds"
+      write(636,*) "Complete runtime: ",tarray(1)," Seconds"
+      Close(636)
     
-    write(6,*) "Reading SiteVariable: ",tsitev," Seconds"
-    write(6,*) "Input time:",tio," Seconds"
-    write(6,*) "Compute time:",tcomp," Seconds"
-    write(6,*) "Out time:",tout," Seconds"
-    write(6,*) "Out timeinNC:",toutnc," Seconds"
-    write(6,*) "Aggregated StorageArray:",taggre," Seconds"
-    write(6,*) "Aggregation time:",tagg," Seconds"
-    write(6,*) "Complete runtime:",tarray(1)," Seconds"
-    Write(6,*) "Your task is successfully performed! Plesae view the results in 'outputs' folder!"
+      write(6,*) "Reading SiteVariable: ",tsitev," Seconds"
+      write(6,*) "Input time:",tio," Seconds"
+      write(6,*) "Compute time:",tcomp," Seconds"
+      write(6,*) "Out time:",tout," Seconds"
+      write(6,*) "Out timeinNC:",toutnc," Seconds"
+      write(6,*) "Aggregated StorageArray:",taggre," Seconds"
+      write(6,*) "Aggregation time:",tagg," Seconds"
+      write(6,*) "Complete runtime:",tarray(1)," Seconds"
+      Write(6,*) "Your task is successfully performed! Plesae view the results in 'outputs' folder!"
     
 end program
