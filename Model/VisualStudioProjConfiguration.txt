@@ -22,7 +22,7 @@ Add the following libraries to visual studio project
 netcdf.lib
 netcdf_f90.lib
 
-For the bitbox repository we leave netCDF out of the repository so need to go up a few directories
+For the bitbucket repository we leave netCDF out of the repository so need to go up a few directories
 
 Settings to Visual studio to include netCDF files in the builds
 In Fortran\General\Additional Include Directories: ...\..\netcdf3.6.1\include
@@ -30,5 +30,6 @@ In Linker\General\Additional Library Directories\General: ..\..\..\netcdf3.6.1\l
 In Linker\Input\Additional Dependencies: netcdf.lib
 In code use netcdf
 In system path create an entry for the path to the file netcdf.dll in ..\..\..\netcdf3.6.1\lib
+[Also handy to add ...\netcdf3.6.1\bin to path to take advantage of ncdump and ncgen programs]
 In Visual studio solution add netcdf.lib and netcdf_f90.lib
 In Visual studio project properties -> Fortran ->Libraries set runtime library to Multithreaded to avoid libcmt warning.

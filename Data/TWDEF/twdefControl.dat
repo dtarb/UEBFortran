@@ -3,6 +3,6 @@ param.dat
 siteinitial.dat
 inputcontrol.dat
 outputcontrol.dat
-watershed.nc;X:x;Y:y;D:IDnumber
+watershed.nc;X:xcoord;Y:ycoord;D:IDnumber
 Aggregateoutputcontrol.dat
 outputs\AggregatedOutput.dat
