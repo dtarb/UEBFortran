@@ -412,6 +412,7 @@ integer:: DimID1,DImID2
 !Open the file and see what's inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file
 ! get dimension IDs
+! TODO - the logic below seems unnecessarily complex.  
 call check(nf90_inq_dimid(ncidout,dimname1,DimID1))
 call check(nf90_inq_dimid(ncidout,dimname2,DimID2))
 if (DimID1==1 .and. dimID2==2)THEN
@@ -422,22 +423,44 @@ if (DimID1==2 .and. dimID2==1)THEN
     call check(nf90_inquire_dimension(ncidout,DimID1,len=dimlen2))       ! Information about dimensionID 1
     call check(nf90_inquire_dimension(ncidout,DimID2,len=dimlen1))       ! information about dimensionID 2  
 END IF
+!  DGT suggests making dimname and dimlen arrays and replacing the 10 lines above by the following
+! do idim=1,2
+! call check(nf90_inq_dimid(ncidout,dimname(i),DimID))
+! call check(nf90_inquire_dimension(ncidout,DimID,len=dimlen(DimID)))
+! enddo
 call check(nf90_inq_varid(ncidout,WatershedVARID,WSVarId))
 CALL check(nf90_inquire_variable(ncidout,WSVarId,natts=numAtts))
 
+! The logic below will work if missing or fill value is not the last attribute in the list.
+!DO iii=1,numAtts
+!CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
+!    if(AttName .eq. missing_value)THEN
+!        CALL check(nf90_get_att(ncidout,WSVarId,missing_value,WsMissingValues)) 
+!    ELSE
+!        WsMissingValues=0
+!    end IF
+!    if(AttName .eq. fillvalue)THEN
+!        CALL check(nf90_get_att(ncidout,WSVarId,fillvalue,WsFillValues))  
+!    ELSE
+!        WsFillValues=0
+!    end IF
+!END DO
+WsMissingValues=0
 DO iii=1,numAtts
-CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
-    if(AttName .eq. missing_value)THEN
-        CALL check(nf90_get_att(ncidout,WSVarId,missing_value,WsMissingValues)) 
-    ELSE
-        WsMissingValues=0
-    end IF
-    if(AttName .eq. fillvalue)THEN
-        CALL check(nf90_get_att(ncidout,WSVarId,fillvalue,WsFillValues))  
-    ELSE
-        WsFillValues=0
-    end IF
-END DO
+  CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
+  if(AttName .eq. missing_value)then
+    CALL check(nf90_get_att(ncidout,WSVarId,missing_value,WsMissingValues))
+    exit
+  endif
+enddo
+WsFillValues=0
+DO iii=1,numAtts
+  CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
+  if(AttName .eq. fillvalue)then
+    CALL check(nf90_get_att(ncidout,WSVarId,fillvalue,WsFillValues))
+    exit
+  endif
+enddo
 CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end subroutine nCDF2DArrayInfo2
