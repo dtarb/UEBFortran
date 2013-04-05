@@ -955,207 +955,63 @@ END Subroutine StringSepWord
 !**********************************************
 
 ! Obtain name of the NC/Index files, Xcoordinate, Ycoordinate, Time and Variable names
-Subroutine StringToVarName(nargs,words,delimit,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
-                &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+Subroutine StringToVarName(nargs,wordgroup,delimit,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
+                &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,is2d)
                          
 Implicit none
-integer:: nargs,nargs2,nargs3,nargs4,nargs5,nargs6,nargs7
+logical:: is2d
+integer:: nargs,nargs2,i,nargsrange
 Character(200):: SitexcoordinateR, SiteycoordinateR, InputtcoordinateR
 Character(100):: VarNameinNCDFR
-Character(200),Allocatable:: words1(:),words2(:),words3(:),words4(:),words5(:),words6(:),words7(:)
-REAL,Allocatable:: words7Real(:) 
-!character(200):: words(nargs)
-character(200):: words(7)
+Character(200),Allocatable:: words(:),wordsrange(:)
+character(200):: wordgroup(nargs)
 Character(1):: delimit,delimit3
 Character(200):: StateSiteFilesR
 Integer:: DefaultDimValues(3)
 real:: RangeMin, RangeMax
 
-StateSiteFilesR = words(1)
+StateSiteFilesR = wordgroup(1)  ! first argument is always the file name
+if(is2d)then  ! default dimension values for 2d files (not space time varying)
+  DefaultDimValues(1)=-9999
+  DefaultDimValues(2)=1
+  DefaultDimValues(3)=2
+else ! default dimension values for 3d files (space time varying)
+  DefaultDimValues(1)=1
+  DefaultDimValues(2)=2
+  DefaultDimValues(3)=3
+endif  
+! default range values
+RangeMin=-9999
+RangeMax=-9999
 
-CALL StringSep(words(2),delimit,nargs2)
-Allocate(words2(nargs2))
-CALL StringSepWord(words(2),delimit,nargs2,words2)
-
-CALL StringSep(words(3),delimit,nargs3)
-Allocate(words3(nargs3))
-CALL StringSepWord(words(3),delimit,nargs3,words3)
-
-CALL StringSep(words(4),delimit,nargs4)
-Allocate(words4(nargs4))
-CALL StringSepWord(words(4),delimit,nargs4,words4)
-
-CALL StringSep(words(5),delimit,nargs5)
-Allocate(words5(nargs5))
-CALL StringSepWord(words(5),delimit,nargs5,words5) 
-
-CALL StringSep(words(6),delimit,nargs6)
-Allocate(words6(nargs6))
-CALL StringSepWord(words(6),delimit,nargs6,words6) 
-
-CALL lowercase(words2(1),words2(1))
-CALL lowercase(words3(1),words3(1))
-CALL lowercase(words4(1),words4(1))
-CALL lowercase(words5(1),words5(1))
-call lowercase(words6(1),words6(1))
-
-Allocate(words7(3))
-Allocate(words7Real(2))
-
-if (words2(1) == 'x')Then
-    SitexcoordinateR=words2(2)
-end if
-if (words3(1) == 'x')Then
-    SitexcoordinateR=words3(2)
-end if
-if (words4(1) == 'x')Then
-    SitexcoordinateR=words4(2)
-end if
-if (words5(1) == 'x')Then
-    SitexcoordinateR=words5(2)
-end if
-if (words6(1) == 'x')Then
-    SitexcoordinateR=words6(2)
-end if   
-  
-if (words2(1) .eq. 'x' .or. words3(1) .eq. 'x' .or. words4(1) .eq. 'x' .or. words5(1) .eq. 'x' .or. words6(1) .eq. 'x')THEN
-    DefaultDimValues(3)=-9999
-else 
-    DefaultDimValues(3)=3
-end if
-
-if (words2(1) == 'y')Then
-    SiteycoordinateR=words2(2)
-end if
-if (words3(1) == 'y')Then
-    SiteycoordinateR=words3(2)
-end if
-if (words4(1) == 'y')Then
-    SiteycoordinateR=words4(2)
-end if
-if (words5(1) == 'y')Then
-    SitexcoordinateR=words5(2)
-end if
-if (words6(1) == 'y')Then
-    SitexcoordinateR=words6(2)
-end if
-
-if (words2(1) .eq. 'y' .or. words3(1) .eq. 'y' .or. words4(1) .eq. 'y' .or. words5(1) .eq. 'y' .or. words6(1) .eq. 'y')THEN
+do i=2,nargs
+  CALL StringSep(wordgroup(i),delimit,nargs2)  !  separates the input word group into its parts
+  Allocate(words(nargs2))
+  CALL StringSepWord(wordgroup(i),delimit,nargs2,words)
+  CALL lowercase(words(1),words(1))
+  if (words(1) == 'x')Then
+      SitexcoordinateR=words(2)
+      DefaultDimValues(3)=-9999
+  elseif (words(1) == 'y')Then
+    SiteycoordinateR=words(2)
     DefaultDimValues(2)=-9999
-else 
-    DefaultDimValues(2)=2
-end if
-    
-if (words2(1) == 'time')Then
-    InputtcoordinateR=words2(2)
-end if
-if (words3(1) == 'time')Then
-    InputtcoordinateR=words3(2)
-end if
-if (words4(1) == 'time')Then
-    InputtcoordinateR=words4(2)
-end if
-if (words5(1) == 'time')Then
-    InputtcoordinateR=words5(2)
-end if
-if (words6(1) == 'time')Then
-    InputtcoordinateR=words6(2)
-end if
-
-if (words2(1) .eq. 'time' .or. words3(1) .eq. 'time' .or. words4(1) .eq. 'time' .or. words5(1) .eq. 'time' .or. words6(1) .eq. 'time')THEN
+  elseif (words(1) == 'time')Then
+    InputtcoordinateR=words(2)
     DefaultDimValues(1)=-9999
-else 
-    DefaultDimValues(1)=1
-end if
-      
-if (words2(1) == 'd')Then
-    VarNameinNCDFR=words2(2)
-elseif (words3(1) == 'd')Then
-    VarNameinNCDFR=words3(2)
-elseif (words4(1) == 'd')Then
-    VarNameinNCDFR=words4(2)
-elseif (words5(1) == 'd')Then
-    VarNameinNCDFR=words5(2)
-elseif (words6(1) == 'd')Then
-    VarNameinNCDFR=words6(2)
-else
-write(6,*) "variable name must be writen along with file name", StateSiteFilesR
-end if
-
-if (words2(1) == 'range')Then
-    deallocate(words7)
-    CALL StringSep(words2(2),delimit3,nargs7)
-    Allocate(words7(nargs7))
-    CALL StringSepWord(words2(2),delimit3,nargs7,words7) 
-    READ(words7(1),*)words7Real(1)
-    READ(words7(2),*)words7Real(2) 
-    RangeMin=words7Real(1)
-    RangeMax=words7Real(2)
-end if
-if (words3(1) == 'range')Then
-    deallocate(words7)
-    deallocate(words7Real)
-    CALL StringSep(words3(2),delimit3,nargs7)
-    Allocate(words7(nargs7))
-    Allocate(words7Real(nargs7))
-    CALL StringSepWord(words3(2),delimit3,nargs7,words7)
-    READ(words7(1),*)words7Real(1)
-    READ(words7(2),*)words7Real(2) 
-    RangeMin=words7Real(1)
-    RangeMax=words7Real(2)
-end if
-if (words4(1) == 'range')Then
-    deallocate(words7)
-    deallocate(words7Real)
-    CALL StringSep(words4(2),delimit3,nargs7)
-    Allocate(words7(nargs7))
-    Allocate(words7Real(nargs7))
-    CALL StringSepWord(words4(2),delimit3,nargs7,words7)
-    READ(words7(1),*)words7Real(1)
-    READ(words7(2),*)words7Real(2) 
-    RangeMin=words7Real(1)
-    RangeMax=words7Real(2)
-end if
-if (words5(1) == 'range')Then
-    deallocate(words7)
-    deallocate(words7Real)
-    CALL StringSep(words5(2),delimit3,nargs7)
-    Allocate(words7(nargs7))
-    Allocate(words7Real(nargs7))
-    CALL StringSepWord(words5(2),delimit3,nargs7,words7)
-    READ(words7(1),*)words7Real(1)
-    READ(words7(2),*)words7Real(2) 
-    RangeMin=words7Real(1)
-    RangeMax=words7Real(2)
-end if
-if (words6(1) == 'range')Then
-    deallocate(words7)
-    deallocate(words7Real)
-    CALL StringSep(words6(2),delimit3,nargs7)
-    Allocate(words7(nargs7))
-    Allocate(words7Real(nargs7))
-    CALL StringSepWord(words6(2),delimit3,nargs7,words7)
-    READ(words7(1),*)words7Real(1)
-    READ(words7(2),*)words7Real(2) 
-    RangeMin=words7Real(1)
-    RangeMax=words7Real(2)
-end if
-
-if (words2(1) .eq. 'range' .or. words3(1) .eq. 'range' .or. words4(1) .eq. 'range' .or. words5(1) .eq. 'range' .or. words6(1) .eq. 'range')THEN
-    RangeMin=RangeMin
-    RangeMax=RangeMax
-else
-    RangeMin=-9999
-    RangeMax=-9999
-end if
-
-deallocate(words2)
-deallocate(words3)
-deallocate(words4)
-deallocate(words5)
-deallocate(words6)
-deallocate(words7)
-
+  elseif (words(1) == 'd')Then
+    VarNameinNCDFR=words(2)
+  elseif (words(1) == 'range')Then
+    CALL StringSep(words(2),delimit3,nargsrange)
+    Allocate(wordsrange(nargsrange))
+    CALL StringSepWord(words(2),delimit3,nargsrange,wordsrange) 
+    READ(wordsrange(1),*)RangeMin
+    READ(wordsrange(2),*)RangeMax
+    deallocate(wordsrange)
+  else
+    write(6,*) "variable name must be writen along with file name", StateSiteFilesR
+  end if
+  deallocate(words)
+enddo
 End Subroutine StringToVarName
 
 !==================Obtain Input Variable Missing and Filling value ===========================================

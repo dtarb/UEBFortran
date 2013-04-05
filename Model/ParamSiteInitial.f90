@@ -181,7 +181,7 @@
                     CALL StringSepWord(str,delimit1,nargs,words)
                     Words7element(1:nargs)=words(1:nargs)
                     CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
-                                         &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                                         &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.true.)
                     SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (get y coordinate)
                     SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get y coordinate)
                     SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (there is no time in a 2-D file)
@@ -339,7 +339,7 @@
                     CALL StringSepWord(str,delimit1,nargs,words)
                     words7element(1:nargs)=words(1:nargs)
                     CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
-                                         &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                                         &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.true.)
                     SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (get y coordinate)
                     SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get y coordinate)
                     SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (there is no time in a 2-D file)

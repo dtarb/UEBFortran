@@ -91,7 +91,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
                         CALL StringSepWord(str,delimit1,nargs,words)
                         Word7element(1:nargs)=words(1:nargs)
                         CALL StringToVarName(nargs,Word7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
-                                             &VarNameinNCDFR,InputtcoordinateR,DEFAULTDIMVALUES,RangeMin,RangeMax,delimit3)
+                                             &VarNameinNCDFR,InputtcoordinateR,DEFAULTDIMVALUES,RangeMin,RangeMax,delimit3,.true.)
                         Sitexcoordinates(i)=SitexcoordinateR
                         Siteycoordinates(i)=SiteycoordinateR                                        
                         SiteVarNameinNCDF(i)=VarNameinNCDFR
@@ -178,7 +178,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
                         CALL StringSepWord(str,delimit1,nargs,words)
                         Words7element(1:nargs)=words(1:nargs)                      
                         CALL StringToVarName(nargs,Words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
-                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.false.)
                         InputDefDimval(NCNumber,1)=DefaultDimValues(1)
                         InputDefDimval(NCNumber,2)=DefaultDimValues(2)
                         InputDefDimval(NCNumber,3)=DefaultDimValues(3)  

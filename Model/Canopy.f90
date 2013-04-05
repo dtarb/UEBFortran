@@ -39,7 +39,7 @@
 
         REAL Qsi,cf,Taufb,Taufd,Qsib,Qsid,Taufc
         REAL param(*),as,bs,Lambda
-			
+		
         as     = param(28)			! Fraction of extraterrestaial radiation on cloudy day,Shuttleworth (1993)  
 	bs     = param(29)			! (as+bs):Fraction of extraterrestaial radiation on clear day, Shuttleworth (1993) 
 	Lambda = param(30)		    ! Ratio of diffuse atm radiation to direct for cler sky,from Dingman (1993)
@@ -75,8 +75,8 @@
      	         Betab,Betad,Taub,Taud)                     ! Output variables: Transmission and Reflection fractions
 
     
-	REAL sitev(*),param(*),LAI,COSZEN,EXPI,G, kk
-	REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
+  REAL sitev(*),param(*),LAI,COSZEN,EXPI,G, kk
+  REAL Taub,Taud,Taubh,Taudh, Beta, Betab, Betad
 
 
 	Cc    = sitev(5)     ! Leaf Area Index 
@@ -125,7 +125,8 @@
 
 !****************** NET CANOPY & SUB CANOPY SOLAR RADIATION *********************************
 !      Computes the net canopy and sub-canopy solar radiation
-!      considering the multiple scatterings of radiation by the canopy and multile reflectios between the canopy and the snow surface
+!      considering the multiple scatterings of radiation by the canopy and multile reflections 
+!      between the canopy and the snow surface
 	SUBROUTINE NETSOLRAD(Ta,A,Betab,Betad,Wc,Taub,Taud, &
      	 Inmax,Qsib,Qsid,param,Fs, &
                             Qsns,Qsnc ) !  Output: Qsns,Qsnc (Net subcanopy, canopy solar radiation) 
