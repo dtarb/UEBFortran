@@ -93,7 +93,7 @@
                         CALL StringSepWord(str,delimit1,nargs,words)
                         Words7element(1:nargs)=words(1:nargs)
                         CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
-                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.false.)
                         InputNCFilename(i)=StateSiteFilesR
                         Deallocate(words)
                         deallocate(words7element)
@@ -251,7 +251,7 @@
                         CALL StringSepWord(str,delimit1,nargs,words)
                         Words7element(1:nargs)=words(1:nargs)
                         CALL StringToVarName(nargs,Words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
-                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3)
+                                             &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.false.)
                         InputDefDimval(i,1)=DefaultDimValues(1)
                         InputDefDimval(i,2)=DefaultDimValues(2)
                         InputDefDimval(i,3)=DefaultDimValues(3)                                             
