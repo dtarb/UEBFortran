@@ -447,21 +447,21 @@
       ModelEndDate,ModelEndHour,nrefyr,nrefmo,nrefday,modeldt,NumtimeStep,CurrentArrayPosRegrid,modelTimeJDT)
        
        !*******************************************************************************           
-        OPEN(665,FILE='DataBeforeRegrid.DAT',STATUS='UNKNOWN')
-        Do I = 1,maxncfilents
-            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
-            &TSV(i,7),TSV(i,8),TSV(i,9),TSV(i,10),TSV(i,11)
-37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
-        End do
-        Close(665)
-        OPEN(668,FILE='CurrentArrayPosRegrid.DAT',STATUS='UNKNOWN')
-        Do I = 1,NumtimeStep
-            Write(668,39) CurrentArrayPosRegrid(i,1),CurrentArrayPosRegrid(i,2),CurrentArrayPosRegrid(i,3),CurrentArrayPosRegrid(i,4),&
-            CurrentArrayPosRegrid(i,5),CurrentArrayPosRegrid(i,6),CurrentArrayPosRegrid(i,7),CurrentArrayPosRegrid(i,8),&
-            CurrentArrayPosRegrid(i,9),CurrentArrayPosRegrid(i,10),CurrentArrayPosRegrid(i,11)
-39          format(I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5)
-        END DO
-        Close(668)
+!        OPEN(665,FILE='DataBeforeRegrid.DAT',STATUS='UNKNOWN')
+!        Do I = 1,maxncfilents
+!            Write(665,37) TSV(i,1),TSV(i,2),TSV(i,3),TSV(i,4),TSV(i,5),TSV(i,6),&
+!            &TSV(i,7),TSV(i,8),TSV(i,9),TSV(i,10),TSV(i,11)
+!37          format(f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5,1x,f17.5)
+!        End do
+!        Close(665)
+!        OPEN(668,FILE='CurrentArrayPosRegrid.DAT',STATUS='UNKNOWN')
+!        Do I = 1,NumtimeStep
+!            Write(668,39) CurrentArrayPosRegrid(i,1),CurrentArrayPosRegrid(i,2),CurrentArrayPosRegrid(i,3),CurrentArrayPosRegrid(i,4),&
+!            CurrentArrayPosRegrid(i,5),CurrentArrayPosRegrid(i,6),CurrentArrayPosRegrid(i,7),CurrentArrayPosRegrid(i,8),&
+!            CurrentArrayPosRegrid(i,9),CurrentArrayPosRegrid(i,10),CurrentArrayPosRegrid(i,11)
+!39          format(I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5,1x,I5)
+!        END DO
+!        Close(668)
       !*******************************************************************************         
 
       If (GridModel)THEN
@@ -884,7 +884,7 @@
                           do ioutvar=1,AggOutNum
                               AggValues=OutVarValue(istep,AggOutVarnum(ioutvar))
                               AggdWSVarVal(istep,jUniqueID,ioutvar)=AggdWSVarVal(istep,jUniqueID,ioutvar)+AggValues
-                              ! Averaging requires according to Joseph D. Nigro
+                              ! Averaging required
                               AggdWSVarValAvg(istep,jUniqueID,ioutvar) = AggdWSVarVal(istep,jUniqueID,ioutvar)/UniqueIDArrayCount(jUniqueID)
                           END DO
                           Exit
@@ -915,7 +915,7 @@
           deallocate(Taveprevday)
           Close(iunit)
         
-          IF (nlines .eq. GridModel)THEN 
+          IF (GridModel)THEN 
             do ioutv=1,outcount
               do incfile = 1,NumofFile
                   CALL OutputnetCDF(NCIDARRAY,outvar,NumtimeStep,outcount,incfile,ioutv,jxcoord,iycoord,NumtimeStepPerFile,NumofFile,&
@@ -939,7 +939,7 @@
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    ! Space loop ends here
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-      IF (nlines .eq. GridModel)THEN 
+      IF (GridModel)THEN 
          ! Putting all the dimension values inside the netcdf files
         do ioutv=1,outcount
           do incfile = 1,NumofFile
