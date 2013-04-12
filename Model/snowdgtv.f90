@@ -40,7 +40,7 @@
       parameter(niv=8) 
 
       REAL MR,k,lc,ks
-	real lans,lang
+	real lans,lang,rkinc,Tac
       integer pflag,ounit,iflag(*),nstepday
     real:: cumGM
 !	For canopy variables
@@ -191,6 +191,10 @@
 	Lambda   = param(30)		    ! Ratio of direct atm radiation to diffuse,worked out from Dingman (1993)
 	Rimax    = param(31)            ! Maximum value of Richardsion number for stability corretion
 	Wcoeff   = param(32)            ! Wind decay coefficient for the forest
+  
+  ! Some initializations
+  rkinc=0.
+  tac=0.
 
 !  State Variables - These serve as initial conditions
     Us = statev(1)				    	! Snow Energy Content  (KJ/m^2)

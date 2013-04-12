@@ -57,7 +57,6 @@
       real::to,tk,sbc,hf,hneu,cw,cs,cp,rag,k,hff,rhoi,rhow,pi,narg,UTCOFFSET,Etime,g,w1day,dt
       integer::NUMtimeSTEP,NREFYR,NREFMO,NREFDAY,NumOP
       REAL::us,ws,wc,apr,cg,rhog,de,tave,ws1,wc1,cump,cumes,cumec,cummr,ta,p,v,rh,tmin,tmax,TRANGE,QSIOBS,QG,QLI
-      REAL:: QSIOBSModify ! this is usd to switch to the temperature method just for time steps when radiation is negative
       real::tavg,qnetob,snowalb,coszen,atff,cf,hri,atfimplied,ema,eacl,dstorage,ERRMBAL,HRI0
       integer:: juniqueid,ivar,iradfl
       integer::month
@@ -417,7 +416,7 @@
         Allocate(OutVar(outcount))
         Allocate(outputfolder(outcount))
         Allocate(OutVarValue(NumtimeStep,66))
-        CALL OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile, &
+        CALL OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile,dimlen1,dimlen2,&
         OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
         Allocate(NCIDARRAY(NumofFile,outcount))
         Allocate(OutFolder(outcount))
@@ -714,19 +713,18 @@
             INPT(8,1)=COSZEN                
             IF(IRAD.LE.2)THEN               
                 CALL atf(atff,trange,month,dtbar,bca,bcc)
-                IF(IRAD.EQ.0) THEN                     
+!      
+! We found that Model reanalysis and dowscaled data may produce some unreasonably negative solar radiation.
+! this is simply bad data and it is generally better policy to try to give a model good data. 
+! If this is not possible, then the UEB checks will avoid the model doing anything too bad, 
+! it handles negative solar radiation in following way:
+
+! "no data in radiation would be to switch to the temperature method just for time steps 
+! when radiation is negative." 
+                IF(IRAD.EQ.0 .or. (QSIOBS .lt. 0.)) THEN    !  For cases where input is strictly negative we calculate QSI from HRI and air temp range.  This covers the case of missing data being flagged with negative number, i.e. -9999.                 
                     INPT(5,1)=atff*IO*HRI
                     CALL cloud(param,atff,cf)   ! For cloudiness fraction
-                ELSE 
-                    If(QSIOBS .lt. 0) then
-                        QSIOBSModify=QSIOBS
-    !                    If (snowdgtvariteflag .EQ. 1)then
-    !                         write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
-    !                         write(66,*)"at date",year,month,day,hour
-    !                         write(66,*)"was set to zero."
-    !                    end if
-                        QSIOBS=0       
-                    Endif
+                ELSE   ! Here incoming solar is input
     !      Need to call HYRI for horizontal surface to perform horizontal
     !      measurement adjustment
                     CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,0.0,AZI,LAT,HRI0,COSZEN)
@@ -758,28 +756,7 @@
             ELSE 
               IRADFL=1                    ! This case is when given IRAD =3 (From Net Radiation)  
               INPT(7,1) = QNETOB          
-            ENDIF
-       
-            IF((IRAD == 1) .Or. (IRAD == 2))THEN
-              If(QSIOBSModify .lt. 0) then
-                INPT(5,1)=atff*IO*HRI
-                CALL cloud(param,atff,cf)   ! For cloudiness fraction
-                If (snowdgtvariteflag .EQ. 1)then
-                      write(66,*)"Warning! Negative incoming radiation: ",QSIOBS
-                      write(66,*)"at date",year,month,day,hour
-                      write(66,*)"was set to ", INPT(5,1),"using radiation calculation from temperature"
-                end if
-              END IF
-          End if
-!      
-! We found that Model reanalysis and dowscaled data may produce some unreasonably negative solar radiation.
-! this is simply bad data and it is generally better policy to try to give a model good data. 
-! If this is not possible, then the UEB checks will avoid the model doing anything too bad, 
-! it handles negative solar radiation in following way:
-
-! "no data in radiation would be to switch to the temperature method just for time steps 
-! when radiation is negative." 
-       
+            ENDIF 
        
 !************************************************************************************************
             if(towrite)WRITE(iunit,*)YEAR,MONTH,DAY,HOUR,atff,HRI,Eacl,Ema,(INPT(i,1),i=1,8) 

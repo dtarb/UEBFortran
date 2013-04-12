@@ -140,7 +140,7 @@
 !  The file name to each variable that is outpus
 !  An array indicating whether each variable is output or not 
 
-        subroutine OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile, &
+        subroutine OutputFiles(OutControlFILE,NumtimeStep,NumofFile,outSampleFile,NumtimeStepPerFile,dimlen1,dimlen2,&
         OutVar,OutPoint,OutPointFiles,NumOutPoint,OutCount)
         
         ! OutControlFILE
