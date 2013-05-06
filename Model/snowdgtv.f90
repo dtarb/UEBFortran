@@ -34,19 +34,20 @@
       SUBROUTINE SNOWUEB2(dt,nt,input,sitev,statev, &
         tsprevday, taveprevday, nstepday, param,iflag, &
         cump,cumes,cumEc,cummr,cumGM,outv,mtime &
-       ,atff,cf,OutArr)
+       ,atff,cf,OutArr,CumEG)
 
 !      PARAMETER(nsv=9,npar=32,nxv=6,niv=8,nov=14) 
       parameter(niv=8) 
-
+      REAL:: Ms,R,MG
       REAL MR,k,lc,ks
 	real lans,lang,rkinc,Tac
       integer pflag,ounit,iflag(*),nstepday
-    real:: cumGM
+    real:: cumGM,CumEG
 !	For canopy variables
 	REAL int,ieff,Inmax,Mc
 	DOUBLE PRECISION Uc
     REAL AvaiableWater
+    REAL:: MRX,MSX
       !CHANGES TO ACCOMODATE GLACIER
       real:: WGT ! WGT=WATER EQUIVALENT GLACIER THICKNESS
       real:: WGM ! WGT=WATER EQUIVALENT GLACIER MELTED
@@ -364,9 +365,7 @@
                QHs,QEs,Es,QPs, &
                MR,QMs,Q,FM,TSURFs,tave,qnet,refDepth, totalRefDepth, &
                smelt,gsurf,Qlis)
-               
-    
-
+                 
 !  DGT 4/2/05   Despite all checks in predicor It can (and does) occur that 
 !   we still have Us so large that it results in tave greater than 0, which implies that all the 
 !   snow is liquid.  In these cases - just force the snow to disappear and add the energy involved to Qm.
@@ -388,43 +387,76 @@
          Us=rhog*de*cg*10.0
          Tave = 10.0
 	endif
-        
 ! Update snow surface age based on snowfall in time step
-    if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)          
+    if(iflag(4).eq.1) call agesn(statev(3),dt,ps,Tsurfs,tk,dNewS)  
 
-! Partition of melt outflow between rain and snow melt for non glacier case
-    If (Ws .GT. 0)THEN 
-        SWIR=0
-        SWISM=Mr
-    ELSE   !  This else case is never entered for glaciers because the entire WGT is not melted in one time step
-       AvailableSnow=(Ps+statev(2)/dt)
-       SWISM=min(AvailableSnow,Mr)       ! This bounds snow surface melt by the available snow - the balance is due to rain
-       SWIR=Mr-SWISM   
-    Endif
-   
-!  Correction to partition to account for presence of glaciers 
-   IF (Ws .LT. WGT)Then                  ! There was glacier melt
-       AvailableSnow=(Ps+statev(2)/dt)
-       SWISM=min(AvailableSnow,Mr)       !  This bounds snow surface melt by the available snow - the balance is due to rain
-       RemainingAvailableWater=Mr-SWISM  !  This is the remaining melt to allocate
-       SWIGM=min(RemainingAvailableWater,(WGT-Ws)/dt)
-       SWIR=Mr-SWISM-SWIGM
+!  2013 - Introduced glacier substrate into model
+!  Partition melt outflow into the portion that is from rain, snow and glacier
+!  Inputs are condensation (C=max(-Es,0)), precipitation as rain (pr) and precipitation as snow (Ps)
+!  Outputs are melt (Mr) and sublimation (Sub=Max(Es,0))
+!  DW is change in snow water equivalent (positive if decrease)
+!  DG is change in glacier (positive if decrease)
+!  Mass balance
+!  DW+DG=Mr+Sub-Pr-Ps-C
+!  In the case of snow left on the ground/glacier - any rain is assumed to have added to the snow
+    SnowLeft = MAX(Ws-WGT,0.0)
+    DW = (statev(2) - SnowLeft)/dt   ! change in seasonal snow rate
+    ! Reduction in snow storage is snow at the beginning minus the snow at the end in excess of glacier.  Can be negative if snow increases
+    DG = Max(WGT-Ws,0.0)/dt   !  Reduction in glacier storage rate
+ 
+    if(SnowLeft > 0.)then
+      R=0. ! No outflow due to rain
+!  Inequalities that hold
+!  0<= Ms <= Ps+Pr+C+DW
+!  0<= MG <= DG
+!  The slack in these inequalities is due to Sub
+!  Compute Ms and MG using proportioning
+      MSX = Ps+Pr+DW+Max(-Es,0.0)   !  Maximum melt contrib from snow.  Note that condensation is taken to add to snow as is rain
+      MRX = MSX+DG     !  Maximum melt overall
+    ! Mr is less than MRX due to sublimation losses.  Do the rain proportioning accordingly  
+      IF(MRX <= 0.0)THEN
+        Ms=0.
+        MG=0.
+      ELSE
+        Ms=Mr*MSX/MRX
+        MG=Mr*DG/MRX
+      END If
+    else  ! The case where all seasonal snow is gone and precipitation may contribute to total outflow
+!  Inequalities that hold
+!  0<= Ms <= Ps+C+DW
+!  0<= R <= Pr
+!  0<= MG <= DG
+!  The slack in these inequalities is due to Sub.  Note that here Pr may contribute to R but that C is still put to snow
+      MSX = Ps+DW+Max(-Es,0.0)   !  Maximum melt contrib from snow.  Note that condensation is taken to add to snow as is rain
+      MRX = MSX+DG+Pr     !  Maximum melt overall
+      IF(MRX <= 0.0)THEN
+        Ms=0.
+        R=0.
+        MG=0.
+      ELSE
+        Ms=Mr*MSX/MRX
+        R=Mr*Pr/MRX
+        MG=Mr*DG/MRX
+      END If
+    endif     
+    Eglacier=DG-MG
+    SWISM=Ms
+    SWIGM=MG
+    SWIR=R
+    SWIT=Mr
+   IF (Ws .LT. WGT)Then                  !  There was glacier melt
        Ws=0                              !  Reset      
    ELSE                                  !  Here ws is greater than the glacier thickness so no glacier melt
        Ws=Ws-WGT  
-       SWIGM=0
-   END IF   
-
-!  SWIT=Mr+SWIGM  ! DGT 2/22/13.  THis seems wrong
-   SWIT=Mr   !  The total is always Mr
+   END IF          
     
 !  accumulate for mass balance
    cump  = cump+(Ps+Pr)*dt
-   cumes  = cumes+Es*dt                  
+   cumes  = cumes+Es*dt                 
    cumEc = cumEc+Ec*dt                ! Evaporation from canopy
    cumMr = cumMr+Mr*dt                ! canopy melt not added
-   cumGM = cumGM+SWIGM*dt             !  Cumulative glacier melt
-
+   cumGM = cumGM+SWIGM*dt             ! Cumulative glacier melt
+   CumEG= CumEG+Eglacier*dt
 !  yjs update the total depth of the refreezing depth in the snow pack according the 
 !  yjs the refreezing depth at time step and the positive energy input. 07/22/01
 !  DGT's revised logic  1/13/05
@@ -565,8 +597,8 @@
       real param(*)
 	real mtime(*)        !yjs add model time 
 	Integer iradfl
-    real:: WGT
-    WGT=1.0
+    !real:: WGT
+    
 !	common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
 !yjs  Constant data set 
