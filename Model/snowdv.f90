@@ -189,7 +189,7 @@
        integer:: DefaultDimValues(3)
        REAL::RangeMin,RangeMax
        CHARACTER(1):: delimit3
-       REAL:: InputVarRange(11,2)
+       REAL:: InputVarRange(11,2),CumEG
        character(200), allocatable::Words7element(:)
        
        DefaultDimNames(1)='time'
@@ -615,6 +615,7 @@
             cumEc = 0.
             cumMr = 0.
             cumGM = 0.
+            cumEG = 0.
     !************************************************************************************************      
 
         !  find out if this is an output point and if so open the point output file
@@ -712,7 +713,7 @@
             CALL hyri(MYEAR,MMONTH,MDAY,NHOUR,DT,SLOPE,AZI,LAT,HRI,COSZEN)
             INPT(8,1)=COSZEN                
             IF(IRAD.LE.2)THEN               
-                CALL atf(atff,trange,month,dtbar,bca,bcc)
+            CALL atf(atff,trange,month,dtbar,bca,bcc)
 !      
 ! We found that Model reanalysis and dowscaled data may produce some unreasonably negative solar radiation.
 ! this is simply bad data and it is generally better policy to try to give a model good data. 
@@ -806,7 +807,7 @@
               mtime(3) = day
             endif
             CALL SNOWUEB2(dt,1,inpt,sitev,statev,tsprevday, taveprevday, nstepday, param,iflag,&  
-              &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr)
+              &cump,cumes,cumEc,cummr,cumGM,outv,mtime,atff,cf,OutArr,CumEG)
      
             tresult= Etime(tarray)
             tcomp=tcomp+tresult-tlast
@@ -818,7 +819,7 @@
         
             if(towrite)WRITE(iunit,*)OutArr       
             DStorage=statev(2)-Ws1+statev(4)-Wc1
-            errmbal= cump-cumMr-cumEs-cumEc -DStorage+cumGM  
+            errmbal= cump-cumMr-cumEs-cumEc-DStorage+cumGM+cumEG
 
             if(towrite)WRITE(iunit,*)ERRMBAL
             if (GridModel)THEN

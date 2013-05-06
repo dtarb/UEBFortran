@@ -343,6 +343,9 @@
         character (200) :: outSampleFile(outcount)
         Real:: MissingValues,Fillvalues
 
+        double precision:: DimValueX
+        
+        
         call check(nf90_open(WATERSHEDfILE,nf90_nowrite, ncidout))                 ! open the netcdf file
         ! get dimension IDs
         call check(nf90_inq_dimid(ncidout,wsycoordinate,DimID1))
@@ -441,7 +444,7 @@
         MissingValues=-9999.000
         Fillvalues=-9999.0
         time_unit='days since'//' '//trim(refyear)//'-'//trim(refmonth) &
-       //'-'//trim(refday)//'T'//'00:00'
+       //'-'//trim(refday)//' '//'00:00 UTC'
        
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
@@ -526,9 +529,9 @@
                ! similarly for (lon_dimid).
                call check(nf90_def_var(ncid,"time",NF90_REAL,time_dimid, &
                     time_varid))
-               call check(nf90_def_var(ncid,wsycoordinate,NF90_REAL,y_dimid, &
+               call check(nf90_def_var(ncid,wsycoordinate,NF90_DOUBLE,y_dimid, &
                     y_varid))
-                call check(nf90_def_var(ncid,wsxcoordinate,NF90_REAL,x_dimid, &
+                call check(nf90_def_var(ncid,wsxcoordinate,NF90_DOUBLE,x_dimid, &
                     x_varid))
 
                ! Assign units attributes to coordinate variables.
@@ -553,11 +556,11 @@
                ! End define mode.
                call check(nf90_enddef(ncid))
                CALL check(nf90_sync(ncid))
-               CALL Check(NF90_PUT_VAR(ncid,y_varid,dble(DimValue1))) ! latitude/y is dimension 2
-               CALL Check(NF90_PUT_VAR(ncid,x_varid,dble(DimValue2))) ! longtude/x is dimension 3
-!              CALL NF_PUT_VAR_REAL(ncid,x_varid,DimValue2) ! longtude/x is dimension 3
-!              CALL NF_PUT_VAR_REAL(ncid,y_varid,DimValue1) ! longtude/y is dimension 2
-               NCIDARRAY(j,i)=ncid
+               CALL Check(NF90_PUT_VAR(ncid,y_varid,DimValue1)) ! latitude/y is dimension 2
+               CALL Check(NF90_PUT_VAR(ncid,x_varid,DimValue2)) ! longtude/x is dimension 3
+              !CALL NF_PUT_VAR_DOUBLE(ncid,x_varid,DimValue1) ! longtude/x is dimension 3
+              !CALL NF_PUT_VAR_DOUBLE(ncid,y_varid,DimValue2) ! longtude/y is dimension 2
+              NCIDARRAY(j,i)=ncid
             end do
         end do
         end Subroutine DirectoryCreate
