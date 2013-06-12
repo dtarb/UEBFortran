@@ -536,7 +536,7 @@
           IDNumber(1)=1
         END IF
         ! Perform calculations only if grid cell is in the watershed
-        if((IDNumber(1) .ne. 0) .and. (IDNumber(1) .ne. WsMissingValuesInt) .and. (IDNumber(1) .ne. WsFillValuesInt))then  
+        if((IDNumber(1) .ne. -9999) .and. (IDNumber(1) .ne. WsMissingValuesInt) .and. (IDNumber(1) .ne. WsFillValuesInt))then  
 !  TODO change the above to also exclude netcdf no data values
 
           !  read site variables and initial conditions of state variables
