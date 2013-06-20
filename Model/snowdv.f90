@@ -191,7 +191,7 @@
        CHARACTER(1):: delimit3
        REAL:: InputVarRange(11,2),CumEG
        character(200), allocatable::Words7element(:)
-       
+
        DefaultDimNames(1)='time'
        DefaultDimNames(2)='Y'
        DefaultDimNames(3)='X' 

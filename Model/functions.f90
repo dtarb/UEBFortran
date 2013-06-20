@@ -89,7 +89,8 @@ real*4 inreal(1)
 real*8 indouble(1)
 integer:: vartype
 character*50:: wsxcoordinate,wsycoordinate
-integer:: dimid1,dimid2
+integer:: dimid1,dimid2,varndim
+integer,allocatable::vardmids(:)
 
 count = (/ 1, 1 /)
 start = (/ 1, 1/)
@@ -100,6 +101,9 @@ call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! return
 call check(nf90_inq_varid(ncidout, varname, VarID))
 !call check(nf90_inquire_variable(ncidout, 3, varname1))                 ! information about variableID 3
 !  Inquire the type of the data
+call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,ndims=varndim))
+Allocate(vardmids(varndim))
+call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,dimids=vardmids))
 call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
 call check(nf90_inq_dimid(ncidout,wsycoordinate,dimid1))
 call check(nf90_inq_dimid(ncidout,wsxcoordinate,dimid2))
@@ -107,13 +111,13 @@ call check(nf90_inq_dimid(ncidout,wsxcoordinate,dimid2))
 ! jxcoord=i
 ! tcoord=1, ycoord=2, and xcoord=3 (DEFAULT of UEBGrid)
 ! http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html (section 2.4)
-if (dimid1 == 1 .and. dimid2 == 2)THEN
+if (vardmids(1)==dimid1 .and. vardmids(2)==dimid2)THEN
     start(1) = j
     start(2) = i        
 END IF
 
 ! tcoord=1, ycoord=3, and xcoord=2
-if (dimid1 == 2 .and. dimid2 == 1)THEN
+if (vardmids(2)==dimid1 .and. vardmids(1)==dimid2)THEN
     start(1) = i
     start(2) = j
 END IF
@@ -172,8 +176,8 @@ real*4 inreal(1)
 real*8 indouble(1)
 integer:: vartype
 character*50:: Sitexcoord,Siteycoord
-integer:: dimid1,dimid2
-
+integer:: dimid1,dimid2,varndim
+integer,allocatable::vardmids(:)
 count = (/ 1, 1 /)
 start = (/ 1, 1/)
 !Open the file and see hats inside
@@ -183,19 +187,22 @@ call check(nf90_inquire(ncidout, nDimensions, nVariables, nAttributes)) ! return
 call check(nf90_inq_varid(ncidout, varname, VarID))
 !call check(nf90_inquire_variable(ncidout, 3, varname1))                 ! information about variableID 3
 !  Inquire the type of the data
+call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,ndims=varndim))
+Allocate(vardmids(varndim))
+call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,dimids=vardmids))
 call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
 call check(nf90_inq_dimid(ncidout,Siteycoord,dimid1))
 call check(nf90_inq_dimid(ncidout,Sitexcoord,dimid2))
 !
 ! tcoord=1, ycoord=2, and xcoord=3 (DEFAULT of UEBGrid)
 ! http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html (section 2.4)
-if (dimid1 == 1 .and. dimid2 == 2)THEN
+if (vardmids(1)==dimid1 .and. vardmids(2)==dimid2)THEN
     start(1) = j
     start(2) = i        
 END IF
 
 ! tcoord=1, ycoord=3, and xcoord=2
-if (dimid1 == 2 .and. dimid2 == 1)THEN
+if (vardmids(2)==dimid1 .and. vardmids(1)==dimid2)THEN
     start(1) = i
     start(2) = j
 END IF
@@ -266,7 +273,7 @@ integer*2 inshort(1)
 integer*4 ininteger(1)
 real*4 inreal(1)
 real*8 indouble(1)
-integer:: vartype
+integer:: vartype,dimID
 !Open the file and see whats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                     
 call check(nf90_inq_varid(ncidout, Rec_name, VarId))                    ! information about variableID for a given VariableName
@@ -275,7 +282,8 @@ call check(nf90_inquire_attribute(ncidout, Varid, UNITS, len = att_len))
 !call check(nf90_inq_dimid(ncidout, REC_NAME, time_dimid))
 ! TODO  fix up so that the rec_name comes from output of an appropriate function
 !  we are following the logic that the 3rd dimension no matter what its name is is the time dimension
-call check(nf90_inquire_dimension(ncidout, Varid, Rec_name, numtimeStep))       ! information about dimensionID 3
+call check(nf90_inq_dimid(ncidout, Rec_name, DimID))
+call check(nf90_inquire_dimension(ncidout, DimID, Rec_name, numtimeStep))       ! information about dimensionID 3
 !days since 2010-03-10T00:00
 !allocate(time_in(dimlen3))
 CALL check(nf90_sync(ncidout))
@@ -710,7 +718,7 @@ Allocate(inshort2(dimlen2))
 Allocate(ininteger2(dimlen2))
 Allocate(inreal2(dimlen2))
 Allocate(indouble2(dimlen2))
-Allocate(DimValue2Org(dimlen1))
+Allocate(DimValue2Org(dimlen2))
                
 call check(nf90_inq_varid(ncidout,dimname1, VarId))                    ! information about variableID for a given VariableName
 call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
@@ -729,7 +737,7 @@ elseif(vartype .eq. NF90_INTs1)then
     call check(nf90_get_var(ncidout,Varid,ininteger1)) 
     DimValue1Org=REAL(ininteger1,8)
 elseif(vartype .eq. NF90_FLOATs1)then 
-    call check(nf90_get_var(ncidout,Varid,inshort1)) 
+    call check(nf90_get_var(ncidout,Varid,inreal1)) 
     DimValue1Org=REAL(inreal1,8) 
 elseif(vartype .eq. NF90_DOUBLEs1)then
     call check(nf90_get_var(ncidout,Varid,indouble1))  
@@ -807,7 +815,8 @@ real*4, allocatable:: inreal(:)
 real*8, allocatable:: indouble(:)
 integer:: vartype
 Character*50:: Inputxcoord,inputycoord,inputtcoord
-INTEGER:: DIMID1,DIMID2,DIMID3, ncid
+INTEGER:: DIMID1,DIMID2,DIMID3,ncid,varndim
+integer, allocatable:: vardmids(:)
 
 Allocate(inbyte(rec))
 Allocate(inchar(rec))
@@ -820,14 +829,18 @@ Allocate(indouble(rec))
 !Open the file and see hats inside
 call check(nf90_open(File_name, nf90_nowrite, ncidout))                 ! open the netcdf file                      
 call check(nf90_inq_varid(ncidout, Var_name, VarId))                    ! information about variableID for a given VariableName
+call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,ndims=varndim))
+Allocate(vardmids(varndim))
+call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,dimids=vardmids))
 call check(NF90_inquire_variable(ncidout,VarID,xtype=vartype))
 call check(nf90_inq_dimid(ncidout,Inputtcoord,dimid1))
 call check(nf90_inq_dimid(ncidout,Inputycoord,dimid2))
 call check(nf90_inq_dimid(ncidout,Inputxcoord,dimid3))
+!call check(nf90_inquire_variable(ncid=ncidout,varid=VarId,dimids=vardmids))
 
 ! tcoord=1, ycoord=2, and xcoord=3 (DEFAULT of UEBGrid)
 ! http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html (section 2.4)
-if (dimid1 == 1 .and. dimid2 == 2 .and. dimid3 == 3)THEN
+if (dimid1==vardmids(1) .and. dimid2==vardmids(2) .and. dimid3==vardmids(3))THEN
     count = (/ rec, 1, 1 /)
     start = (/ 1, 1, 1 /)
     start(2) = iycoord
@@ -835,7 +848,7 @@ if (dimid1 == 1 .and. dimid2 == 2 .and. dimid3 == 3)THEN
 END IF
 
 ! tcoord=1, ycoord=3, and xcoord=2
-if (dimid1 == 1 .and. dimid2 == 3 .and. dimid3 == 2)THEN
+if (dimid1==vardmids(1) .and. dimid2==vardmids(3) .and. dimid3==vardmids(2))THEN
     count = (/ rec, 1, 1 /)
     start = (/ 1, 1, 1 /)
     start(2) = jxcoord
@@ -843,7 +856,7 @@ if (dimid1 == 1 .and. dimid2 == 3 .and. dimid3 == 2)THEN
 END IF
 
 ! tcoord=2, ycoord=1, and xcoord=3
-if (dimid1 == 2 .and. dimid2 == 1 .and. dimid3 == 3)THEN
+if (dimid1==vardmids(2) .and. dimid2==vardmids(1) .and. dimid3==vardmids(3))THEN
     count = (/ 1, rec, 1 /)
     start = (/ 1, 1, 1 /)
     start(1) = iycoord
@@ -851,7 +864,7 @@ if (dimid1 == 2 .and. dimid2 == 1 .and. dimid3 == 3)THEN
 END IF
 
 ! tcoord=2, ycoord=3, and xcoord=1
-if (dimid1 == 2 .and. dimid2 == 3 .and. dimid3 == 1)THEN
+if (dimid1==vardmids(2) .and. dimid2==vardmids(3) .and. dimid3==vardmids(1))THEN
     count = (/ 1, rec, 1 /)
     start = (/ 1, 1, 1 /)
     start(1) = jxcoord 
@@ -859,7 +872,7 @@ if (dimid1 == 2 .and. dimid2 == 3 .and. dimid3 == 1)THEN
 END IF
 
 ! tcoord=3, ycoord=1, and xcoord=2
-if (dimid1 == 3 .and. dimid2 == 1 .and. dimid3 == 2)THEN
+if (dimid1==vardmids(3) .and. dimid2==vardmids(1) .and. dimid3==vardmids(2))THEN
     count = (/ 1, 1, rec /)
     start = (/ 1, 1, 1 /)
     start(1) = iycoord
@@ -867,7 +880,7 @@ if (dimid1 == 3 .and. dimid2 == 1 .and. dimid3 == 2)THEN
 END IF
 
 ! tcoord=3, ycoord=2, and xcoord=1
-if (dimid1 == 3 .and. dimid2 == 2 .and. dimid3 == 1)THEN
+if (dimid1==vardmids(3) .and. dimid2==vardmids(2) .and. dimid3==vardmids(1))THEN
     count = (/ 1, 1, rec /)
     start = (/ 1, 1, 1 /)
     start(1) = jxcoord

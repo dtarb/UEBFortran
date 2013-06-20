@@ -302,17 +302,17 @@
        Do i=1,n
             if (IsInputFromNC(i) .eq. 1)then
                 Do k=1,MaxNumofFile
-                    If(InputDefDimval(i,1) .NE. ModelMissVaue)THEN ! Get the name of time-coordinate
+                    If(InputDefDimval(i,1) .NE. int(ModelMissVaue))THEN ! Get the name of time-coordinate
                         CALL check(nf90_open(NCfileContain,NF90_NOWRITE, ncidout))
                         CALL check(nf90_inquire_dimension(NCIDout,InputDefDimval(i,1),inputts(k,i)))
                         CALL check(nf90_close(ncidout))
                     End if
-                    If(InputDefDimval(i,2) .NE. ModelMissVaue)THEN ! Get the name of Y-coordinate
+                    If(InputDefDimval(i,2) .NE. int(ModelMissVaue))THEN ! Get the name of Y-coordinate
                         CALL check(nf90_open(NCfileContain,NF90_NOWRITE, ncidout))
                         CALL check(nf90_inquire_dimension(ncidout,InputDefDimval(i,2),inputys(k,i)))
                         CALL check(nf90_close(ncidout))
                     End if
-                    If(InputDefDimval(i,3) .NE. ModelMissVaue)THEN ! Get the name of X-coordinate
+                    If(InputDefDimval(i,3) .NE. int(ModelMissVaue))THEN ! Get the name of X-coordinate
                         CALL check(nf90_open(NCfileContain,NF90_NOWRITE, ncidout))
                         CALL check(nf90_inquire_dimension(NCIDout,InputDefDimval(i,3),Inputxs(k,i)))
                         CALL check(nf90_close(ncidout))
