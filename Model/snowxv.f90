@@ -197,8 +197,7 @@
 !  plane slope goes over a pole.  Achieved using atan2.
 !     DDT=ATAN(SIN(AZI1)*SIN(SLOPE1)/(COS(SLOPE1)*COS(LAT1)
 !    *    -COS(AZI1)*SIN(SLOPE1)*SIN(LAT1)))
-      ddt=atan2(SIN(AZI1)*SIN(SLOPE1), &
-        (COS(SLOPE1)*COS(LAT1)-COS(AZI1)*SIN(SLOPE1)*SIN(LAT1)))  
+      ddt=atan2(SIN(AZI1)*SIN(SLOPE1),(COS(SLOPE1)*COS(LAT1)-COS(AZI1)*SIN(SLOPE1)*SIN(LAT1)))  
 
 !  Now similar logic as before needs to be repeated for equivalent plane
 !  but with times reflecting

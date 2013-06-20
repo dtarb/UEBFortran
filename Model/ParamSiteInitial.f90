@@ -182,15 +182,13 @@
                     Words7element(1:nargs)=words(1:nargs)
                     CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
                                          &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.true.)
-                    SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (get y coordinate)
+                    SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (there is no time in a 2-D file)
                     SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get y coordinate)
-                    SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (there is no time in a 2-D file)
+                    SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (get x coordinate)
                     StateSiteFiles(i)=StateSiteFilesR
                     Sitexcoordinates(i)=SitexcoordinateR
                     Siteycoordinates(i)=SiteycoordinateR                                        
                     SiteVarNameinNCDF(i)=VarNameinNCDFR
-!                    RangeMin
-!                    RangeMax
                     Deallocate(words)
                     deAllocate(Words7element)
                 end if
@@ -205,18 +203,18 @@
 
        Do i=1,n
         if(isVarFromNC(i).eq. 1) then
-            If(SiteDefDimval(i,1) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+            If(SiteDefDimval(i,2) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
                                                   ! therefore, to get y-dim we need to ask for second element of 
                                                   ! DefaultDimValues
                 CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
-                CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,1),Siteycoordinates(i)))
+                CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,2),Siteycoordinates(i)))
                 CALL check(nf90_close(ncidout))
             End if
-            If(SiteDefDimval(i,2) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
+            If(SiteDefDimval(i,3) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
                                                   ! therefore, to get x-dim we need to ask for second element of 
                                                   ! DefaultDimValues
                 CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
-                CALL check(nf90_inquire_dimension(NCIDout,SiteDefDimval(i,2),Sitexcoordinates(i)))
+                CALL check(nf90_inquire_dimension(NCIDout,SiteDefDimval(i,3),Sitexcoordinates(i)))
                 CALL check(nf90_close(ncidout))
             End if 
         end if   
@@ -341,7 +339,7 @@
                     CALL StringToVarName(nargs,words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,&
                                          &VarNameinNCDFR,InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.true.)
                     SiteDefDimval(i,1)=DefaultDimValues(1) !2-D netCDF file mapping (get y coordinate)
-                    SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get y coordinate)
+                    SiteDefDimval(i,2)=DefaultDimValues(2) !2-D netCDF file mapping (get x coordinate)
                     SiteDefDimval(i,3)=DefaultDimValues(3) !2-D netCDF file mapping (there is no time in a 2-D file)
                     StateSiteFiles(i)=StateSiteFilesR
                     Sitexcoordinates(i)=SitexcoordinateR
@@ -365,14 +363,14 @@
                                                   ! therefore, to get y-dim we need to ask for second element of 
                                                   ! DefaultDimValues
                 CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
-                CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,1),Siteycoordinates(i)))
+                CALL check(nf90_inquire_dimension(ncidout,SiteDefDimval(i,2),Siteycoordinates(i)))
                 CALL check(nf90_close(ncidout))
             End if
             If(SiteDefDimval(i,3) .NE. -9999)THEN ! in a 2-D netCDF file first dimensionn is y and x is second
                                                   ! therefore, to get x-dim we need to ask for second element of 
                                                   ! DefaultDimValues
                 CALL check(nf90_open(StateSiteFiles(i),NF90_NOWRITE, ncidout))
-                CALL check(nf90_inquire_dimension(NCIDout,SiteDefDimval(i,2),Sitexcoordinates(i)))
+                CALL check(nf90_inquire_dimension(NCIDout,SiteDefDimval(i,3),Sitexcoordinates(i)))
                 CALL check(nf90_close(ncidout))
             End if 
         end if   

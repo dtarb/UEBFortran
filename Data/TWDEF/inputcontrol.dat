@@ -1,6 +1,6 @@
 Input Control file
 2009	10 01 00 yyyy mm dd hh.hh (starting Date)
-2010	06 29 23 yyyy mm dd hh.hh (ending Date)
+2009	10 29 23 yyyy mm dd hh.hh (ending Date)
 1.00 (dt=increment in two consecutive time step in hours)
 -7.0 UTCOffSet for the times that are input to the model.  Use 0 for input times in UTC.  (-7 is US Mountain time zone)
 Ta: Air temperature  (always required)
