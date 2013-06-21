@@ -856,7 +856,7 @@
         
             IF (GridModel)THEN      
               IDNum=Int(IDNumber(1))
-              if((IDNum .ne. 0) .and. (IDNum .ne. WsMissingValuesInt) .and. (IDNum .ne. WsFillValuesInt))then
+              if((IDNum .ne. -9999) .and. (IDNum .ne. WsMissingValuesInt) .and. (IDNum .ne. WsFillValuesInt))then
                   Do jUniqueID=1,uniqueIDNumber
                       If(UniqueIDArray(jUniqueID) .eq. IDNum)then
                           do ioutvar=1,AggOutNum
@@ -932,7 +932,7 @@
         do istep=1,Numtimestep
           do ivar=1,AggOutNum
             Do jUniqueID=1,uniqueIDNumber
-              if((UniqueIDArray(jUniqueID) .ne. 0) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValuesInt) .and.&
+              if((UniqueIDArray(jUniqueID) .ne. -9999) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValuesInt) .and.&
                 &(UniqueIDArray(jUniqueID) .ne. WsFillValuesInt))then
                   WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
                   &UniqueIDArray(jUniqueID),AggdWSVarValAvg(istep,jUniqueID,ivar)

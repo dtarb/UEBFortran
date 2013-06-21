@@ -453,7 +453,7 @@ CALL check(nf90_inquire_variable(ncidout,WSVarId,natts=numAtts))
 !        WsFillValues=0
 !    end IF
 !END DO
-WsMissingValues=0
+WsMissingValues=-9999
 DO iii=1,numAtts
   CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
   if(AttName .eq. missing_value)then
@@ -461,7 +461,7 @@ DO iii=1,numAtts
     exit
   endif
 enddo
-WsFillValues=0
+WsFillValues=-9999
 DO iii=1,numAtts
   CALL check(nf90_inq_attname(ncidout,WSVarId,iii,AttName))
   if(AttName .eq. fillvalue)then
