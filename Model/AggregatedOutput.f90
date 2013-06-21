@@ -208,7 +208,7 @@
                     exit
                 end if
             End do
-            if(found .and. ((IDVALUEAllocate(i) .ne. 0) .or. (IDVALUEAllocate(i) .ne. WsMissingValues) .or. (IDVALUEAllocate(i) .ne. WsFillValues)))then
+            if(found .and. ((IDVALUEAllocate(i) .ne. -9999) .and. (IDVALUEAllocate(i) .ne. WsMissingValues) .and. (IDVALUEAllocate(i) .ne. WsFillValues)))then
                 uniqueIDNumber=uniqueIDNumber+1
             end if
         end do
@@ -330,7 +330,7 @@
                     exit
                 end if
             End do
-            if(found .and. ((IDVALUEAllocate(i) .ne. 0) .or. (IDVALUEAllocate(i) .ne. WsMissingValues) .or. (IDVALUEAllocate(i) .ne. WsFillValues)))then
+            if(found .and. ((IDVALUEAllocate(i) .ne. -9999) .and. (IDVALUEAllocate(i) .ne. WsMissingValues) .and. (IDVALUEAllocate(i) .ne. WsFillValues)))then
                 uniqueIDNumber=uniqueIDNumber+1
                 UniqueIDArray(uniqueIDNumber)=IDVALUEAllocate(i)
             end if
