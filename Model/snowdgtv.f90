@@ -134,7 +134,7 @@
     real taveprevday(*)
     integer iTsMethod       !yjs Add model time initialization 09/19/2000
     integer windfl
-    REAL::SWIT,SWISM, SWIR,SWIGM
+    REAL::SWIT,SWISM,SWIR,SWIGM
     Real OutArr(53)
 	common /tsk_save/ tssk_old, tsavek_old, Tsavek_Ave, Tssk_ave
 
@@ -257,7 +257,7 @@
       RID  = 1.0/RRHO-1.0/RRHOI    !used to compute melt water flux (Fmelt)
 	rhom = lc*rho
 
-	! for Gracier melting calculation
+	! for Glacier melting calculation
     IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
         WGT=0.0
     ELSE
@@ -324,14 +324,19 @@
         PS = PS*dF
 
 !  Calculate Albedo	
-        ! for Gracier melting calculation
+        ! for Glacier melting calculation
         
         IF(iflag(4).eq.1)THEN
-!            IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
-                A=albedo(statev(3),coszen,Ws/RRHO,aep,abg,avo,anir0)      ! Snow depth (Ws/RRho)
-!	        ELSE                                                          ! Use of this albedo throughout time step neglects the
-!                A=albedo(statev(3),coszen,(Ws-WGT)/RRHO,aep,abg,avo,anir0)! changes due to new snow within a time step.o
-!            ENDIF
+            IF(SITEV(10) .EQ. 1 .OR. SITEV(10) .EQ. 2)THEN  
+            !  Here we are in glacier so need to remove WGT from Ws before computing depth and guard against negative
+                snowdepth=max((Ws-WGT)/RRHO,0.0)
+                A=albedo(statev(3),coszen,snowdepth,aep,abg,avo,anir0)      
+	        ELSE    
+	            snowdepth=Ws/RRHO    ! Snow depth (Ws/RRho)            
+                A=albedo(statev(3),coszen,snowdepth,aep,abg,avo,anir0)
+            ENDIF
+            ! Use of this albedo throughout time step neglects the
+            ! changes due to new snow within a time step.
         ELSE
             A=statev(3)                                                 
         END IF   
@@ -427,7 +432,7 @@
 !  0<= R <= Pr
 !  0<= MG <= DG
 !  The slack in these inequalities is due to Sub.  Note that here Pr may contribute to R but that C is still put to snow
-      MSX = Ps+DW+Max(-Es,0.0)   !  Maximum melt contrib from snow.  Note that condensation is taken to add to snow as is rain
+      MSX = Ps+DW   !  Maximum melt contrib from snow.  Note that condensation is taken to add to snow as is rain
       MRX = MSX+DG+Pr     !  Maximum melt overall
       IF(MRX <= 0.0)THEN
         Ms=0.
@@ -435,7 +440,7 @@
         MG=0.
       ELSE
         Ms=Mr*MSX/MRX
-        R=Mr*Pr/MRX
+        R=Mr*(Pr+Max(-Es,0.0))/MRX
         MG=Mr*DG/MRX
       END If
     endif     

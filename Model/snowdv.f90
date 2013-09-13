@@ -184,7 +184,7 @@
        Double precision:: JMSD,JMED
        integer:: dimlen1OUT,dimlen2OUT
        REAL, allocatable:: InputvarMissVal(:,:), InputvarFillVal(:,:)
-       integer::WsMissingValuesInt,WsFillValuesInt
+       !integer::WsMissingValuesInt,WsFillValuesInt
        Character (50):: DefaultDimNames(3)
        integer:: DefaultDimValues(3)
        REAL::RangeMin,RangeMax
@@ -521,8 +521,8 @@
       toutnc=0.0 
       tsitev=0.0
       dt=Modeldt
-      WsMissingValuesInt = int(WsMissingValues,8)
-      WsFillValuesInt = int(WsFillValues,8)
+      !WsMissingValuesInt = int(WsMissingValues,8)
+      !WsFillValuesInt = int(WsFillValues,8)
       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       ! Space loop starts here
       !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -536,7 +536,7 @@
           IDNumber(1)=1
         END IF
         ! Perform calculations only if grid cell is in the watershed
-        if((IDNumber(1) .ne. -9999) .and. (IDNumber(1) .ne. WsMissingValuesInt) .and. (IDNumber(1) .ne. WsFillValuesInt))then  
+        if((IDNumber(1) .ne. -9999) .and. (IDNumber(1) .ne. WsMissingValues) .and. (IDNumber(1) .ne. WsFillValues))then  
 !  TODO change the above to also exclude netcdf no data values
 
           !  read site variables and initial conditions of state variables
@@ -856,7 +856,7 @@
         
             IF (GridModel)THEN      
               IDNum=Int(IDNumber(1))
-              if((IDNum .ne. -9999) .and. (IDNum .ne. WsMissingValuesInt) .and. (IDNum .ne. WsFillValuesInt))then
+              if((IDNum .ne. -9999) .and. (IDNum .ne. WsMissingValues) .and. (IDNum .ne. WsFillValues))then
                   Do jUniqueID=1,uniqueIDNumber
                       If(UniqueIDArray(jUniqueID) .eq. IDNum)then
                           do ioutvar=1,AggOutNum
@@ -932,8 +932,8 @@
         do istep=1,Numtimestep
           do ivar=1,AggOutNum
             Do jUniqueID=1,uniqueIDNumber
-              if((UniqueIDArray(jUniqueID) .ne. -9999) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValuesInt) .and.&
-                &(UniqueIDArray(jUniqueID) .ne. WsFillValuesInt))then
+              if((UniqueIDArray(jUniqueID) .ne. -9999) .and. (UniqueIDArray(jUniqueID) .ne. WsMissingValues) .and.&
+                &(UniqueIDArray(jUniqueID) .ne. WsFillValues))then
                   WRITE(Aggunit,47)yymmddarray(1,istep),yymmddarray(2,istep),yymmddarray(3,istep),timearray(istep),outSymbol(AggOutVarnum(ivar)),&
                   &UniqueIDArray(jUniqueID),AggdWSVarValAvg(istep,jUniqueID,ivar)
 47                format(1x,i5,i3,i3,f8.3,1x,a11,i7,1x,g13.6)
