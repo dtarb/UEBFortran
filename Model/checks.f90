@@ -199,7 +199,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
 
         
         If (NCNumber .GE. 1)THEN
-            Do i=1,NCNumber
+            Do i=1,(NCNumber)
                 If(InputDefDimval(i,2) .NE. -9999)THEN ! Get the name of Y-coordinate
                     CALL check(nf90_open(AllNCDFfile(i),NF90_NOWRITE, ncidout))
                     CALL check(nf90_inquire_dimension(ncidout,InputDefDimval(i,1),ALLYcoord(i)))

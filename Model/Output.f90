@@ -444,7 +444,7 @@
         MissingValues=-9999.000
         Fillvalues=-9999.0
         time_unit='days since'//' '//trim(refyear)//'-'//trim(refmonth) &
-       //'-'//trim(refday)//' '//'00:00 UTC'
+       //'-'//trim(refday)//' '//'00:00:00'
        
       ! the symbol table element lengths have been expanded to match
       ! fixed width lengths.  This accomidates cross-compiler
