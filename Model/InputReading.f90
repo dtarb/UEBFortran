@@ -198,7 +198,7 @@
         integer:: uniqueIDNumberts(n),uniqueIDNumberys(n),uniqueIDNumberxs(n)
         integer:: uniqueIDNumbert,uniqueIDNumbery,uniqueIDNumberx
         Logical:: found
-        Integer::j
+        Integer::j, DimID
         REAL::RangeMin,RangeMax
         REAL:: ModelMissVaue
         Character(1):: delimit3
@@ -206,7 +206,9 @@
         real::InputVarRange(n,2)
         character(50):: daysstring
         logical:: MissFound, FillFound
-        
+        integer:: nDimensions,ij
+        character*50, DIMENSION(:), ALLOCATABLE :: dimset
+        integer, DIMENSION(:), ALLOCATABLE :: dimlenstore
         allocate(tempfilelist(MaxNumofFile))
         allocate(tempfilesteps(MaxNumofFile))
         allocate(tempstarttime(MaxNumofFile))
@@ -465,9 +467,22 @@
                     MissFound=.false.
                     FillFound=.false.
                     File_name=NCDFContainer(k,i)
-                    call check(nf90_open(File_name, nf90_nowrite, ncidout))                         ! open the netcdf file
+                    call check(nf90_open(File_name, nf90_nowrite, ncidout))                          ! open the netcdf file
                     call check(nf90_inq_varid(ncidout,Rec_name,Varid))
-                    call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC))  ! information about dimensionID 3
+                    call check(nf90_inquire(ncidout, nDimensions)) !integer=nDimensions
+                    allocate(dimset(nDimensions)) !character*50, DIMENSION(:), ALLOCATABLE :: dimset
+                    allocate(dimlenstore(nDimensions))
+                    DO ij=1,nDimensions
+                         call check(nf90_inquire_dimension(ncidout, ij, dimset(ij), dimlenstore(ij)))
+                    end do
+                    DO ij=1,nDimensions
+                           if(Rec_name .eq. dimset(ij))THEN
+                                NumtimeStepEachNC = dimlenstore(ij)     
+                           end if
+                    end do
+                    deallocate(dimset) !character*50, DIMENSION(:), ALLOCATABLE :: dimset
+                    deallocate(dimlenstore)
+                    ! call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC)) ! information about dimensionID 3
                     Call check(nf90_inq_varid(ncidout,Inputvarnameinncdf(i),InputVarId))
                     Call VarMissFill(FILE_NAME,Inputvarnameinncdf(i),VarMissValueOne,varFillValueOne)
                     CALL check(nf90_inquire_variable(ncidout,InputVarId,natts = numAtts))
@@ -567,6 +582,11 @@
         real*8, allocatable:: indouble(:)
         integer:: vartype
         character*50::daysstring
+        logical:: MissFound, FillFound
+        integer:: nDimensions,ij,DimID
+        character*50, DIMENSION(:), ALLOCATABLE :: dimset
+        integer, DIMENSION(:), ALLOCATABLE :: dimlenstore
+        
         !Varid=3  !  We require that time is the 3rd dimension
         RefHour=0.00
         FileCount=1
@@ -597,7 +617,20 @@
                     FileCount=FileCount+1
                     call check(nf90_open(File_nameM, nf90_nowrite, ncidout))                         ! open the netcdf file
                     call check(nf90_inq_varid(ncidout,Inputtcoordinates(i),VarId))                   ! information about variableID for a given VariableName
-                    call check(nf90_inquire_dimension(ncidout,Varid,len=NumtimeStepEachNC))          ! information about dimensionID 3  
+                    call check(nf90_inquire(ncidout, nDimensions)) !integer=nDimensions
+                    allocate(dimset(nDimensions)) !character*50, DIMENSION(:), ALLOCATABLE :: dimset
+                    allocate(dimlenstore(nDimensions))
+                    DO ij=1,nDimensions
+                         call check(nf90_inquire_dimension(ncidout, ij, dimset(ij), dimlenstore(ij)))
+                    end do
+                    DO ij=1,nDimensions
+                           if(Rec_name .eq. dimset(ij))THEN
+                                NumtimeStepEachNC = dimlenstore(ij)     
+                           end if
+                    end do
+                    deallocate(dimset) !character*50, DIMENSION(:), ALLOCATABLE :: dimset
+                    deallocate(dimlenstore)
+                    ! call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC)) ! information about dimensionID 3
                     CALL check(nf90_sync(ncidout))
                     CALL nCDF3DtimeRead(file_nameM,Inputtcoordinates(i),1,TVal,TotalTS,StartY,StartM,StartD,daysstring)
                     CALL JULDAT(StartY,StartM,StartD,RefHour,NCRfeferenceJDT)

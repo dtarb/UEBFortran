@@ -432,15 +432,15 @@
 !  0<= R <= Pr
 !  0<= MG <= DG
 !  The slack in these inequalities is due to Sub.  Note that here Pr may contribute to R but that C is still put to snow
-      MSX = Ps+DW   !  Maximum melt contrib from snow.  Note that condensation is taken to add to snow as is rain
-      MRX = MSX+DG+Pr     !  Maximum melt overall
+      MSX = Ps+DW+Max(-Es,0.0)   !  Maximum melt contrib from snow.  Note that condensation is taken to add to snow as is rain
+      MRX = MSX+DG+Pr     !  Maximum melt overall 
       IF(MRX <= 0.0)THEN
         Ms=0.
         R=0.
         MG=0.
       ELSE
         Ms=Mr*MSX/MRX
-        R=Mr*(Pr+Max(-Es,0.0))/MRX
+        R=Mr*Pr/MRX
         MG=Mr*DG/MRX
       END If
     endif     
