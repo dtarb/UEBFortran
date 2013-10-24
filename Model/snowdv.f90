@@ -689,7 +689,11 @@
             qli=INPVals(9)
             QNETOB=INPVals(10)
             Snowalb=INPVals(11)
-        
+            if(Snowalb .LT. 0.0 .or. Snowalb .GT. 1.0)then
+               ireadalb=0
+            else
+               ireadalb=1   
+            end if
     !  Below is code from point UEB 
             sitev(3)=qg   
             INPT(1,1)=TA

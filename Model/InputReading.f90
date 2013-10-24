@@ -624,13 +624,13 @@
                          call check(nf90_inquire_dimension(ncidout, ij, dimset(ij), dimlenstore(ij)))
                     end do
                     DO ij=1,nDimensions
-                           if(Rec_name .eq. dimset(ij))THEN
+                           if(Inputtcoordinates(i) .eq. dimset(ij))THEN
                                 NumtimeStepEachNC = dimlenstore(ij)     
                            end if
                     end do
                     deallocate(dimset) !character*50, DIMENSION(:), ALLOCATABLE :: dimset
                     deallocate(dimlenstore)
-                    ! call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC)) ! information about dimensionID 3
+                    !call check(nf90_inquire_dimension(ncidout, Varid, Rec_name,NumtimeStepEachNC)) ! information about dimensionID 3
                     CALL check(nf90_sync(ncidout))
                     CALL nCDF3DtimeRead(file_nameM,Inputtcoordinates(i),1,TVal,TotalTS,StartY,StartM,StartD,daysstring)
                     CALL JULDAT(StartY,StartM,StartD,RefHour,NCRfeferenceJDT)
@@ -749,27 +749,27 @@
                     CALL lowercase(inputvarname(i),inputvarname(i))
                     Do jj=1,NoofTS(i)
                         if (Allvalues(jj,i) .EQ. VarMissingValues(k,i))Then
-                            If (inputvarname(i) .NE. 'qsi')THen
-                                Allvalues(jj,i)=Allvalues((jj-1),i)
+                            If (inputvarname(i) .EQ. 'qsi' .or. inputvarname(i) .EQ. 'snowalb')THen
+                                
                             else
-                                Allvalues(jj,i)=-9999
+                                Allvalues(jj,i)=Allvalues((jj-1),i)
                             end if      
                         End if
                         
                         if (Allvalues(jj,i) .EQ. VarFillValues(k,i))Then
-                            If (inputvarname(i) .NE. 'qsi')THen
-                                Allvalues(jj,i)=Allvalues((jj-1),i)
-                            else
+                            If (inputvarname(i) .EQ. 'qsi' .or. inputvarname(i) .EQ. 'snowalb')THen
                                 Allvalues(jj,i)=-9999
+                            else
+                                Allvalues(jj,i)=Allvalues((jj-1),i)
                             End if
                         end if
                         
                         If(InputVarRange(i,1) .NE. -9999 .and. InputVarRange(i,2) .NE. -9999)THEN
                             if (Allvalues(jj,i) .LT. InputVarRange(i,1) .OR. Allvalues(jj,i) .GT. InputVarRange(i,2))Then
-                                If (inputvarname(i) .NE. 'qsi')Then
-                                    Allvalues(jj,i)=Allvalues((jj-1),i)
+                                If (inputvarname(i) .EQ. 'qsi' .or. inputvarname(i) .EQ. 'snowalb')Then
+                                    Allvalues(jj,i)=-9999 
                                 else
-                                    Allvalues(jj,i)=-9999
+                                    Allvalues(jj,i)=Allvalues((jj-1),i)
                                 end if      
                             End if
                         end if
