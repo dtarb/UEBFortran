@@ -689,7 +689,7 @@
             qli=INPVals(9)
             QNETOB=INPVals(10)
             Snowalb=INPVals(11)
-            if(Snowalb .LT. 0.0 .or. Snowalb .GT. 1.0)then
+            if((ireadalb==1 .and. Snowalb .LT. 0.0) .or. (ireadalb==1 .and. Snowalb .GT. 1.0) .or. ireadalb==0)then
                ireadalb=0
             else
                ireadalb=1   
