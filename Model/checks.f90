@@ -147,6 +147,9 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
         Character(200),Allocatable:: words1(:),words2(:),words3(:),words4(:),words5(:)
         integer:: DefaultDimValues(3), NCIDOUT
         REAL::RangeMin,RangeMax
+        double precision:: maxdimval1, maxdimval2, maxdimval3, maxdimval4,diffdim13,diffdim24
+        logical:: Logic
+!        logical::unitx,unity,diffx,diffy
         delimit1=';'
         delimit2=':'
         delimit3=','
@@ -255,15 +258,25 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
         CALL FindDimensionLength(AllNCDFfile(II),ALLXcoord(II),ALLYcoord(II),dimlen3,dimlen4)
         !Subroutine SpatialCoordinate('LangtangKholaWatershed.nc','latitude','longitude',DimValue1,DimValue2,DimUnit1,DimUnit2)
         CALL SpatialCoordinate(AllNCDFfile(II),ALLXcoord(II),ALLYcoord(II),DimValue3,DimValue4,DimUnit3,DimUnit4,dimlen3,dimlen4)
-            If (((MAXVAL(DimValue1) - MAXVAL(DimValue3)) .LE. 1E-5) .and. ((MINVAL(DimValue2) - MINVAL(DimValue4)) .LE. 1E-5)&
-            &.and. DimUnit1 .eq. DimUnit3 .and. DimUnit2 .eq. DimUnit4)Then
+        maxdimval1=MAXVAL(DimValue1)
+        maxdimval2=MAXVAL(DimValue2)
+        maxdimval3=MAXVAL(DimValue3)
+        maxdimval4=MAXVAL(DimValue4)
+!        diffdim13 = abs(maxdimval1 - maxdimval3)
+!        diffdim24 = abs(maxdimval2 - maxdimval4)
+!        unitx=DimUnit1 == DimUnit3
+!        unity=DimUnit2 == DimUnit4
+!        diffx=(diffdim13 .LE. 1E-5) 
+!        diffy=(diffdim24 .LE. 1E-5) 
+        Logic=(diffdim13 .LE. 1E-5) .or. (diffdim24 .LE. 1E-5) .or. (DimUnit1 == DimUnit3) .or. (DimUnit2 == DimUnit4)
+            If (Logic)Then
                 II=II+1
                 Deallocate(DimValue3)
                 Deallocate(DimValue4)
                 GO To 601
             else
-                Write(6,*) "Spatial coordinates of",AllNCDFfile(ii),"mismatch with watershed file's spatial coordinates"
-                Write(6,*) "Spatial bounrary of",AllNCDFfile(ii), "doesn't match with watershed netCDF file"
+                Write(6,*) "Spatial coordinates of",AllNCDFfile(II),"mismatch with watershed file's spatial coordinates"
+                Write(6,*) "Spatial bounrary of",AllNCDFfile(II), "doesn't match with watershed netCDF file"
                 II=II+1
                 Deallocate(DimValue3)
                 Deallocate(DimValue4)
