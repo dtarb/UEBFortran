@@ -1,18 +1,21 @@
-Initial Beta version of UEB Grid Snowmelt Model
 
-UEBGrid version 0.2
+# UEB Grid Snowmelt Model
+
+## Version 1.0
 
 David Tarboton, Avirup Sen Gupta
 
-September 9, 2012
+March 23 2014
 
-Folders
+####Folders
 
-Model:  This contains the source code and Compiled Windows Binary executable in Release folder
+* Model:  This contains the source code and Compiled Windows Binary executable in Release folder
 
-Data:  This contains example input and output data sets
+* Data:  This contains example input and output data sets
 
-Documentation:  This contains documentation.
+* Documentation:  This contains documentation
+
+<hr>
 
 The Utah Energy Balance (UEB) snow model is an energy balance snowmelt model developed by David Tarboton's research group, first in 1994, and updated over the years. The model is written in FORTRAN and uses a lumped representation of the snowpack and keeps track of water and energy balance. The model is driven by inputs of air temperature, precipitation, wind speed, humidity and radiation at time steps sufficient to resolve the diurnal cycle (six hours or less). The model uses physically-based calculations of radiative, sensible, latent and advective heat exchanges. A force-restore approach is used to represent surface temperature, accounting for differences between snow surface temperature and average snowpack temperature without having to introduce additional state variables. Melt outflow is a function of the liquid fraction, using Darcy's law. This allows the model to account for continued outflow even when the energy balance is negative. Because of its parsimony (few state variables - but increasing with later versions) this model is suitable for application in a distributed fashion on a grid over a watershed. There are a number of versions available. 
 
@@ -41,7 +44,7 @@ The file UEB\Model\VisualStudioProjConfiguration.txt describes the configuration
 The folder UEB\Model\UEBGrid contains the Visual Studio Solution and project files.  
 UEB\Model\UEBGrid\Release contains the latest compiled executable for Windows (32 bit).
 
-Copyright (C) 2012  David Tarboton, Utah State University, dtarb@usu.edu.  http://www.engineering.usu.edu/dtarb
+Copyright (C) 2014  David Tarboton, Utah State University, dtarb@usu.edu.  http://www.engineering.usu.edu/dtarb
 
 UEB is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,14 +64,10 @@ other software that does not meet the GNU General Public License
 conditions contact the author to request permission.
 
 David G. Tarboton  
-
-Utah State University 
-
-8200 Old Main Hill 
-
-Logan, UT 84322-8200 
-
-USA 
+Utah State University  
+8200 Old Main Hill  
+Logan, UT 84322-8200  
+USA  
 http://www.engineering.usu.edu/dtarb/ 
 
 email:  dtarb@usu.edu 
@@ -77,10 +76,6 @@ Acknowledgements
 
 I am grateful to the following funding agencies that have supported the develoopment of UEB
 
-NASA Grant NNX11AK03G has supported the development of UEBGrid
+* NASA Grant NNX11AK03G has supported the development of UEBGrid
 
-USDA-CREES award 2008-34552-19042 Utah Drought Management Project supported the development of the vegetation components.
-
-
- 
-
+* USDA-CREES award 2008-34552-19042 Utah Drought Management Project supported the development of the vegetation components.
