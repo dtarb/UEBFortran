@@ -157,7 +157,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
              "Tmin   ","Tmax   ","Qsi    ","Qg     ","Qli    ", &
              "Qnet   ","Snowalb"  /)
         InputDefDimval=-9999          
-        NCNumber=1
+        NCNumber=0
         OPEN(8,FILE=svfile,STATUS='OLD')
           Read (8,*) SiteHeading
 3010      Read(8,*,iostat=reason,end=4010)SVcode
@@ -182,12 +182,14 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
                         Words7element(1:nargs)=words(1:nargs)                      
                         CALL StringToVarName(nargs,Words7element,delimit2,StateSiteFilesR,SitexcoordinateR,SiteycoordinateR,VarNameinNCDFR,&
                                              &InputtcoordinateR,DefaultDimValues,RangeMin,RangeMax,delimit3,.false.)
-                        InputDefDimval(NCNumber,1)=DefaultDimValues(1)
-                        InputDefDimval(NCNumber,2)=DefaultDimValues(2)
-                        InputDefDimval(NCNumber,3)=DefaultDimValues(3)  
-                        AllNCDFfile(NCNumber)=StateSiteFilesR
-                        ALLXcoord(NCNumber)=SitexcoordinateR
-                        ALLYcoord(NCNumber)=SiteycoordinateR
+                        If (NCNumber > 0) then                    
+                          InputDefDimval(NCNumber,1)=DefaultDimValues(1)
+                          InputDefDimval(NCNumber,2)=DefaultDimValues(2)
+                          InputDefDimval(NCNumber,3)=DefaultDimValues(3)  
+                          AllNCDFfile(NCNumber)=StateSiteFilesR
+                          ALLXcoord(NCNumber)=SitexcoordinateR
+                          ALLYcoord(NCNumber)=SiteycoordinateR
+                        End if
                         Deallocate(words)
                         Deallocate(Words7element)
                         NCNumber=NCNumber+1
