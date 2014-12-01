@@ -95,8 +95,8 @@
 !===End of reading the values from parameter file ==
 
 ! =================== for one point within the grid that the model is looping over 
-      subroutine readsv(param,statev,sitev,svfile,slope,azi,lat,subtype, &
-      ilat,jlon,dtbar,ts_last,longitude,Sitexcoordinates,Siteycoordinates)
+      subroutine readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,ilat,jlon,dtbar,Ts_last,longitude,&
+      &nstepday,Taveprevday,Sitexcoordinates,Siteycoordinates)
     ! param (input and output) an array that holds all the paramter values
     ! statev (output) is state variable array that returns the initial conditions read from input files
     ! sitev (output)is site variables array that returns the site variables read from input files
@@ -111,9 +111,10 @@
       use netCDF 
       Implicit None
       integer:: n,i
-      PARAMETER(n=32)
-      integer:: reason,matched,isVarFromNC(n),subtype            
+      PARAMETER(n=33)
+      integer:: reason,matched,isVarFromNC(n),subtype,nstepday            
       integer:: ilat,jlon
+      real::Taveprevday(nstepday)
       real param(32)
       REAL statev(6),sitev(10),slope,azi,lat, StateSiteValue(n), &
            SingleArray(1), vardefaults(n), dtbar(12),ts_last,longitude
@@ -136,6 +137,9 @@
       integer:: DefaultDimValues(3),SiteDefDimval(n,3),ncidout
       REAL:: RangeMin,RangeMax
       character(200),allocatable::Words7element(:)
+      character(len=10) :: IntToChar
+      character*200:: TavestateOutfilelist(nstepday)
+      
       delimit1=';'
       delimit2=':'
       delimit3=','
@@ -145,12 +149,12 @@
              "latitude ","subalb   ","subtype  ","gsurf    ","b01      ", &
              "b02      ","b03      ","b04      ","b05      ","b06      ", &
              "b07      ","b08      ","b09      ","b10      ","b11      ", &
-             "b12      ","ts_last  ","longitude"/)
+             "b12      ","ts_last  ","longitude","taveprevday"/)
 
       vardefaults= (/ 0.0, 0.0, 0.0, 0.0, 1.0, 100000.0, 0.1, 0.0, 0.0, &
            0.0, 6.6, 1.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.98, 5.712903, &
            4.350000, 6.890322, 8.660001, 8.938710, 10.010000, 9.541936, &
-           9.038710, 7.160001, 8.106450, 5.923332, 5.058064, -9999.0, 111.00 /)
+           9.038710, 7.160001, 8.106450, 5.923332, 5.058064, -9999.0, 111.00,-9999.0 /)
       do i=1,n  
       SiteDefDimval=-9999
       isVarFromNC(i)= -1  ! use the coding 0 to indicate SCTC from file, 
@@ -239,6 +243,18 @@
           StateSiteValue(i)=vardefaults(i)
         endif
       end do
+
+      DO i = 1,nstepday
+           write(IntToChar,'(i2.2)')i
+           TavestateOutfilelist(i)=trim("taveprevday")//trim(IntToChar)//".nc"
+      END DO
+      
+      Do i=1,nstepday                                                        !ivariables is a looping variable
+            file_name=TavestateOutfilelist(i)
+            CALL nCDF2DReadReal(file_name,SiteVarNameinNCDF(33),SingleArray,ilat,jlon,Sitexcoordinates(33),Siteycoordinates(33))
+            Taveprevday(i)=SingleArray(1)
+      end do
+      
         statev(1:4)=StateSiteValue(1:4)
         sitev(1:2)=StateSiteValue(5:6)
         sitev(4:9)=StateSiteValue(7:12)
@@ -274,7 +290,7 @@
       use netCDF
       Implicit None
       integer:: n,i
-      PARAMETER(n=32)
+      PARAMETER(n=33)
       integer:: reason,matched,isVarFromNC(n)         
       !REAL, DIMENSION(16):: vardefaults
       CHARACTER*50 SiteHeading, SVcode, SVname, StateSiteVName(n)
@@ -306,7 +322,7 @@
              "latitude ","subalb   ","subtype  ","gsurf    ","b01      ", &
              "b02      ","b03      ","b04      ","b05      ","b06      ", &
              "b07      ","b08      ","b09      ","b10      ","b11      ", &
-             "b12      ","ts_last  ","longitude"/)
+             "b12      ","ts_last  ","longitude","taveprevday"/)
              
       do i=1,n  
         isVarFromNC(i)= -1  ! use the coding 0 to indicate SCTC from file, 

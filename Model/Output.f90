@@ -588,7 +588,7 @@
     integer:: iycoord,jxcoord, timerec
     integer::NumtimeStepPerFile(NumofFile),StartEndNCDF(NumofFile,2)
     integer::NCIDARRAY(NumofFile,outcount),OutVar(outcount)
-    REAL:: OutVarValue(NumtimeStep,64)
+    REAL:: OutVarValue(NumtimeStep,66)
     
     timerec=NumtimeStepPerFile(incfile)
 !    count = (/ 1, 1, timerec /)

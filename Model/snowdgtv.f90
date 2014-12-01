@@ -261,7 +261,7 @@
     IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
         WGT=0.0
     ELSE
-        WGT=1.0
+        WGT=1.0000
     END IF
 	Ws=Ws+WGT
 !   Loop for each time step

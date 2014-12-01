@@ -127,7 +127,7 @@
       character*(200) :: DimUnit1,DimUnit2
       Character* 200,dimension(:), allocatable :: OutFolder,outSampleFile,outputfolder
       integer,dimension(:),allocatable :: outvar  !  Variable to hold the index position of each output variable
-
+      integer:: istate
 !  Arrays to manage the steping of time through the input files using the following rules
 !  First value in a set of input files is the first time step value
 !  If there are multiple netcdf file they are used in the order of their first time value
@@ -191,7 +191,14 @@
        CHARACTER(1):: delimit3
        REAL:: InputVarRange(11,2),CumEG
        character(200), allocatable::Words7element(:)
-
+       integer,PARAMETER:: staten=4 
+       integer:: outvarpos(staten)
+       Character(200)::Outfilelist(staten)
+       integer :: statestart(2), statecount(2)
+       real, allocatable:: allstatearray(:,:,:)
+       character*200, allocatable::stateoutSymbol(:), stateoutFile(:), stateOutUnits(:),stateOutfilelist(:)
+       integer, allocatable:: stateNCIDARRAY(:)
+       character(len=10) :: IntToChar
        DefaultDimNames(1)='time'
        DefaultDimNames(2)='Y'
        DefaultDimNames(3)='X' 
@@ -510,7 +517,24 @@
       write(6,*)'time to create netCDFs: ',(tresult-tlast)
       write(636,*)'Create netCDFs: ',(tresult-tlast),' seconds'  
       write(6,*)"Starting loop over grid cells"
-       
+      
+      allocate(allstatearray(dimlen1,dimlen2,(nstepday+4)))
+      allocate(stateoutSymbol(4+nstepday))
+      allocate(stateOutUnits(4+nstepday))
+      allocate(stateOutfilelist(4+nstepday))
+      allocate(stateNCIDARRAY(4+nstepday))
+      stateoutSymbol(1:4)= (/ "Ub       ","SWE      ", "tausn    ","SWEc     "/)
+      stateOutUnits(1:4)  = (/ "kJ/m2   ","m       ", "unitless","m       "/)
+      stateOutfilelist(1:4) =  (/ "USic.nc   ","WSis.nc   ", "Tic.nc    ","WCic.nc   "/)
+      DO i = 1,nstepday
+           write(IntToChar,'(i2.2)')i
+           stateoutSymbol(i+4)=trim("taveprevday")
+           stateOutUnits(i+4)="deg_C"
+           stateOutfilelist(i+4)="taveprevday"//trim(IntToChar)//".nc"
+      END DO
+      call StateVarriablenetCDFCreate(WATERSHEDfILE,wsycoordinate,wsxcoordinate,stateNCIDARRAY,nstepday,stateoutSymbol,stateOutUnits,stateOutfilelist)
+      outvarpos(1:4) = (/ 13, 14, 26, 53 /)
+      
       ! time tracking variables are inititated as 0.0
       tlast=tresult
       tio=0.0
@@ -539,8 +563,30 @@
         if((IDNumber(1) .ne. -9999) .and. (IDNumber(1) .ne. WsMissingValues) .and. (IDNumber(1) .ne. WsFillValues))then  
 !  TODO change the above to also exclude netcdf no data values
 
+          ALLOCATE(Tsprevday(nstepday))
+          ALLOCATE(Taveprevday(nstepday))
+          
+                ! FIXME: what if the result is fractional
+      !  should not be fractional (except numerically)
+            nstepday=StepInADay  ! number of time steps/day
+            
+            !  Initialize Tsbackup and TaveBackup
+            DO 3 i = 1,nstepday
+                Tsprevday(i)=-9999.
+                Taveprevday(i)=-9999.0
+3           CONTINUE
+
+           CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude,nstepday,Taveprevday,Sitexcoordinates,Siteycoordinates)
+            ! Take surface temperature as 0 where it is unknown the previous time step
+            ! This is for first day of the model to get the force restore going
+            IF(ts_last .le. -9999.)THEN    
+              Tsprevday(nstepday)=0  
+            ELSE
+              Tsprevday(nstepday)=ts_last                      !has measurements
+            END IF 
+            
           !  read site variables and initial conditions of state variables
-          CALL readsv(param,statev,sitev,svfile,slope,azi,lat,subtype,iycoord,jxcoord,dtbar,Ts_last,longitude,Sitexcoordinates,Siteycoordinates)
+          
           ! Set water equivalent thickness of glacier based on substrate type
           ! subtype = sitev(10)
           !   0 = Ground/Non Glacier, 
@@ -551,16 +597,14 @@
           IF(SITEV(10) .EQ. 0 .OR. SITEV(10) .EQ. 3)THEN
               WGT=0.0
           ELSE
-              WGT=1.0
+              WGT=1.0000
           END IF
     
           tresult= Etime(tarray)
           tsitev=tsitev+tresult-tlast
           tlast=tresult
        
-          ALLOCATE(Tsprevday(nstepday))
-          ALLOCATE(Taveprevday(nstepday))
-       
+        
           if(sitev(10) .ne. 3) then   !  Only do this work for non accumulation cells where model is run 
             ! TODO check logic and consolidate with to perform calculations only on grid
             CALL Values4VareachGrid(inputvarname,IsInputFromNC,MaxNumofFile,NUMNCFILES,NCDFContainer,varnameinncdf,iycoord,jxcoord,&
@@ -575,25 +619,6 @@
 !       End do
 !       Close(666)
       !*******************************************************************************  
-
-      ! FIXME: what if the result is fractional
-      !  should not be fractional (except numerically)
-            nstepday=StepInADay  ! number of time steps/day
-
-
-            !  Initialize Tsbackup and TaveBackup
-            DO 3 i = 1,nstepday
-                Tsprevday(i)=-9999.
-                Taveprevday(i)=-9999.0
-3            CONTINUE
-
-            ! Take surface temperature as 0 where it is unknown the previous time step
-            ! This is for first day of the model to get the force restore going
-            IF(ts_last .le. -9999.)THEN    
-              Tsprevday(nstepday)=0  
-            ELSE
-              Tsprevday(nstepday)=ts_last                      !has measurements
-            END IF 
 
     ! compute Ave.Temp for previous day 
             Us   = statev(1)                                  ! Ub in UEB
@@ -668,7 +693,7 @@
     !        Write(667,38)istep,InpVals(1),InpVals(2),InpVals(3),InpVals(4),InpVals(5),InpVals(6),&
     !            &InpVals(7),InpVals(8),InpVals(9),InpVals(10),InpVals(11)
 
-      !      Map from wrapper input variables to UEB variables     
+    !        Map from wrapper input variables to UEB variables     
             TA=INPVals(1)
             P=INPVals(2)
             V=INPVals(3)
@@ -892,7 +917,15 @@
       !    Go to 1
       !End if
       !
-       
+        IF (GridModel)THEN
+            if ((EJD == CTJD))THEN
+                  do istate=1,4
+                       allstatearray(iycoord,jxcoord,istate)=OutVarValue(NumtimeStep,outvarpos(istate))
+                  end do
+                  allstatearray(iycoord,jxcoord,5:(4+nstepday))=Tsprevday(1:nstepday)
+             end if
+        end if
+        
           deallocate(Tsprevday)
           deallocate(Taveprevday)
           Close(iunit)
@@ -908,6 +941,7 @@
           END IF
         endif  !  this is the end of if we are in a watershed    
         
+
         tresult= Etime(tarray)
         toutnc=toutnc+tresult-tlast
         tlast=tresult
@@ -920,7 +954,13 @@
       END DO    
    !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    ! Space loop ends here
-   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
+   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  
+    IF (GridModel)THEN 
+          do i=1,(4+nstepday)
+                call Check(NF90_PUT_VAR(stateNCIDARRAY(i),3,allstatearray(:,:,i)))
+          end do  
+    end if 
       IF (GridModel)THEN 
          ! Putting all the dimension values inside the netcdf files
         do ioutv=1,outcount

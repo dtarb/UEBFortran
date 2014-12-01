@@ -1071,3 +1071,17 @@ CALL check(nf90_sync(ncidout))
 call check(nf90_close(ncidout))                                         ! Closing the netcdf file
 end Subroutine VarMissFill
 !==================Obtain Input Variable Missing and Filling value ===========================================
+
+!==================Creating new directory ===========================================
+subroutine create_directory( newDirPath )
+    character(len=*), intent(in) :: newDirPath
+    character(200) :: mkdirCmd
+    logical  :: dirExists
+    inquire( directory=newDirPath, exist=dirExists )         ! Works with ifort, but not gfortran
+    if (dirExists) then
+    else
+        mkdirCmd = 'mkdir -p '//trim(newDirPath)
+        call system( mkdirCmd )
+    endif
+end subroutine create_directory
+!==================Creating new directory ===========================================

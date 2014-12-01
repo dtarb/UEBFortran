@@ -35,5 +35,6 @@
 		<File RelativePath="..\ParamSiteInitial.f90"/>
 		<File RelativePath="..\snowdgtv.f90"/>
 		<File RelativePath="..\snowdv.f90"/>
-		<File RelativePath="..\snowxv.f90"/></Files>
+		<File RelativePath="..\snowxv.f90"/>
+		<File RelativePath=".\StateVariableNetCDF.f90"/></Files>
 	<Globals/></VisualStudioProject>

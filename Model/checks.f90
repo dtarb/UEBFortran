@@ -33,7 +33,7 @@
 subroutine checks(svfile,IsInputFromNC,NumNCFiles,totalNC,StateSiteVName)
 Implicit None
 integer::n,m,i
-parameter(n=32,m=11)
+parameter(n=33,m=11)
 Character*50 Sitexcoordinates(n), Siteycoordinates(n)
 Character*200:: svfile
 Character*200:: SVname,SiteHeading,SVcode,StateSiteVName(n),StateSiteNCFile,StateSiteV
@@ -64,7 +64,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
          "latitude ","subalb   ","subtype  ","gsurf    ","b01      ", &
          "b02      ","b03      ","b04      ","b05      ","b06      ", &
          "b07      ","b08      ","b09      ","b10      ","b11      ", &
-         "b12      ","ts_last  ","longitude"/)
+         "b12      ","ts_last  ","longitude","taveprevday"/)
                   
           count=0
           countinput=0
@@ -120,7 +120,7 @@ StateSiteVName=   (/ "usic     ","wsis     ","tic      ","wcic     ", &
         Use netCDF
         Implicit None
         integer::n,m,i,j,ii
-        parameter(n=32,m=11)
+        parameter(n=33,m=11)
         Character*200:: StateSiteVName(n)
         integer:: MaxNumofFile,dimlen2,dimlen1,dimlen3,dimlen4
         Character*200:: svfile,NCDFContainer(MaxNumofFile,n)
