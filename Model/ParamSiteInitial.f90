@@ -115,7 +115,7 @@
       integer:: reason,matched,isVarFromNC(n),subtype,nstepday            
       integer:: ilat,jlon
       real::Taveprevday(nstepday)
-      real param(32)
+      real param(n)
       REAL statev(6),sitev(10),slope,azi,lat, StateSiteValue(n), &
            SingleArray(1), vardefaults(n), dtbar(12),ts_last,longitude
       !REAL, DIMENSION(16):: vardefaults
@@ -243,18 +243,18 @@
           StateSiteValue(i)=vardefaults(i)
         endif
       end do
-
-      DO i = 1,nstepday
+      if (isVarFromNC(33) .eq. 1) then
+        DO i = 1,nstepday
            write(IntToChar,'(i2.2)')i
            TavestateOutfilelist(i)=trim("taveprevday")//trim(IntToChar)//".nc"
-      END DO
+        END DO
       
-      Do i=1,nstepday                                                        !ivariables is a looping variable
+       Do i=1,nstepday                                                        !ivariables is a looping variable
             file_name=TavestateOutfilelist(i)
             CALL nCDF2DReadReal(file_name,SiteVarNameinNCDF(33),SingleArray,ilat,jlon,Sitexcoordinates(33),Siteycoordinates(33))
             Taveprevday(i)=SingleArray(1)
-      end do
-      
+       end do
+      end if
         statev(1:4)=StateSiteValue(1:4)
         sitev(1:2)=StateSiteValue(5:6)
         sitev(4:9)=StateSiteValue(7:12)

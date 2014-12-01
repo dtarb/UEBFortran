@@ -89,9 +89,12 @@ b11: Bristow-Campbell B for November (11)
 b12: Bristow-Campbell B for December (12)
 0
 6.67 
-ts_last:  degree celsius 
+ts_last: degree celsius 
 0
 -9999
 longitude: A 2-D grid that contains the latitude at each grid 
 1
-longitude.nc;X:xcoord;Y:ycoord;D:longitude
+longitude.nc;X:xcoord;Y:ycoord;D:longitude 
+taveprevday: Average Temperature of the timesteps of lastday of previous run
+0
+-9999
