@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "UEBGrid", "UEBGrid.vfproj", "{367085E4-CDE7-4885-83C6-772A5B110B80}"
 EndProject
 Global

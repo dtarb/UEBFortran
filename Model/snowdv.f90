@@ -229,7 +229,8 @@
 !  Constant data set
       data to /0.0/        !  Temperature of freezing (0 C)a
       data tk /273.15/     !  Temperature to convert C to K (273.15)
-      data sbc /2.0747e-7/ !  Stefan boltzman constant (2.0747e-7 KJ/m^2/hr/K)
+!      data sbc /2.0747e-7/ !  Stefan boltzman constant (2.0747e-7 KJ/m^2/hr/K)
+      data sbc /2.041334e-07/ !  Stefan boltzman constant 5.67037321e-08*3.6 W m^-2 K^-4= 2.041334e-07 KJ m^-2 hr^-1 K^-4)
       data hf /333.5/      !  Heat of fusion (333.5 KJ/kg)
       data hneu /2834.0/   !  Heat of Vaporization (Ice to Vapor, 2834 KJ/kg)
       data cw /4.18/       !  Water Heat Capacity (4.18 KJ/kg/C)
