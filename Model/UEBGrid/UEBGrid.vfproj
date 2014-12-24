@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" AdditionalIncludeDirectories="..\..\..\netcdf3.6.1\include" Interfaces="true" WarnInterfaces="true" FloatingPointModel="source" FloatingPointSpeculation="fpSpeculationOff" Traceback="true" BoundsCheck="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" AdditionalIncludeDirectories="..\..\..\netcdf3.6.1\include" WarnInterfaces="true" FloatingPointModel="source" FloatingPointSpeculation="fpSpeculationOff" Traceback="true" BoundsCheck="true" Interfaces="true"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\..\netcdf3.6.1\lib" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="netcdf.lib"/>
 				<Tool Name="VFResourceCompilerTool" ShowProgress="true"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -36,5 +36,5 @@
 		<File RelativePath="..\snowdgtv.f90"/>
 		<File RelativePath="..\snowdv.f90"/>
 		<File RelativePath="..\snowxv.f90"/>
-		<File RelativePath=".\StateVariableNetCDF.f90"/></Files>
+		<File RelativePath="..\StateVariableNetCDF.f90"/></Files>
 	<Globals/></VisualStudioProject>
