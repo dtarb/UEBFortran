@@ -61,7 +61,7 @@
       integer:: juniqueid,ivar,iradfl
       integer::month
       integer::ii,iycoord,jxcoord,iunit,totaldday,NSTEPDAY,i
-      PARAMETER(nsv=10,npar=32,nxv=6,niv=8,nov=14)
+      PARAMETER(nsv=10,npar=33,nxv=6,niv=8,nov=14)
       integer :: OutCount,ioutv,totalgrid,numgrid
       integer, parameter :: NDIMS = 3
       integer:: irad, ireadalb, subtype, NumNCFILES(11),ISInputFROMNC(11)
@@ -75,7 +75,7 @@
       Character (200):: WatershedVARID
       CHARACTER*200 MainHeading
       Character*100 varnameinncdf(11)
-      CHARACTER*200 pfile,inputcon,StateSiteVName(32)
+      CHARACTER*200 pfile,inputcon,StateSiteVName(33)
       CHARACTER*200 Watershedfile,AggOutControl,AggdOutput
       CHARACTER*200 afile
       INTEGER YEAR,DAY,iflag(6)                        ! Pass a flag to control surface temperature modeling 
@@ -177,7 +177,7 @@
        Double precision::UTCJulDat,OHour,MHOUR,ModHour
        integer::modx,totaldayMOne,totalDay,StepInADay,gg
        REAL:: DimDiff1,DimDiff2
-       Character*50 Inputxcoordinates(11),inputycoordinates(11),inputtcoordinates(11),Sitexcoordinates(32), Siteycoordinates(32)
+       Character*50 Inputxcoordinates(11),inputycoordinates(11),inputtcoordinates(11),Sitexcoordinates(33), Siteycoordinates(33)
        character*50 wsxcoord,wsycoord,wsxcoordinate,wsycoordinate
        integer:: nlines 
        Double precision:: MSTARTHOUR,MENDHOUR
