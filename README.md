@@ -7,7 +7,7 @@ David Tarboton, Avirup Sen Gupta
 
 March 23 2014
 
-####Folders
+### Folders
 
 * Model:  This contains the source code and Compiled Windows Binary executable in Release folder
 
