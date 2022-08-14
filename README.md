@@ -47,20 +47,15 @@ UEB\Model\UEBGrid\Release contains the latest compiled executable for Windows (3
 Copyright (C) 2014  David Tarboton, Utah State University, dtarb@usu.edu.  http://hydrology.usu.edu/dtarb/ 
 
 UEB is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+it under the terms of the MIT Open Source License as published by
+the Open Source Initiative https://opensource.org/licenses/MIT.
 
 UEB is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-A copy of the GNU General Public License is included in the file gpl.txt.
-This is also available at: http://www.gnu.org/licenses/.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
 If you wish to use or incorporate this program (or parts of it) into 
-other software that does not meet the GNU General Public License 
+other software that does not meet the MIT License 
 conditions contact the author to request permission.
 
 David G. Tarboton  
